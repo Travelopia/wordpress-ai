@@ -1,0 +1,15 @@
+{
+  "name": "travelopia-wordpress-ai",
+  "version": "0.1.0",
+  "description": "Scaffold for AI integration.",
+  "scripts": {
+    "lint": "npm run lint:php",
+    "lint:php": "composer run lint",
+    "lint-test": "npm run lint && npm run static-analysis:php",
+    "static-analysis:php": "composer static-analysis"
+  },
+  "author": "Travelopia Team",
+  "license": "MIT"
+}
+
+

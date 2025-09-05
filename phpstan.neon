@@ -1,0 +1,12 @@
+parameters:
+	level: max
+	scanFiles:
+		- plugin.php
+	scanDirectories:
+		- vendor
+	paths:
+		- inc
+	excludePaths:
+		- vendor/wordpress/wp-admin/includes/noop.php
+
+

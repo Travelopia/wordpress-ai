@@ -15,6 +15,7 @@
     "post-install-cmd": "[ $COMPOSER_DEV_MODE -eq 0 ] || composer run set-coding-standards",
     "post-update-cmd": "[ $COMPOSER_DEV_MODE -eq 0 ] || composer run set-coding-standards",
     "lint": "phpcs",
+    "fix": "phpcbf",
     "static-analysis": "phpstan analyse -c phpstan.neon --memory-limit=512M"
   },
   "config": {

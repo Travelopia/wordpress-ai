@@ -9,7 +9,7 @@
  * @package travelopia-ai
  */
 
-namespace Travelopia\AI;
+namespace TravelopiaAI;
 
 // Composer autoload.
 if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {

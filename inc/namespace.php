@@ -9,7 +9,6 @@ namespace Travelopia\AI;
 
 use WordPress\AiClient\AiClient;
 use WordPress\AiClient\ProviderImplementations\Google\GoogleProvider;
-use WP_Error;
 use Exception;
 
 /**
@@ -29,7 +28,7 @@ function bootstrap(): void {
  * @return void
  */
 function maybe_generate_alt_text_on_upload( int $attachment_id ): void {
-	generate_alt_text_for_attachment( $attachment_id, false );
+	generate_alt_text_for_attachment( $attachment_id );
 }
 
 /**
@@ -39,12 +38,15 @@ function maybe_generate_alt_text_on_upload( int $attachment_id ): void {
  * @return string|false Generated alt text or false on failure.
  */
 function generate_alt_text_for_attachment( int $attachment_id ) {
-	if ( ! function_exists( '\\wp_attachment_is_image' ) ) {
+	// Early validation checks
+	if ( ! function_exists( 'wp_attachment_is_image' ) || ! wp_attachment_is_image( $attachment_id ) ) {
 		return false;
 	}
 
-	if ( ! wp_attachment_is_image( $attachment_id ) ) {
-		return false;
+	// Check for existing alt text to avoid unnecessary API calls
+	$existing_alt = get_post_meta( $attachment_id, '_wp_attachment_image_alt', true );
+	if ( ! empty( trim( $existing_alt ) ) ) {
+		return $existing_alt;
 	}
 
 	// Ensure AI client is available.
@@ -52,60 +54,61 @@ function generate_alt_text_for_attachment( int $attachment_id ) {
 		return false;
 	}
 
-	$file_path = (string) get_attached_file( $attachment_id, true );
-	if ( '' === $file_path || ! file_exists( $file_path ) ) {
-		error_log( "Travelopia AI: Image file not found for attachment {$attachment_id}" ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+	// Get the file path.
+	$file_path = get_attached_file( $attachment_id, true );
+	if ( empty( $file_path ) || ! file_exists( $file_path ) ) {
 		return false;
 	}
 
-	$file_name = wp_basename( $file_path );
-	$title     = (string) get_the_title( $attachment_id );
-
-	// Build context from metadata.
+	// Build optimized context from metadata
 	$context_parts = array();
-	if ( '' !== $file_name ) {
+	$file_name = wp_basename( $file_path );
+	$title = get_the_title( $attachment_id );
+
+	if ( $file_name ) {
 		$context_parts[] = 'filename: ' . $file_name;
 	}
-	if ( '' !== $title ) {
+	if ( $title ) {
 		$context_parts[] = 'title: ' . $title;
 	}
 	$context = implode( '; ', $context_parts );
 
-	// Create a prompt that asks the AI to analyze the actual image content.
+	// Optimized prompt construction
 	$prompt = 'Analyze this image and provide a concise, objective, accessible alt text description (maximum 120 characters). Focus on the main subject, key visual elements, and important details that would help someone who cannot see the image understand its content.';
-	if ( '' !== $context ) {
+	if ( $context ) {
 		$prompt .= ' Additional context: ' . $context;
 	}
 
 	try {
-		// Check if Google API key is available.
-		if ( ! defined( 'GOOGLE_API_KEY' ) ) {
-			return new WP_Error( 'travelopia_ai_google_api_key_not_configured', 'Google API key not configured. Set GOOGLE_API_KEY environment variable.' );
+		// Check API key availability
+		if ( ! defined( 'GOOGLE_API_KEY' ) && ! getenv( 'GOOGLE_API_KEY' ) ) {
+			return false;
 		}
 
-		// @todo: Get the public URL for the image.
-		// $image_url = wp_get_attachment_url( $attachment_id );
-		$image_url = "https://sunsail-website.s3.amazonaws.com/uploads/2025/05/LOGO_Dee-Caffari-e1748266875143.jpg";
-		if ( empty( $image_url ) ) {
-			return new WP_Error( 'travelopia_ai_image_url_not_found', 'Image URL not found for attachment: ' . $attachment_id );
+		// Get actual image URL for the attachment
+		$image_url = wp_get_attachment_url( $attachment_id );
+
+		// If the image URL is not found, return false.
+		if ( ! $image_url ) {
+			return false;
 		}
 
 		$prompt .= ' Image: ' . $image_url;
 
 		$generated = AiClient::prompt( $prompt )
-			->usingModel( GoogleProvider::model( 'gemini-2.5-flash' ) )
+			->usingModel( GoogleProvider::model( 'gemini-1.5-flash' ) )
 			->usingTemperature( 0.1 )
 			->generateText();
 
-		$generated = (string) $generated;
-		$generated = trim( wp_strip_all_tags( $generated ) );
-		if ( '' === $generated ) {
+		// Process and validate generated text
+		$generated = trim( wp_strip_all_tags( (string) $generated ) );
+		if ( empty( $generated ) ) {
 			return false;
 		}
 
-		// Enforce 140 char limit and sanitize.
-		if ( strlen( $generated ) > 140 ) {
-			$generated = substr( $generated, 0, 140 );
+		// Enforce character limit and sanitize
+		if ( strlen( $generated ) > 120 ) {
+			$generated = substr( $generated, 0, 120 );
 		}
 		$generated = sanitize_text_field( $generated );
 
@@ -113,6 +116,6 @@ function generate_alt_text_for_attachment( int $attachment_id ) {
 
 		return $generated;
 	} catch ( Exception $e ) {
-		return new WP_Error( 'travelopia_ai_failed_to_generate_alt_text', 'Failed to generate alt text for attachment: ' . $attachment_id . ' - ' . $e->getMessage() );
+		return false;
 	}
 }

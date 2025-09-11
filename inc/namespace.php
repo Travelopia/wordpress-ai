@@ -2,10 +2,10 @@
 /**
  * Namespace functions.
  *
- * @package travelopia-ai
+ * @package trav-ai
  */
 
-namespace Travelopia\AI;
+namespace TravAI;
 
 use WordPress\AiClient\AiClient;
 use WordPress\AiClient\ProviderImplementations\Google\GoogleProvider;

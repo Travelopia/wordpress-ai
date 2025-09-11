@@ -1,15 +1,15 @@
 <?php
 /**
- * Plugin Name: Travelopia AI
- * Description: WordPress Plugin for WordPress AI integration.
+ * Plugin Name: TravAI
+ * Description: WordPress Plugin for AI-powered alt text generation.
  * Author: Travelopia Team
  * Author URI: https://www.travelopia.com
  * Version: 0.1.0
  *
- * @package travelopia-ai
+ * @package trav-ai
  */
 
-namespace Travelopia\AI;
+namespace TravAI;
 
 // Composer autoload.
 if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {

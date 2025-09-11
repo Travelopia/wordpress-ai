@@ -1,4 +1,4 @@
-## Travelopia WordPress AI
+## TravAI WordPress Plugin
 
 **What it does**: Automatically generates image alt text using AI when you upload an image to the Media Library, or when editing an existing image.
 
@@ -15,10 +15,10 @@
 
 ### Install
 1. Copy the `wordpress-ai` folder into `wp-content/plugins/`.
-2. Activate “Travelopia AI” in Plugins.
+2. Activate "TravAI" in Plugins.
 
 ### Configure
-- Set your AI API key and provider (environment, wp-config.php).
+- Set your Google API key (environment variable or wp-config.php).
 - Optional: Update prompt/language or control overwrite behavior.
 
 ### Usage
@@ -26,11 +26,11 @@
 - **Existing images**: Open Media > Library, edit an image, and click “Generate Alt Text”
 
 ### Privacy
-- Images (or related metadata) may be sent to the configured AI provider to generate alt text.
+- Images (or related metadata) may be sent to Google Gemini to generate alt text.
 
 ### Troubleshooting
-- **No alt text generated**: Check API key, provider availability, and that the site can make outbound requests.
-- **Overwrites**: If you don’t want overwrites, disable the regenerate action or ensure the plugin is configured to skip when alt text exists.
+- **No alt text generated**: Check Google API key, provider availability, and that the site can make outbound requests.
+- **Overwrites**: If you don't want overwrites, disable the regenerate action or ensure the plugin is configured to skip when alt text exists.
 
 ### Roadmap
 - Batch backfill for existing media

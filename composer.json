@@ -1,5 +1,5 @@
 {
-  "name": "travelopia/wordpress-ai",
+  "name": "trav-ai/wordpress-plugin",
   "type": "wordpress-plugin",
   "extra": {
     "wordpress-install-dir": "vendor/wordpress"

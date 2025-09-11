@@ -10,6 +10,7 @@ namespace TravAI;
 use WordPress\AiClient\AiClient;
 use WordPress\AiClient\ProviderImplementations\Google\GoogleProvider;
 use Exception;
+use WP_CLI;
 
 /**
  * Bootstrap plugin.
@@ -19,6 +20,12 @@ use Exception;
 function bootstrap(): void {
 	// Auto-generate alt text on new image upload when none exists.
 	add_action( 'add_attachment', __NAMESPACE__ . '\\maybe_generate_alt_text_on_upload', 20 );
+
+	// Register WP CLI commands.
+	if ( defined( 'WP_CLI' ) && true === WP_CLI ) {
+		require_once __DIR__ . '/wp-cli/class-travai.php';
+		WP_CLI::add_command( 'travai', __NAMESPACE__ . '\\TravAI' );
+	}
 }
 
 /**

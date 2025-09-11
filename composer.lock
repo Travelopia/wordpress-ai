@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "dd9263e1231b7504d242b9c12fe12472",
+    "content-hash": "3188da818c91b7039e0e4c0c29171aaa",
     "packages": [
         {
             "name": "php-http/discovery",
@@ -1073,6 +1073,44 @@
             "time": "2025-09-05T05:47:09+00:00"
         },
         {
+            "name": "travelopia/wordpress-coding-standards",
+            "version": "1.0.6",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Travelopia/wordpress-coding-standards-phpcs.git",
+                "reference": "edb063f3ce9197c66ef51ba6bdae64418d76aa30"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Travelopia/wordpress-coding-standards-phpcs/zipball/edb063f3ce9197c66ef51ba6bdae64418d76aa30",
+                "reference": "edb063f3ce9197c66ef51ba6bdae64418d76aa30",
+                "shasum": ""
+            },
+            "require": {
+                "wp-coding-standards/wpcs": "^3.1"
+            },
+            "require-dev": {
+                "dealerdirect/phpcodesniffer-composer-installer": "*"
+            },
+            "type": "phpcodesniffer-standard",
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Travelopia",
+                    "homepage": "https://www.travelopia.com"
+                }
+            ],
+            "description": "Travelopia's PHP WordPress Coding Standards",
+            "support": {
+                "issues": "https://github.com/Travelopia/wordpress-coding-standards-phpcs/issues",
+                "source": "https://github.com/Travelopia/wordpress-coding-standards-phpcs/tree/1.0.6"
+            },
+            "time": "2025-09-01T22:13:19+00:00"
+        },
+        {
             "name": "wp-coding-standards/wpcs",
             "version": "3.2.0",
             "source": {
@@ -1141,10 +1179,10 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {},
     "prefer-stable": false,
     "prefer-lowest": false,
-    "platform": [],
-    "platform-dev": [],
+    "platform": {},
+    "platform-dev": {},
     "plugin-api-version": "2.6.0"
 }

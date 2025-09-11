@@ -1,14 +1,14 @@
 {
-  "name": "travelopia-wordpress-ai",
+  "name": "trav-ai-wordpress",
   "version": "0.1.0",
-  "description": "Scaffold for AI integration.",
+  "description": "AI-powered alt text generation for WordPress.",
   "scripts": {
     "lint": "npm run lint:php",
     "lint:php": "composer run lint",
     "lint-test": "npm run lint && npm run static-analysis:php",
     "static-analysis:php": "composer static-analysis"
   },
-  "author": "Travelopia Team",
+  "author": "TravAI Team",
   "license": "MIT"
 }
 

@@ -1,5 +1,5 @@
 {
-  "name": "travelopia/wordpress-ai",
+  "name": "trav-ai/wordpress-plugin",
   "type": "wordpress-plugin",
   "extra": {
     "wordpress-install-dir": "vendor/wordpress"
@@ -8,12 +8,9 @@
     "roots/wordpress": "*",
     "squizlabs/php_codesniffer": "^3.8",
     "phpstan/phpstan": "^1.10",
-    "wp-coding-standards/wpcs": "^3.0"
+    "travelopia/wordpress-coding-standards": "*"
   },
   "scripts": {
-    "set-coding-standards": "phpcs --config-set installed_paths vendor/wp-coding-standards/wpcs,vendor/phpcsstandards/phpcsutils,vendor/phpcsstandards/phpcsextra",
-    "post-install-cmd": "[ $COMPOSER_DEV_MODE -eq 0 ] || composer run set-coding-standards",
-    "post-update-cmd": "[ $COMPOSER_DEV_MODE -eq 0 ] || composer run set-coding-standards",
     "lint": "phpcs",
     "fix": "phpcbf",
     "static-analysis": "phpstan analyse -c phpstan.neon --memory-limit=512M"
@@ -21,7 +18,8 @@
   "config": {
     "allow-plugins": {
       "dealerdirect/phpcodesniffer-composer-installer": true,
-      "roots/wordpress-core-installer": true
+      "roots/wordpress-core-installer": true,
+      "php-http/discovery": false
     }
   },
   "require": {

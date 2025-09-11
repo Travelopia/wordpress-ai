@@ -1,44 +1,28 @@
 <?xml version="1.0"?>
 <ruleset name="WordPress Coding Standards">
-	<rule ref="WordPress-Extra">
-		<exclude name="Generic.Arrays.DisallowShortArraySyntax.Found" />
-		<exclude name="WordPress.Files.FileName.NotHyphenatedLowercase" />
-		<exclude name="WordPress.PHP.DisallowShortTernary.Found" />
-	</rule>
-	<rule ref="WordPress-Docs" />
-
-	<rule ref="WordPress-Core">
-		<exclude name="Universal.Arrays.DisallowShortArraySyntax.Found" />
-		<exclude name="Universal.Operators.DisallowShortTernary.Found" />
-		<exclude name="PSR2.Classes.ClassDeclaration.CloseBraceAfterBody" />
-		<exclude name="Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed" />
-		<exclude name="WordPress.WP.Capabilities.Unknown" />
-		<exclude name="Universal.Operators.DisallowStandalonePostIncrementDecrement.PostIncrementFound" />
-		<exclude name="Generic.WhiteSpace.IncrementDecrementSpacing.SpaceAfterIncrement" />
-		<exclude name="Generic.CodeAnalysis.UnusedFunctionParameter.Found" />
-		<exclude name="Universal.NamingConventions.NoReservedKeywordParameterNames.stringFound" />
-		<exclude name="Squiz.Functions.MultiLineFunctionDeclaration.SpaceAfterFunction" />
-		<exclude name="Universal.ControlStructures.DisallowLonelyIf.Found" />
-		<exclude name="PSR12.Files.FileHeader.IncorrectOrder" />
-		<exclude name="Universal.NamingConventions.NoReservedKeywordParameterNames.echoFound" />
-		<exclude name="Universal.NamingConventions.NoReservedKeywordParameterNames.classFound" />
-		<exclude name="WordPress.WP.AlternativeFunctions.file_system_operations_mkdir" />
+	<rule ref="Travelopia-WordPress">
+		<!--@TODO: Fix these exclusions as a part of new ticket.-->
+		<exclude name="Travelopia.PHP.NamespaceLeadingSlash.Avoid" />
+		<exclude name="Travelopia.Functions.FunctionReturnType.Missing" />
+		<exclude name="Travelopia.PHP.PreferTheContentOverWPAutoP.UseTheContent" />
+		<exclude name="Travelopia.Functions.FunctionArgsDefaultValue.Missing" />
 	</rule>
 
-	<rule ref="WordPress.Arrays.MultipleStatementAlignment">
+	<rule ref="WordPress.NamingConventions.ValidVariableName">
 		<properties>
-			<property name="maxColumn" value="1000" />
+			<property name="allowed_custom_properties" type="array">
+				<element value="tagName"/>
+				<element value="textContent"/>
+				<element value="nextSibling"/>
+				<element value="parentNode"/>
+			</property>
 		</properties>
 	</rule>
 
-	<arg name="extensions" value="php" />
 	<file>./inc</file>
 
-	<arg value="ps" />
-
-	<exclude-pattern>*/node_modules/*</exclude-pattern>
-	<exclude-pattern>*/vendor/*</exclude-pattern>
-	<exclude-pattern>*/dist/*</exclude-pattern>
+	<!-- Check up to 20 files simultaneously. -->
+	<arg name="parallel" value="20"/>
 </ruleset>
 
 

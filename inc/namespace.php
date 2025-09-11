@@ -2,13 +2,15 @@
 /**
  * Namespace functions.
  *
- * @package travelopia-ai
+ * @package trav-ai
  */
 
-namespace TravelopiaAI;
+namespace TravAI;
 
-// Include AI class.
-require_once __DIR__ . '/class-ai.php';
+use WordPress\AiClient\AiClient;
+use WordPress\AiClient\ProviderImplementations\Google\GoogleProvider;
+use Exception;
+use WP_CLI;
 
 /**
  * Bootstrap plugin.
@@ -16,102 +18,190 @@ require_once __DIR__ . '/class-ai.php';
  * @return void
  */
 function bootstrap(): void {
-	// Filters.
-	add_filter( 'media_row_actions', __NAMESPACE__ . '\\media_row_actions', 10, 2 );
+	// Auto-generate alt text on new image upload when none exists.
+	add_action( 'add_attachment', __NAMESPACE__ . '\\maybe_generate_alt_text_on_upload', 20 );
 
-	// Actions.
-	add_action( 'add_meta_boxes', __NAMESPACE__ . '\\remove_image_editor' );
-	add_action( 'edit_form_after_title', __NAMESPACE__ . '\\modify_image_editor', 11 );
-}
-
-/**
- * Adds Quick Action CTA for generating Alt Text in Media Library Admin Page.
- *
- * @param mixed[] $actions Actions.
- * @param WP_Post $post Post object.
- *
- * @return mixed[]
- */
-function media_row_actions( $actions, $post ) {
-	// Return early if the post is not an image.
-	if ( 'attachment' !== $post->post_type || strpos( $post->post_mime_type, 'image' ) === false ) {
-		return $actions;
+	// Register WP CLI commands.
+	if ( defined( 'WP_CLI' ) && true === WP_CLI ) {
+		require_once __DIR__ . '/wp-cli/class-travai.php';
+		WP_CLI::add_command( 'travai', __NAMESPACE__ . '\\TravAI' );
 	}
-
-	// Check if the image has alt text or not.
-	$alt_text = get_post_meta( $post->ID, '_wp_attachment_image_alt', true );
-
-	// Check if the image has alt text or not.
-	$actions['generate_alt_text'] = sprintf(
-		'<a href="%s">%s</a>',
-		wp_nonce_url(
-			admin_url( 'post.php?post=' . $post->ID . '&action=edit&tp_generate_alt_text=true' ),
-			'generate_alt_text_' . $post->ID,
-			'tp_nonce'
-		),
-		empty( $alt_text ) ? __( 'Generate Alt Text', 'et' ) : __( 'Regenerate Alt Text', 'et' )
-	);
-
-	return $actions;
 }
 
 /**
- * Removes the editor options for the images. Its modified output is shown via modify_image_editor function.
+ * Generate alt text for an uploaded image if missing.
+ *
+ * @param int $attachment_id Attachment ID.
  *
  * @return void
  */
-function remove_image_editor(): void {
-	remove_action( 'edit_form_after_title', 'edit_form_image_editor' );
+function maybe_generate_alt_text_on_upload( int $attachment_id ): void {
+	// Generate alt text for the uploaded image.
+	generate_alt_text_for_attachment( $attachment_id );
 }
 
 /**
- * Modifies the image editor to show the Alt Text Field with Button to generate/regenerate alt text.
+ * Generate alt text for any image attachment.
  *
- * @param WP_Post $post Post object.
+ * @param int $attachment_id Attachment ID.
  *
- * @return void
+ * @return array{success: bool, alt_text?: string, error?: string}
  */
-function modify_image_editor( $post ): void {
-	// Return early if the post is not an image.
-	if ( 'attachment' !== $post->post_type || strpos( $post->post_mime_type, 'image' ) === false ) {
-		return;
+function generate_alt_text_for_attachment( int $attachment_id ) {
+	// Early validation checks.
+	if ( ! function_exists( 'wp_attachment_is_image' ) || ! wp_attachment_is_image( $attachment_id ) ) {
+		return [
+			'success' => false,
+			'error'   => 'Invalid attachment ID or not an image',
+		];
 	}
 
-	// If query args has tp_generate_alt_text, then generate the alt text.
-	if ( isset( $_GET['tp_generate_alt_text'] ) && wp_verify_nonce( $_GET['tp_nonce'], 'generate_alt_text_' . $post->ID ) ) {
-		$ai       = new \TravelopiaAI\AI();
-		$alt_text = $ai->generate_alt_text( wp_get_attachment_image_src( $post->ID, 'full' )[0] );
-		$ai->update_attachment_alt_text( $post->ID, $alt_text );
+	// Check for existing alt text to avoid unnecessary API calls.
+	$existing_alt = get_post_meta( $attachment_id, '_wp_attachment_image_alt', true );
+
+	// Check if existing alt text exists.
+	if ( ! empty( trim( $existing_alt ) ) ) {
+		return $existing_alt;
 	}
 
-	// Get the original output as expected from WP Core.
-	ob_start();
-	edit_form_image_editor( $post );
-	$output = ob_get_clean();
+	// Ensure AI client is available.
+	if ( ! \class_exists( '\\WordPress\\AiClient\\AiClient' ) ) {
+		return [
+			'success' => false,
+			'error'   => 'AI Client not available',
+		];
+	}
 
-	// Get the alt text from the post meta.
-	$alt_text = get_post_meta( $post->ID, '_wp_attachment_image_alt', true );
+	// Get the file path.
+	$file_path = get_attached_file( $attachment_id, true );
 
-	// Add the CTA button alongside the Alt Text Field.
-	ob_start();
+	// Validate file path exists.
+	if ( empty( $file_path ) || ! file_exists( $file_path ) ) {
+		return [
+			'success' => false,
+			'error'   => 'Image file not found',
+		];
+	}
 
-	?>
-	<div style="display: flex; gap: 10px;">
-		<textarea class="widefat" name="_wp_attachment_image_alt" id="attachment_alt" aria-describedby="alt-text-description"><?php echo esc_attr( $alt_text ); ?></textarea>
-		<button type="button" class="button button-primary"><?php empty( $alt_text ) ? esc_attr_e( 'Generate Alt Text', 'et' ) : esc_attr_e( 'Regenerate Alt Text', 'et' ); ?></button>
-	</div>
-	<?php
+	// Default options for the generation.
+	$options = [
+		'model'           => 'gemini-1.5-flash',
+		'temperature'     => 0.1,
+		'max_length'      => 120,
+		'prompt'          => 'Analyze this image and provide a concise, objective, accessible alt text description (maximum 120 characters). Focus on the main subject, key visual elements, and important details that would help someone who cannot see the image understand its content.',
+		'include_context' => true,
+	];
 
-	$new_output = ob_get_clean();
+	// Initialize context.
+	$context = '';
 
-	// Modify the original output with the new one.
-	$output = preg_replace(
-		'/<textarea[^>]*\bname=["\']_wp_attachment_image_alt["\'][^>]*\bid=["\']attachment_alt[^"\']*["\'][^>]*>.*?<\/textarea>/is',
-		$new_output,
-		$output
-	);
+	// Build context from metadata if requested.
+	if ( $options['include_context'] ) {
+		$context_parts = [];
+		$file_name     = wp_basename( $file_path );
+		$title         = get_the_title( $attachment_id );
 
-	// Output the modified output.
-    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-	echo $output;
+		// Add file name to context.
+		if ( $file_name ) {
+			$context_parts[] = 'filename: ' . $file_name;
+		}
+
+		// Add title to context.
+		if ( $title ) {
+			$context_parts[] = 'title: ' . $title;
+		}
+
+		// Join context parts with a semicolon.
+		$context = implode( '; ', $context_parts );
+	}
+
+	// Build final prompt.
+	$prompt = $options['prompt'];
+
+	// Add context to prompt if requested.
+	if ( $context ) {
+		$prompt .= ' Additional context: ' . $context;
+	}
+
+	/**
+	 * Filter the prompt.
+	 *
+	 * @param string $prompt The prompt.
+	 * @param int $attachment_id The attachment ID.
+	 */
+	$prompt = apply_filters( 'trav_ai_alt_text_prompt', $prompt, $attachment_id );
+
+	/**
+	 * Filter the generation options.
+	 *
+	 * @param array $options The generation options.
+	 * @param int $attachment_id The attachment ID.
+	 */
+	$options = apply_filters( 'trav_ai_generation_options', $options, $attachment_id );
+
+	// Start AI generation process.
+	try {
+		// Check API key availability.
+		if ( ! defined( 'GOOGLE_API_KEY' ) && ! getenv( 'GOOGLE_API_KEY' ) ) {
+			return [
+				'success' => false,
+				'error'   => 'Google API key not configured',
+			];
+		}
+
+		// Get actual image URL for the attachment.
+		$image_url = wp_get_attachment_url( $attachment_id );
+
+		// Validate image URL exists.
+		if ( ! $image_url ) {
+			return [
+				'success' => false,
+				'error'   => 'Could not get image URL',
+			];
+		}
+
+		// Append image URL to prompt.
+		$prompt .= ' Image: ' . $image_url;
+
+		// Generate AI response.
+		$generated = AiClient::prompt( $prompt )
+			->usingModel( GoogleProvider::model( $options['model'] ) )
+			->usingTemperature( $options['temperature'] )
+			->generateText();
+
+		// Process and validate generated text.
+		$generated = trim( wp_strip_all_tags( strval( $generated ) ) );
+
+		// Validate generated text is not empty.
+		if ( empty( $generated ) ) {
+			return [
+				'success' => false,
+				'error'   => 'AI generated empty response',
+			];
+		}
+
+		// Truncate text if too long.
+		if ( strlen( $generated ) > $options['max_length'] ) {
+			$generated = substr( $generated, 0, $options['max_length'] );
+		}
+		$generated = sanitize_text_field( $generated );
+
+		// Save generated alt text to database.
+		update_post_meta( $attachment_id, '_wp_attachment_image_alt', $generated );
+
+		// Fire action hook after successful generation.
+		do_action( 'trav_ai_alt_text_generated', $attachment_id, $generated );
+
+		// Return success with generated alt text.
+		return [
+			'success'  => true,
+			'alt_text' => $generated,
+		];
+	} catch ( Exception $e ) {
+		// Return error details.
+		return [
+			'success' => false,
+			'error'   => 'AI generation failed: ' . $e->getMessage(),
+		];
+	}
 }

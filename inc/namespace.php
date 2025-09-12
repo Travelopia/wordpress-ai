@@ -8,7 +8,7 @@
 namespace TravAI;
 
 use WordPress\AiClient\AiClient;
-use WordPress\AiClient\ProviderImplementations\Google\GoogleProvider;
+use WordPress\AiClient\ProviderImplementations\OpenAi\OpenAiProvider;
 use Exception;
 use WP_CLI;
 
@@ -24,7 +24,9 @@ function bootstrap(): void {
 	// Register WP CLI commands.
 	if ( defined( 'WP_CLI' ) && true === WP_CLI ) {
 		require_once __DIR__ . '/wp-cli/class-travai.php';
-		WP_CLI::add_command( 'travai', __NAMESPACE__ . '\\TravAI' );
+		if ( class_exists( 'WP_CLI' ) ) {
+			\WP_CLI::add_command( 'travai', __NAMESPACE__ . '\\TravAI' );
+		}
 	}
 }
 
@@ -85,7 +87,7 @@ function generate_alt_text_for_attachment( int $attachment_id ) {
 
 	// Default options for the generation.
 	$options = [
-		'model'           => 'gemini-1.5-flash',
+		'model'           => 'gpt-4o-mini',
 		'temperature'     => 0.1,
 		'max_length'      => 120,
 		'prompt'          => 'Analyze this image and provide a concise, objective, accessible alt text description (maximum 120 characters). Focus on the main subject, key visual elements, and important details that would help someone who cannot see the image understand its content.',
@@ -142,10 +144,10 @@ function generate_alt_text_for_attachment( int $attachment_id ) {
 	// Start AI generation process.
 	try {
 		// Check API key availability.
-		if ( ! defined( 'GOOGLE_API_KEY' ) && ! getenv( 'GOOGLE_API_KEY' ) ) {
+		if ( ! defined( 'OPENAI_API_KEY' ) && ! getenv( 'OPENAI_API_KEY' ) ) {
 			return [
 				'success' => false,
-				'error'   => 'Google API key not configured',
+				'error'   => 'OpenAI API key not configured',
 			];
 		}
 
@@ -165,8 +167,8 @@ function generate_alt_text_for_attachment( int $attachment_id ) {
 
 		// Generate AI response.
 		$generated = AiClient::prompt( $prompt )
-			->usingModel( GoogleProvider::model( $options['model'] ) )
-			->usingTemperature( $options['temperature'] )
+			->usingModel( OpenAiProvider::model( strval( $options['model'] ) ) )
+			->usingTemperature( (float) $options['temperature'] )
 			->generateText();
 
 		// Process and validate generated text.
@@ -181,8 +183,8 @@ function generate_alt_text_for_attachment( int $attachment_id ) {
 		}
 
 		// Truncate text if too long.
-		if ( strlen( $generated ) > $options['max_length'] ) {
-			$generated = substr( $generated, 0, $options['max_length'] );
+		if ( strlen( $generated ) > absint( $options['max_length'] ) ) {
+			$generated = substr( $generated, 0, absint( $options['max_length'] ) );
 		}
 		$generated = sanitize_text_field( $generated );
 

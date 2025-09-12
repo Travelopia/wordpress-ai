@@ -18,18 +18,40 @@
 2. Activate "TravAI" in Plugins.
 
 ### Configure
-- Set your Google API key (environment variable or wp-config.php).
+- Set your OpenAI API key (environment variable or wp-config.php).
 - Optional: Update prompt/language or control overwrite behavior.
+
+**Set OpenAI API Key:**
+
+Option 1 - Environment Variable (Recommended):
+```bash
+export OPENAI_API_KEY="your-openai-api-key-here"
+```
+
+Option 2 - WordPress wp-config.php:
+```php
+define( 'OPENAI_API_KEY', 'your-openai-api-key-here' );
+```
+
+Option 3 - Server Environment:
+Add to your server's environment variables.
+
+**Get an OpenAI API Key:**
+1. Go to https://platform.openai.com/api-keys
+2. Create a new API key
+3. Copy the key and set it using one of the methods above
+
+**Note:** The plugin uses GPT-4o Mini for image analysis, which supports vision capabilities.
 
 ### Usage
 - **New uploads**: Go to Media > Add New and upload an image. Alt text is generated automatically.
 - **Existing images**: Open Media > Library, edit an image, and click “Generate Alt Text”
 
 ### Privacy
-- Images (or related metadata) may be sent to Google Gemini to generate alt text.
+- Images (or related metadata) may be sent to OpenAI to generate alt text.
 
 ### Troubleshooting
-- **No alt text generated**: Check Google API key, provider availability, and that the site can make outbound requests.
+- **No alt text generated**: Check OpenAI API key, provider availability, and that the site can make outbound requests.
 - **Overwrites**: If you don't want overwrites, disable the regenerate action or ensure the plugin is configured to skip when alt text exists.
 
 ### Roadmap

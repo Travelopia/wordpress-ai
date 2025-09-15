@@ -27,7 +27,7 @@ class Generate_Alt_Text {
 	 *
 	 * @subcommand generate
 	 *
-	 * @synopsis [--ids=<1,2,3>]
+	 * @synopsis [--ids=<1,2,3>] [--missing]
 	 *
 	 * @return void
 	 */
@@ -41,7 +41,8 @@ class Generate_Alt_Text {
 		$options = wp_parse_args(
 			$args_assoc,
 			[
-				'ids' => [],
+				'ids'     => [],
+				'missing' => false,
 			]
 		);
 
@@ -50,6 +51,11 @@ class Generate_Alt_Text {
 			$options['ids'] = array_map( 'absint', array_filter( array_map( 'trim', explode( ',', $options['ids'] ) ) ) );
 		} else {
 			$options['ids'] = [];
+		}
+
+		// Return early if no IDs provided.
+		if ( empty( $options['ids'] ) ) {
+			WP_CLI::error( __( 'You must provide --ids=<1,2,3> to specify which images to process.', 'trav-ai' ) );
 		}
 
 		// Check if AI alt text generation is enabled.
@@ -71,7 +77,13 @@ class Generate_Alt_Text {
 		// Welcome message.
 		WP_CLI::log( WP_CLI::colorize( '%Y' . __( 'Generating alt text for images using AI...', 'trav-ai' ) . '%n' ) );
 		WP_CLI::log( WP_CLI::colorize( '%B' . __( 'Using prompt:', 'trav-ai' ) . '%n ' . $ai_prompt ) );
-		WP_CLI::log( '' );
+
+		// Display mode information.
+		if ( $options['missing'] ) {
+			WP_CLI::log( WP_CLI::colorize( '%B' . __( 'Mode:', 'trav-ai' ) . '%n ' . __( 'Processing specified image IDs that are missing alt text', 'trav-ai' ) ) );
+		} else {
+			WP_CLI::log( WP_CLI::colorize( '%B' . __( 'Mode:', 'trav-ai' ) . '%n ' . __( 'Processing specified image IDs', 'trav-ai' ) ) );
+		}
 
 		// Build query arguments.
 		$query_args = [
@@ -80,11 +92,23 @@ class Generate_Alt_Text {
 			'post_status'    => 'inherit',
 			'posts_per_page' => -1,
 			'fields'         => 'ids',
+			'post__in'       => $options['ids'],
 		];
 
-		// Add specific IDs if provided.
-		if ( ! empty( $options['ids'] ) ) {
-			$query_args['post__in'] = $options['ids'];
+		// Filter for images missing alt text if --missing flag is used.
+		if ( $options['missing'] ) {
+			$query_args['meta_query'] = [
+				'relation' => 'OR',
+				[
+					'key'     => '_wp_attachment_image_alt',
+					'compare' => 'NOT EXISTS',
+				],
+				[
+					'key'     => '_wp_attachment_image_alt',
+					'value'   => '',
+					'compare' => '=',
+				],
+			];
 		}
 
 		// Get images.

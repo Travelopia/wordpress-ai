@@ -12,6 +12,7 @@ use WP_Query;
 use WP_Post;
 
 use function WP_CLI\Utils\make_progress_bar;
+use function TravAI\generate_alt_text_for_attachment;
 
 /**
  * Class Generate_Alt_Text.
@@ -123,7 +124,7 @@ class Generate_Alt_Text {
 			}
 
 			// Use the existing alt text generation function.
-			$result = \TravAI\generate_alt_text_for_attachment( $image_id );
+			$result = generate_alt_text_for_attachment( $image_id );
 
 			// Check result and update counters.
 			if ( $result['success'] && ! empty( $result['alt_text'] ) ) {

@@ -154,8 +154,8 @@ function generate_alt_text_for_attachment( int $attachment_id ): array {
 	/**
 	 * Filter the generation options.
 	 *
-	 * @param array $options The generation options.
-	 * @param int $attachment_id The attachment ID.
+	 * @param array $default_options The generation options.
+	 * @param int   $attachment_id The attachment ID.
 	 */
 	$options = apply_filters( 'trav_ai_generation_options', $default_options, $attachment_id );
 

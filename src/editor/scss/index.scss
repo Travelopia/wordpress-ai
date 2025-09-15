@@ -1,0 +1,18 @@
+.wp-core-ui a.button {
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+}
+
+.wp-core-ui .button {
+
+	&.button-success {
+		background-color: #00a17f;
+		color: #fff;
+	}
+
+	&.button-error {
+		background-color: #db3039;
+		color: #fff;
+	}
+}

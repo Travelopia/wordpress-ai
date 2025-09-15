@@ -37,4 +37,4 @@ vendor
 # --- Source Code
 !inc
 !src
-!dist
+dist/

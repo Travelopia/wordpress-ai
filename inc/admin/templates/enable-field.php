@@ -21,7 +21,7 @@ if ( ! is_array( $settings ) ) {
 $enabled = $settings['ai_alt_text_enabled'] ?? false;
 ?>
 
-<label for="ai_alt_text_enabled">
+<label for="ai-alt-text-enabled">
 	<input
 		type="checkbox"
 		id="ai-alt-text-enabled"

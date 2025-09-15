@@ -26,6 +26,3 @@ add_action( 'plugins_loaded', __NAMESPACE__ . '\\Admin\\bootstrap' );
 
 // Plugin activation hook.
 register_activation_hook( __FILE__, __NAMESPACE__ . '\\activate_plugin' );
-
-// Kick it off.
-bootstrap();

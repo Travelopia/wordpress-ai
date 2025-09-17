@@ -307,3 +307,25 @@ function generate_alt_text_for_attachment( int $attachment_id ): array {
 		];
 	}
 }
+
+/**
+ * Plugin activation hook handler.
+ *
+ * This function is called when the plugin is activated.
+ * It can be used to set up initial options, create database tables,
+ * or perform any other setup tasks required for the plugin.
+ *
+ * @return void
+ */
+function activate_plugin(): void {
+	// Initialize default settings if they don't exist.
+	$default_settings = [
+		'ai_alt_text_enabled' => false,
+		'ai_prompt'           => __( 'Describe this image in a concise, informative way for alt text. Focus on the main subject and important details that would help someone understand what is in the image.', 'trav-ai' ),
+	];
+
+	// Only set defaults if no settings exist yet.
+	if ( false === get_option( 'travai_settings' ) ) {
+		add_option( 'travai_settings', $default_settings );
+	}
+}

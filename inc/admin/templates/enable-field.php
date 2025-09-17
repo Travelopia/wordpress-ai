@@ -5,6 +5,11 @@
  * @package trav-ai
  */
 
+// Prevent direct access.
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 // Get necessary functions.
 use function TravAI\Admin\get_default_settings;
 

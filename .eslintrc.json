@@ -1,3 +1,4 @@
 {
+  "root": true,
   "extends": [ "plugin:@travelopia/eslint-plugin-wordpress-coding-standards/default" ]
 }

@@ -11,14 +11,23 @@
 
 namespace TravAI;
 
-// Composer autoload.
-if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
-    require_once __DIR__ . '/vendor/autoload.php';
+// Prevent direct access.
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
 }
 
+// Composer autoload.
+if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
+	require_once __DIR__ . '/vendor/autoload.php';
+}
+
+// Include main namespace file.
 require_once __DIR__ . '/inc/namespace.php';
+require_once __DIR__ . '/inc/admin/namespace.php';
 
 // Kick it off.
-bootstrap();
+add_action( 'plugins_loaded', __NAMESPACE__ . '\\bootstrap' );
+add_action( 'plugins_loaded', __NAMESPACE__ . '\\Admin\\bootstrap' );
 
-
+// Plugin activation hook.
+register_activation_hook( __FILE__, __NAMESPACE__ . '\\activate_plugin' );

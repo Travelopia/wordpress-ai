@@ -33,6 +33,7 @@ vendor
 !wp-cli.yml
 !README.md
 !plugin.php
+!assets
 
 # --- Source Code
 !inc

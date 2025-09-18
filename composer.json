@@ -13,6 +13,7 @@
   },
   "scripts": {
     "lint": "phpcs",
+    "fix": "phpcbf",
     "static-analysis": "phpstan analyse -c phpstan.neon --memory-limit=512M"
   },
   "config": {

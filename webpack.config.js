@@ -4,17 +4,27 @@
 
 // External dependencies.
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
+import TerserPlugin from 'terser-webpack-plugin';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Variables.
+const __filename = fileURLToPath( import.meta.url );
+const __dirname = path.dirname( __filename );
 
 // Config.
 export default () => {
-	// Build configuration.
-	const scriptConfig = {
+	// Configuration.
+	return {
 		stats: 'minimal',
 		cache: {
 			type: 'memory',
 		},
 		entry: {
-			editor: './src/editor/js/index.ts',
+			admin: [
+				'./src/editor/ts/admin.ts',
+				'./src/editor/scss/admin.css',
+			],
 		},
 		module: {
 			rules: [
@@ -30,31 +40,6 @@ export default () => {
 					],
 					exclude: /node_modules/,
 				},
-			],
-		},
-		output: {
-			filename: './js/[name].js',
-			publicPath: '/',
-		},
-		optimization: {
-			removeEmptyChunks: true,
-			minimize: true,
-		},
-		plugins: [
-			new MiniCssExtractPlugin( {
-				filename: './css/[name].css',
-			} ),
-		],
-	};
-
-	// CSS configuration.
-	const styleConfig = {
-		...scriptConfig,
-		entry: {
-			editor: './src/editor/scss/index.scss',
-		},
-		module: {
-			rules: [
 				{
 					test: /\.(sa|sc|c)ss$/,
 					use: [
@@ -77,8 +62,29 @@ export default () => {
 				},
 			],
 		},
+		output: {
+			path: path.resolve( __dirname, 'dist' ),
+			filename: '[name].js',
+			publicPath: '/',
+		},
+		optimization: {
+			removeEmptyChunks: true,
+			minimize: true,
+			minimizer: [
+				new TerserPlugin( {
+					terserOptions: {
+						format: {
+							comments: false,
+						},
+					},
+					extractComments: false,
+				} ),
+			],
+		},
+		plugins: [
+			new MiniCssExtractPlugin( {
+				filename: '[name].css',
+			} ),
+		],
 	};
-
-	// Return build configuration.
-	return [ scriptConfig, styleConfig ];
 };

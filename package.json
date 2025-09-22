@@ -1,26 +1,35 @@
 {
   "name": "trav-ai-wordpress",
   "version": "0.1.0",
+  "type": "module",
   "description": "AI-powered alt text generation for WordPress.",
   "scripts": {
-    "build": "npm run clear-assets && webpack --config ./webpack.config.js --mode production --env=production",
-    "dev": "npm run clear-assets && webpack --config ./webpack.config.js --mode production --env=development --watch",
-    "clear-assets": "rm -rf ./dist",
-    "lint": "npm run lint:js && npm run lint:scss && npm run lint:php",
-    "lint:js": "eslint src webpack.config.js",
-    "lint:scss": "stylelint src",
+    "build": "npm run clear-assets && tsc --noEmit && webpack --mode production",
+    "dev": "npm run clear-assets && webpack --mode development --watch",
+    "clear-assets": "rm -rf dist",
+    "type-check": "tsc --noEmit",
+    "lint": "npm run lint:js && npm run lint:css && npm run lint:php",
+    "lint:js": "eslint src --ext .js,.ts,.tsx",
+    "lint:css": "stylelint 'src/**/*.{css,scss}'",
     "lint:php": "composer run lint",
     "lint-test": "npm run lint && npm run static-analysis:php",
     "static-analysis:php": "composer static-analysis"
   },
-  "author": "TravAI Team",
-  "license": "MIT",
   "devDependencies": {
+    "@wordpress/stylelint-config": "^21.2.0",
     "css-loader": "^7.1.2",
+    "eslint": "^8.57.0",
     "mini-css-extract-plugin": "^2.9.4",
     "sass": "^1.92.1",
     "sass-loader": "^16.0.5",
+    "stylelint": "^14.16.1",
+    "terser-webpack-plugin": "^5.3.6",
     "ts-loader": "^9.5.4",
-    "webpack": "^5.101.3"
-  }
+    "typescript": "^5.6.2",
+    "webpack": "^5.101.3",
+    "webpack-cli": "^5.1.4",
+    "@travelopia/eslint-plugin-wordpress-coding-standards": "^1.0.0"
+  },
+  "author": "TravAI Team",
+  "license": "MIT"
 }

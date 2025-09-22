@@ -1,0 +1,68 @@
+/**
+ * TravAI Admin Styles
+ *
+ * @package trav-ai
+ */
+
+/* Settings form styling */
+.travai-prompt-field {
+	width: 100%;
+	max-width: 600px;
+	line-height: 1.4;
+}
+
+.travai-prompt-field:disabled {
+	background-color: #f6f7f7;
+	color: #646970;
+}
+
+/* Info box styling */
+.travai-info {
+	background: #f6f7f7;
+	border: 1px solid #ccd0d4;
+	border-radius: 4px;
+	padding: 1rem;
+	margin-top: 2rem;
+}
+
+.travai-info h3 {
+	margin-top: 0;
+	color: #1d2327;
+}
+
+.travai-info code {
+	background: #f0f0f1;
+	padding: 2px 4px;
+	border-radius: 2px;
+}
+
+.travai-info ul {
+	margin: 0.5rem 0;
+}
+
+.travai-info li {
+	margin-bottom: 0.25rem;
+}
+
+.form-table th[scope="row"] {
+	vertical-align: top;
+	padding-top: 15px;
+}
+
+/* Character counter styling */
+.description {
+	color: #646970;
+	font-style: italic;
+}
+
+/* Toggle field styling */
+label[for="ai-alt-text-enabled"] {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-weight: 500;
+}
+
+#ai-alt-text-enabled {
+	margin: 0;
+}

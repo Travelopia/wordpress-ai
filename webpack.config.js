@@ -8,11 +8,13 @@ import TerserPlugin from 'terser-webpack-plugin';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Variables.
+const __filename = fileURLToPath( import.meta.url );
+const __dirname = path.dirname( __filename );
 
 // Config.
 export default () => {
+	// Configuration.
 	return {
 		stats: 'minimal',
 		cache: {
@@ -61,7 +63,7 @@ export default () => {
 			],
 		},
 		output: {
-			path: path.resolve(__dirname, 'dist'),
+			path: path.resolve( __dirname, 'dist' ),
 			filename: '[name].js',
 			publicPath: '/',
 		},
@@ -69,14 +71,14 @@ export default () => {
 			removeEmptyChunks: true,
 			minimize: true,
 			minimizer: [
-				new TerserPlugin({
+				new TerserPlugin( {
 					terserOptions: {
 						format: {
 							comments: false,
 						},
 					},
 					extractComments: false,
-				}),
+				} ),
 			],
 		},
 		plugins: [

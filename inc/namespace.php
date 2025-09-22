@@ -9,7 +9,6 @@ namespace TravAI;
 
 use WordPress\AiClient\AiClient;
 use WordPress\AiClient\ProviderImplementations\OpenAi\OpenAiProvider;
-use WordPress\AiClient\Providers\Http\DTO\ApiKeyRequestAuthentication;
 use Exception;
 use WP_CLI;
 use WP_Post;
@@ -89,13 +88,13 @@ function get_ai_setting( string $key, mixed $default_value = null ): mixed {
  */
 function admin_enqueue_scripts(): void {
 	// Enqueue editor scripts.
-	wp_enqueue_script( 'trav-ai-editor', plugins_url( 'dist/js/editor.js', __DIR__ ), [ 'wp-dom-ready' ], '1.0.0', true );
-	wp_enqueue_style( 'trav-ai-editor', plugins_url( 'dist/css/editor.css', __DIR__ ), [], '1.0.0' );
+	wp_enqueue_script( 'trav-ai-editor', plugins_url( 'dist/editor.js', __DIR__ ), [ 'wp-dom-ready', 'media-editor' ], '1.0.0', true );
+	wp_enqueue_style( 'trav-ai-editor', plugins_url( 'dist/editor.css', __DIR__ ), [], '1.0.0' );
 
 	// Localize script with AJAX data and nonce.
 	wp_localize_script(
 		'trav-ai-editor',
-		'wp',
+		'travAi',
 		[
 			'ajax'   => [
 				'url' => admin_url( 'admin-ajax.php' ),
@@ -270,11 +269,6 @@ function generate_alt_text_for_attachment( int $attachment_id, bool $update = tr
 				'error'    => __( 'OpenAI API key is empty', 'trav-ai' ),
 			];
 		}
-
-		// Set up authentication for OpenAI provider.
-		$registry = AiClient::defaultRegistry();
-		$auth     = new ApiKeyRequestAuthentication( $api_key );
-		$registry->setProviderRequestAuthentication( OpenAiProvider::class, $auth );
 
 		// Get actual image URL for the attachment.
 		$image_url = wp_get_attachment_url( $attachment_id );

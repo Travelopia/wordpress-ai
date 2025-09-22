@@ -25,6 +25,10 @@ export default () => {
 				'./src/editor/ts/admin.ts',
 				'./src/editor/scss/admin.css',
 			],
+			editor: [
+				'./src/editor/js/index.ts',
+				'./src/editor/scss/index.scss',
+			],
 		},
 		module: {
 			rules: [
@@ -63,7 +67,7 @@ export default () => {
 			],
 		},
 		resolve: {
-			extensions: ['.tsx', '.ts', '.js'],
+			extensions: [ '.tsx', '.ts', '.js' ],
 		},
 		output: {
 			path: path.resolve( __dirname, 'dist' ),
@@ -89,5 +93,9 @@ export default () => {
 				filename: '[name].css',
 			} ),
 		],
+		watchOptions: {
+			ignored: /node_modules/,
+			aggregateTimeout: 200,
+		},
 	};
 };

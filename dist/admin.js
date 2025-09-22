@@ -1,1 +1,0 @@
-(()=>{"use strict";document.addEventListener("DOMContentLoaded",()=>{const e=document.getElementById("ai-alt-text-enabled"),t=document.getElementById("ai-alt-text-prompt");function n(){t&&(t.disabled=!(null==e?void 0:e.checked))}e&&t&&(e.addEventListener("change",n),n())})})();

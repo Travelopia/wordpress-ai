@@ -62,6 +62,9 @@ export default () => {
 				},
 			],
 		},
+		resolve: {
+			extensions: ['.tsx', '.ts', '.js'],
+		},
 		output: {
 			path: path.resolve( __dirname, 'dist' ),
 			filename: '[name].js',

@@ -1,7 +1,7 @@
 /**
  * Internal dependencies.
  */
-import MediaEditor from './media.ts';
+import MediaEditor from './media';
 
-// TODO: Add comment.
+// Initialize the MediaEditor class.
 new MediaEditor();

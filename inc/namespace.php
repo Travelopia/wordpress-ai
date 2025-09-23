@@ -411,8 +411,8 @@ function modify_image_editor( WP_Post $post ): void {
 
 	// Get the existing alt text.
 	$is_regeneration = isset( $_GET['tp_regenerate_alt_text'] );
+	$valid_request   = ! isset( $_GET['tp_nonce'] ) ? false : wp_verify_nonce( $_GET['tp_nonce'], 'generate_alt_text_' . $post->ID );
 	$is_generation   = isset( $_GET['tp_generate_alt_text'] );
-	$valid_request   = wp_verify_nonce( $_GET['tp_nonce'], 'generate_alt_text_' . $post->ID );
 	$alt_text        = get_post_meta( $post->ID, '_wp_attachment_image_alt', true );
 	$is_empty_alt    = empty( $alt_text );
 

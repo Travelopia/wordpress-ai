@@ -163,18 +163,6 @@ function generate_alt_text_for_attachment( int $attachment_id, bool $update = tr
 		];
 	}
 
-	// Get the file path.
-	$file_path = get_attached_file( $attachment_id, true );
-
-	// Validate file path exists.
-	if ( empty( $file_path ) || ! file_exists( $file_path ) ) {
-		return [
-			'success'  => false,
-			'alt_text' => '',
-			'error'    => __( 'Image file not found', 'trav-ai' ),
-		];
-	}
-
 	// Default options for the generation.
 	$default_options = [
 		'model'           => 'gpt-4o-mini',
@@ -213,17 +201,7 @@ function generate_alt_text_for_attachment( int $attachment_id, bool $update = tr
 	// Build context from metadata if requested.
 	if ( true === $options['include_context'] ) {
 		$context_parts = [];
-		$file_name     = wp_basename( $file_path );
 		$title         = get_the_title( $attachment_id );
-
-		// Add file name to context.
-		if ( $file_name ) {
-			$context_parts[] = sprintf(
-				/* translators: %s: filename */
-				__( 'filename: %s', 'trav-ai' ),
-				$file_name
-			);
-		}
 
 		// Add title to context.
 		if ( $title ) {

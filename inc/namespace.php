@@ -154,21 +154,13 @@ function generate_alt_text_for_attachment( int $attachment_id, bool $update = tr
 		];
 	}
 
-	// Ensure ApiKeyRequestAuthentication is available.
-	if ( ! class_exists( '\\WordPress\\AiClient\\Providers\\Http\\DTO\\ApiKeyRequestAuthentication' ) ) {
-		return [
-			'alt_text' => '',
-			'success'  => false,
-			'error'    => __( 'AI Client authentication class not available', 'trav-ai' ),
-		];
-	}
-
 	// Default options for the generation.
 	$default_options = [
-		'model'           => 'gpt-4o-mini',
-		'temperature'     => 0.1,
-		'prompt'          => $ai_prompt,
-		'include_context' => true,
+		'model'              => 'gpt-4o-mini',
+		'temperature'        => 0.1,
+		'prompt'             => $ai_prompt,
+		'include_context'    => true,
+		'system_instruction' => 'You are an accessibility tool.',
 	];
 
 	/**
@@ -263,17 +255,13 @@ function generate_alt_text_for_attachment( int $attachment_id, bool $update = tr
 			];
 		}
 
-		// Append image URL to prompt.
-		$prompt .= sprintf(
-			/* translators: %s: image URL */
-			__( ' Image: %s', 'trav-ai' ),
-			$image_url
-		);
 
 		// Generate AI response.
 		$generated = AiClient::prompt( $prompt )
 			->usingModel( OpenAiProvider::model( strval( $options['model'] ) ) )
 			->usingTemperature( floatval( $options['temperature'] ) )
+			->withFile( $image_url )
+			->usingSystemInstruction( $options['system_instruction'] )
 			->generateText();
 
 		// Process and validate generated text.

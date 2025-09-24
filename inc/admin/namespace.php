@@ -97,7 +97,7 @@ function get_default_settings(): array {
 	// Return default settings.
 	return [
 		'ai_alt_text_enabled' => false,
-		'ai_alt_text_prompt'  => __( 'Analyze this image and provide a concise, objective, accessible alt text description (maximum 120 characters). Focus on the main subject, key visual elements, and important details that would help someone who cannot see the image understand its content.', 'trav-ai' ),
+		'ai_alt_text_prompt'  => __( 'Look at the image and generate a short, accurate alt text (less than 15 words) describing exactly what`s in the image, without assumptions.', 'trav-ai' ),
 	];
 }
 

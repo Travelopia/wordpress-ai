@@ -1,7 +1,5 @@
 /**
- * TravAI Admin TypeScript
- *
- * @package
+ * Travelopia WordPress AI Admin TypeScript
  */
 
 // On DOM ready.

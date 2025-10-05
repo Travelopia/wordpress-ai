@@ -5,19 +5,19 @@
  */
 
 /* Settings form styling */
-.travai-prompt-field {
+.travelopia-wp-ai-prompt-field {
 	width: 100%;
 	max-width: 600px;
 	line-height: 1.4;
 }
 
-.travai-prompt-field:disabled {
+.travelopia-wp-ai-prompt-field:disabled {
 	background-color: #f6f7f7;
 	color: #646970;
 }
 
 /* Info box styling */
-.travai-info {
+.travelopia-wp-ai-info {
 	background: #f6f7f7;
 	border: 1px solid #ccd0d4;
 	border-radius: 4px;
@@ -25,22 +25,22 @@
 	margin-top: 2rem;
 }
 
-.travai-info h3 {
+.travelopia-wp-ai-info h3 {
 	margin-top: 0;
 	color: #1d2327;
 }
 
-.travai-info code {
+.travelopia-wp-ai-info code {
 	background: #f0f0f1;
 	padding: 2px 4px;
 	border-radius: 2px;
 }
 
-.travai-info ul {
+.travelopia-wp-ai-info ul {
 	margin: 0.5rem 0;
 }
 
-.travai-info li {
+.travelopia-wp-ai-info li {
 	margin-bottom: 0.25rem;
 }
 

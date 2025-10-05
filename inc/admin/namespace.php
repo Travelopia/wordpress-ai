@@ -2,10 +2,10 @@
 /**
  * Admin namespace functions.
  *
- * @package trav-ai
+ * @package travelopia-wp-ai
  */
 
-namespace TravAI\Admin;
+namespace Travelopia_WordPress_AI\Admin;
 
 /**
  * Bootstrap admin functionality.
@@ -37,10 +37,10 @@ function bootstrap(): void {
 function setup_settings(): void {
 	// Add WordPress AI settings page to Settings menu.
 	add_options_page(
-		__( 'TravAI Settings', 'trav-ai' ),
-		__( 'TravAI', 'trav-ai' ),
+		__( 'Travelopia WordPress AI Settings', 'travelopia-wp-ai' ),
+		__( 'Travelopia WP AI', 'travelopia-wp-ai' ),
 		'manage_options',
-		'travai-settings',
+		'travelopia-wp-ai-settings',
 		__NAMESPACE__ . '\\render_settings_page'
 	);
 }
@@ -53,8 +53,8 @@ function setup_settings(): void {
 function initialize_settings(): void {
 	// Register settings group.
 	register_setting(
-		'travai_settings_group',
-		'travai_settings',
+		'travelopia_wp_ai_settings_group',
+		'travelopia_wp_ai_settings',
 		[
 			'sanitize_callback' => __NAMESPACE__ . '\\sanitize_settings',
 			'default'           => get_default_settings(),
@@ -63,28 +63,28 @@ function initialize_settings(): void {
 
 	// Add settings section.
 	add_settings_section(
-		'travai_main_section',
-		__( 'AI Alt Text Generation Settings', 'trav-ai' ),
+		'travelopia_wp_ai_main_section',
+		__( 'AI Alt Text Generation Settings', 'travelopia-wp-ai' ),
 		__NAMESPACE__ . '\\render_section_description',
-		'travai-settings'
+		'travelopia-wp-ai-settings'
 	);
 
 	// Add Enable Alt Text Generation field.
 	add_settings_field(
 		'ai_alt_text_enabled',
-		__( 'Enable AI Alt Text Generation', 'trav-ai' ),
+		__( 'Enable AI Alt Text Generation', 'travelopia-wp-ai' ),
 		__NAMESPACE__ . '\\render_enable_field',
-		'travai-settings',
-		'travai_main_section'
+		'travelopia-wp-ai-settings',
+		'travelopia_wp_ai_main_section'
 	);
 
 	// Add Alt Text Prompt field.
 	add_settings_field(
 		'ai_alt_text_prompt',
-		__( 'AI Alt Text Prompt', 'trav-ai' ),
+		__( 'AI Alt Text Prompt', 'travelopia-wp-ai' ),
 		__NAMESPACE__ . '\\render_prompt_field',
-		'travai-settings',
-		'travai_main_section'
+		'travelopia-wp-ai-settings',
+		'travelopia_wp_ai_main_section'
 	);
 }
 
@@ -97,7 +97,7 @@ function get_default_settings(): array {
 	// Return default settings.
 	return [
 		'ai_alt_text_enabled' => false,
-		'ai_alt_text_prompt'  => __( 'Look at the image and generate a short, accurate alt text (less than 15 words) describing exactly what`s in the image, without assumptions.', 'trav-ai' ),
+		'ai_alt_text_prompt'  => __( 'Look at the image and generate a short, accurate alt text (less than 15 words) describing exactly what`s in the image, without assumptions.', 'travelopia-wp-ai' ),
 	];
 }
 
@@ -145,7 +145,7 @@ function render_settings_page(): void {
  */
 function render_section_description(): void {
 	// Output section description.
-	esc_html_e( 'Configure the AI-powered alt text generation settings for your WordPress site.', 'trav-ai' );
+	esc_html_e( 'Configure the AI-powered alt text generation settings for your WordPress site.', 'travelopia-wp-ai' );
 }
 
 /**
@@ -179,8 +179,8 @@ function add_settings_link( array $links ): array {
 	// Create settings link.
 	$settings_link = sprintf(
 		'<a href="%s">%s</a>',
-		esc_url( admin_url( 'options-general.php?page=travai-settings' ) ),
-		esc_html__( 'Settings', 'trav-ai' )
+		esc_url( admin_url( 'options-general.php?page=travelopia-wp-ai-settings' ) ),
+		esc_html__( 'Settings', 'travelopia-wp-ai' )
 	);
 
 	// Add settings link to beginning of array.
@@ -199,7 +199,7 @@ function add_settings_link( array $links ): array {
  */
 function enqueue_admin_styles( string $hook_suffix ): void {
 	// Only load on our settings page.
-	if ( 'settings_page_travai-settings' !== $hook_suffix ) {
+	if ( 'settings_page_travelopia-wp-ai-settings' !== $hook_suffix ) {
 		return;
 	}
 
@@ -208,7 +208,7 @@ function enqueue_admin_styles( string $hook_suffix ): void {
 
 	// Enqueue admin styles.
 	wp_enqueue_style(
-		'travai-admin',
+		'travelopia-wp-ai-admin',
 		$plugin_dir_url . 'dist/admin.css',
 		[],
 		'1.0.0'
@@ -216,7 +216,7 @@ function enqueue_admin_styles( string $hook_suffix ): void {
 
 	// Enqueue admin scripts.
 	wp_enqueue_script(
-		'travai-admin',
+		'travelopia-wp-ai-admin',
 		$plugin_dir_url . 'dist/admin.js',
 		[],
 		'1.0.0',

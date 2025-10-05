@@ -1,15 +1,15 @@
 <?php
 /**
- * Plugin Name: TravAI
+ * Plugin Name: Travelopia WordPress AI
  * Description: WordPress Plugin for AI-powered alt text generation.
  * Author: Travelopia Team
  * Author URI: https://www.travelopia.com
  * Version: 0.1.0
  *
- * @package trav-ai
+ * @package travelopia-wp-ai
  */
 
-namespace TravAI;
+namespace Travelopia_WordPress_AI;
 
 // Prevent direct access.
 if ( ! defined( 'ABSPATH' ) ) {

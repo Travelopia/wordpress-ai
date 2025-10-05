@@ -1,7 +1,7 @@
 /**
  * WordPress dependencies.
  */
-declare const travAi: {
+declare const travelopiaWpAi: {
 	ajax: { url: string };
 	nonces: { modifyAltText: string };
 } | undefined;

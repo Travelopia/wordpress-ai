@@ -1,4 +1,4 @@
-## TravAI WordPress Plugin
+## Travelopia WP AI WordPress Plugin
 
 **What it does**: Automatically generates image alt text using AI when you upload an image to the Media Library, or when editing an existing image.
 

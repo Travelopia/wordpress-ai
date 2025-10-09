@@ -15,7 +15,7 @@
 
 ### Install
 1. Copy the `wordpress-ai` folder into `wp-content/plugins/`.
-2. Activate "TravAI" in Plugins.
+2. Activate "Travelopia WordPress AI" in Plugins.
 
 ### Configure
 - Set your OpenAI API key (environment variable or wp-config.php).

@@ -8,12 +8,12 @@
 namespace Travelopia_WordPress_AI\WP_CLI;
 
 use WP_CLI;
-use WP_Query;
-use WP_Post;
 use WP_Error;
 
-use function Travelopia_WordPress_AI\generate_alt_text_for_attachment;
-use function Travelopia_WordPress_AI\get_setting;
+use function Travelopia_WordPress_AI\Alt_Text\get_all_images;
+use function Travelopia_WordPress_AI\Alt_Text\get_ai_configuration;
+use function Travelopia_WordPress_AI\Alt_Text\get_image_details;
+use function Travelopia_WordPress_AI\Alt_Text\cli_generate_alt_text;
 
 /**
  * Class Alt_Text.
@@ -23,12 +23,64 @@ class Alt_Text {
 	/**
 	 * Generate alt text for images using AI.
 	 *
+	 * ## DESCRIPTION
+	 *
+	 * Generates AI-powered alt text for specified images. This command helps improve
+	 * accessibility by automatically creating descriptive alt text for images that
+	 * are missing it or need regeneration.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--ids=<1,2,3>]
+	 * : Comma-separated list of image attachment IDs to process. Processes all
+	 * specified images regardless of existing alt text. If combined with --missing,
+	 * only processes specified images that are missing alt text.
+	 *
+	 * [--missing]
+	 * : Only process images that are missing alt text. When used without --ids,
+	 * processes all images on the site that are missing alt text (requires confirmation).
+	 *
+	 * [--all]
+	 * : Process all images on the site regardless of existing alt text (requires confirmation).
+	 * Cannot be used with --ids.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     # Generate alt text for specific images (all specified images)
+	 *     wp travelopia-wp-ai alt-text generate --ids=123,456,789
+	 *
+	 *     # Generate alt text only for specific images that are missing alt text
+	 *     wp travelopia-wp-ai alt-text generate --ids=123,456,789 --missing
+	 *
+	 *     # Process all images missing alt text on the site (requires confirmation)
+	 *     wp travelopia-wp-ai alt-text generate --missing
+	 *
+	 *     # Process all images on the site (requires confirmation)
+	 *     wp travelopia-wp-ai alt-text generate --all
+	 *
+	 *     # Process all images missing alt text (same as --missing alone)
+	 *     wp travelopia-wp-ai alt-text generate --all --missing
+	 *
+	 * ## REQUIREMENTS
+	 *
+	 * - AI alt text generation must be enabled in Settings > Travelopia WP AI
+	 * - AI prompt must be configured in the plugin settings
+	 * - Images must be valid attachment posts of type 'image'
+	 *
+	 * ## CONFIRMATION REQUIRED
+	 *
+	 * The following operations require user confirmation due to their potentially
+	 * expensive nature:
+	 * - Processing all images on the site (--all)
+	 * - Processing all missing alt text images (--missing without --ids)
+	 * - Processing all images missing alt text (--all --missing)
+	 *
 	 * @param array<string, mixed> $args       WP CLI arguments.
 	 * @param array<string, mixed> $args_assoc WP CLI associative arguments.
 	 *
 	 * @subcommand generate
 	 *
-	 * @synopsis [--ids=<1,2,3>] [--missing]
+	 * @synopsis [--ids=<1,2,3>] [--missing] [--all]
 	 *
 	 * @return void
 	 */
@@ -38,147 +90,205 @@ class Alt_Text {
 			return;
 		}
 
-		// Get options.
+		// Parse command arguments.
+		$parsed_args = $this->parse_command_arguments( $args_assoc );
+
+		// Validate parsed arguments.
+		$validation_result = $this->validate_command_arguments( $parsed_args );
+
+		// Bail if validation failed.
+		if ( ! $validation_result['valid'] ) {
+			// Handle validation errors.
+			$error = new WP_Error( 'invalid_arguments', $validation_result['error'] ?? 'Unknown validation error' );
+			WP_CLI::error( $error->get_error_message() );
+		}
+
+		// Handle confirmation for expensive operations.
+		if ( $parsed_args['needs_confirmation'] ) {
+			$this->request_confirmation( $parsed_args );
+		}
+
+		// Display command information.
+		$this->display_command_info( $parsed_args );
+
+		// Process images using alt text functionality.
+		$result = cli_generate_alt_text( $parsed_args );
+
+		// Display results.
+		$this->display_results( $result );
+	}
+
+	/**
+	 * Parse command arguments.
+	 *
+	 * @param array<string, mixed> $args_assoc WP CLI associative arguments.
+	 *
+	 * @return array{ids: array<int>, missing: bool, all: bool, needs_confirmation: bool}
+	 */
+	private function parse_command_arguments( array $args_assoc ): array {
+		// Parse and validate command arguments.
 		$options = wp_parse_args(
 			$args_assoc,
 			[
 				'ids'     => [],
 				'missing' => false,
+				'all'     => false,
 			]
 		);
 
 		// Parse IDs if provided.
+		$ids = [];
+
+		// Check if IDs are provided.
 		if ( ! empty( $options['ids'] ) ) {
-			$options['ids'] = array_map( 'absint', array_filter( array_map( 'trim', explode( ',', $options['ids'] ) ) ) );
-		} else {
-			$options['ids'] = [];
+			// Convert comma-separated string to array of integers.
+			$ids = array_map( 'absint', array_filter( array_map( 'trim', explode( ',', $options['ids'] ) ) ) );
 		}
 
-		// Return early if no IDs provided.
-		if ( empty( $options['ids'] ) ) {
-			$error = new WP_Error(
-				'missing_ids',
-				__( 'You must provide --ids=<1,2,3> to specify which images to process.', 'travelopia-wp-ai' )
-			);
-			WP_CLI::error( $error->get_error_message() );
+		// Parse missing and all arguments.
+		$missing = (bool) $options['missing'];
+		$all     = (bool) $options['all'];
+
+		// Determine if confirmation is needed.
+		$needs_confirmation = false;
+
+		// Check for conflicting arguments.
+		if ( ! empty( $ids ) && $all ) {
+			// Handle conflicting arguments.
+			WP_CLI::error( __( 'Cannot use --ids and --all together. Use --ids for specific images or --all for all images.', 'travelopia-wp-ai' ) );
 		}
 
-		// Check if AI alt text generation is enabled.
-		$ai_enabled = get_setting( 'ai_alt_text_enabled', false );
-
-		// If not enabled, show error and exit.
-		if ( ! $ai_enabled ) {
-			$error = new WP_Error(
-				'ai_disabled',
-				__( 'AI alt text generation is not enabled. Please enable it in Settings > Travelopia WP AI.', 'travelopia-wp-ai' )
-			);
-			WP_CLI::error( $error->get_error_message() );
+		// Determine operation type and confirmation needs.
+		if ( $all ) {
+			// Process all images on the site (or all missing if --missing is also used).
+			$needs_confirmation = true;
+		} elseif ( $missing && empty( $ids ) ) {
+			// Process all missing alt text images.
+			$needs_confirmation = true;
 		}
 
-		// Get the AI prompt.
-		$ai_prompt = get_setting( 'ai_alt_text_prompt', '' );
-
-		// Validate prompt is configured.
-		if ( empty( $ai_prompt ) ) {
-			$error = new WP_Error(
-				'missing_prompt',
-				__( 'AI prompt is not configured. Please set it in Settings > Travelopia WP AI.', 'travelopia-wp-ai' )
-			);
-			WP_CLI::error( $error->get_error_message() );
-		}
-
-		// Welcome message.
-		WP_CLI::log( WP_CLI::colorize( '%Y' . __( 'Generating alt text for images using AI...', 'travelopia-wp-ai' ) . '%n' ) );
-		WP_CLI::log( WP_CLI::colorize( '%B' . __( 'Using prompt:', 'travelopia-wp-ai' ) . '%n ' . $ai_prompt ) );
-
-		// Display mode information.
-		if ( $options['missing'] ) {
-			WP_CLI::log( WP_CLI::colorize( '%B' . __( 'Mode:', 'travelopia-wp-ai' ) . '%n ' . __( 'Processing specified image IDs that are missing alt text', 'travelopia-wp-ai' ) ) );
-		} else {
-			WP_CLI::log( WP_CLI::colorize( '%B' . __( 'Mode:', 'travelopia-wp-ai' ) . '%n ' . __( 'Processing specified image IDs', 'travelopia-wp-ai' ) ) );
-		}
-
-		// Build query arguments.
-		$query_args = [
-			'post_type'      => 'attachment',
-			'post_mime_type' => 'image',
-			'post_status'    => 'inherit',
-			'posts_per_page' => -1,
-			'fields'         => 'ids',
-			'post__in'       => $options['ids'],
+		// Return parsed arguments.
+		return [
+			'ids'                => $ids,
+			'missing'            => $missing,
+			'all'                => $all,
+			'needs_confirmation' => $needs_confirmation,
 		];
+	}
 
-		// Filter for images missing alt text if --missing flag is used.
-		if ( $options['missing'] ) {
-			$query_args['meta_query'] = [
-				'relation' => 'OR',
-				[
-					'key'     => '_wp_attachment_image_alt',
-					'compare' => 'NOT EXISTS',
-				],
-				[
-					'key'     => '_wp_attachment_image_alt',
-					'value'   => '',
-					'compare' => '=',
-				],
+	/**
+	 * Validate command arguments.
+	 *
+	 * @param array{ids: array<int>, missing: bool, all: bool, needs_confirmation: bool} $args Parsed arguments.
+	 *
+	 * @return array{valid: bool, error?: string}
+	 */
+	private function validate_command_arguments( array $args ): array {
+		// Validate that some operation is specified.
+		if ( empty( $args['ids'] ) && ! $args['all'] && ! $args['missing'] ) {
+			// Return validation error if no operation specified.
+			return [
+				'valid' => false,
+				'error' => __( 'You must provide --ids=<1,2,3>, --missing, or --all to specify which images to process.', 'travelopia-wp-ai' ),
 			];
 		}
 
-		// Get images.
-		$images_query = new WP_Query( $query_args );
-		$image_ids    = $images_query->posts;
+		// Return validation result.
+		return [ 'valid' => true ];
+	}
 
-		// Check if any images found.
-		if ( empty( $image_ids ) ) {
-			$error = new WP_Error(
-				'no_images_found',
-				__( 'No images found matching the specified criteria!', 'travelopia-wp-ai' )
-			);
-			WP_CLI::error( $error->get_error_message() );
+	/**
+	 * Request confirmation for expensive operations.
+	 *
+	 * @param array{ids: array<int>, missing: bool, all: bool, needs_confirmation: bool} $args Command arguments.
+	 *
+	 * @return void
+	 */
+	private function request_confirmation( array $args ): void {
+		// Determine operation description.
+		if ( ! empty( $args['ids'] ) ) {
+			if ( $args['missing'] ) {
+				$operation = __( 'process specified image IDs that are missing alt text', 'travelopia-wp-ai' );
+			} else {
+				$operation = __( 'process all specified image IDs', 'travelopia-wp-ai' );
+			}
+		} elseif ( $args['all'] && $args['missing'] ) {
+			$operation = __( 'process ALL images missing alt text on the site', 'travelopia-wp-ai' );
+		} elseif ( $args['all'] ) {
+			$operation = __( 'process ALL images on the site', 'travelopia-wp-ai' );
+		} else {
+			$operation = __( 'process ALL images missing alt text on the site', 'travelopia-wp-ai' );
 		}
 
-		// Initialize tracking.
-		$total_images = count( $image_ids );
-		$success      = 0;
-		$failed       = 0;
+		// Get count of images that will be processed.
+		$image_count = count( get_all_images( $args['missing'] ) );
 
-		// Display found images count.
-		WP_CLI::log( WP_CLI::colorize( '%G' . __( 'Found images:', 'travelopia-wp-ai' ) . ' %n' . $total_images ) );
-		WP_CLI::log( __( 'Starting processing...', 'travelopia-wp-ai' ) );
-
-		// Process each image.
-		foreach ( $image_ids as $index => $image_id ) {
-			// Log progress.
-			WP_CLI::log(
-				sprintf(
-					/* translators: 1: current image number, 2: total images */
-					__( 'Processing %1$d of %2$d...', 'travelopia-wp-ai' ),
-					$index + 1,
-					$total_images
+		// Display warning and request confirmation.
+		WP_CLI::log(
+			WP_CLI::colorize(
+				'%R' . __( 'WARNING:', 'travelopia-wp-ai' ) . '%n ' . sprintf(
+				/* translators: 1: operation description, 2: number of images */
+					__( 'You are about to %1$s (%2$d images).', 'travelopia-wp-ai' ),
+					$operation,
+					$image_count
 				)
-			);
+			)
+		);
+		WP_CLI::log( WP_CLI::colorize( '%Y' . __( 'This operation may take a significant amount of time and resources.', 'travelopia-wp-ai' ) . '%n' ) );
 
-			// Ensure we're working with an integer ID.
-			if ( $image_id instanceof WP_Post ) {
-				$image_id = $image_id->ID;
+		// Request confirmation.
+		WP_CLI::confirm( __( 'Do you want to continue?', 'travelopia-wp-ai' ) );
+	}
+
+	/**
+	 * Display command information.
+	 *
+	 * @param array{ids: array<int>, missing: bool, all: bool, needs_confirmation: bool} $args Command arguments.
+	 *
+	 * @return void
+	 */
+	private function display_command_info( array $args ): void {
+		// Display command information and configuration.
+		// Get AI configuration.
+		$config = get_ai_configuration();
+
+		// Welcome message.
+		WP_CLI::log( WP_CLI::colorize( '%Y' . __( 'Generating alt text for images using AI...', 'travelopia-wp-ai' ) . '%n' ) );
+		WP_CLI::log( WP_CLI::colorize( '%B' . __( 'Using prompt:', 'travelopia-wp-ai' ) . '%n ' . $config['prompt'] ) );
+
+		// Display mode information.
+		if ( ! empty( $args['ids'] ) ) {
+			if ( $args['missing'] ) {
+				WP_CLI::log( WP_CLI::colorize( '%B' . __( 'Mode:', 'travelopia-wp-ai' ) . '%n ' . __( 'Processing specified image IDs that are missing alt text', 'travelopia-wp-ai' ) ) );
+			} else {
+				WP_CLI::log( WP_CLI::colorize( '%B' . __( 'Mode:', 'travelopia-wp-ai' ) . '%n ' . __( 'Processing all specified image IDs', 'travelopia-wp-ai' ) ) );
 			}
+		} elseif ( $args['all'] && $args['missing'] ) {
+			WP_CLI::log( WP_CLI::colorize( '%B' . __( 'Mode:', 'travelopia-wp-ai' ) . '%n ' . __( 'Processing all images missing alt text on the site', 'travelopia-wp-ai' ) ) );
+		} elseif ( $args['all'] ) {
+			WP_CLI::log( WP_CLI::colorize( '%B' . __( 'Mode:', 'travelopia-wp-ai' ) . '%n ' . __( 'Processing all images on the site', 'travelopia-wp-ai' ) ) );
+		} else {
+			WP_CLI::log( WP_CLI::colorize( '%B' . __( 'Mode:', 'travelopia-wp-ai' ) . '%n ' . __( 'Processing all images missing alt text on the site', 'travelopia-wp-ai' ) ) );
+		}
 
-			// Validate image ID.
-			$image_id   = absint( $image_id );
-			$image_post = get_post( $image_id );
+		// Display found images count (will be updated after processing).
+		WP_CLI::log( WP_CLI::colorize( '%G' . __( 'Processing images...', 'travelopia-wp-ai' ) . '%n' ) );
+		WP_CLI::log( __( 'Starting processing...', 'travelopia-wp-ai' ) );
+	}
 
-			// Validate image post.
-			if ( ! $image_post instanceof WP_Post ) {
-				++$failed;
-				WP_CLI::warning(
-					sprintf(
-						/* translators: %d: image ID */
-						__( 'Invalid image post for ID %d', 'travelopia-wp-ai' ),
-						$image_id
-					)
-				);
-				continue;
-			}
+	/**
+	 * Display processing results.
+	 *
+	 * @param array{success: bool, processed: int, success_count: int, failed_count: int, images: array<int, array{id: int, success: bool, alt_text?: string, error?: string, skipped?: bool, reason?: string}>} $result Processing result.
+	 *
+	 * @return void
+	 */
+	private function display_results( array $result ): void {
+		// Display processing results and summary.
+		// Process each result.
+		foreach ( $result['images'] as $image_result ) {
+			$image_id      = $image_result['id'];
+			$image_details = get_image_details( $image_id );
 
 			// Log which image is being processed.
 			WP_CLI::log(
@@ -186,28 +296,34 @@ class Alt_Text {
 					/* translators: 1: image ID, 2: image title */
 					__( 'Processing image ID %1$d: %2$s', 'travelopia-wp-ai' ),
 					$image_id,
-					$image_post->post_title ?: __( '(no title)', 'travelopia-wp-ai' )
+					$image_details['title']
 				)
 			);
 
-			// Use the existing alt text generation function.
-			$result = generate_alt_text_for_attachment( $image_id );
-
-			// Check result and update counters.
-			if ( $result['success'] && ! empty( $result['alt_text'] ) ) {
-				++$success;
-				$alt_text = $result['alt_text'];
-				WP_CLI::success(
-					sprintf(
-						/* translators: 1: image ID, 2: alt text */
-						__( 'Generated alt text for image ID %1$d: %2$s', 'travelopia-wp-ai' ),
-						$image_id,
-						$alt_text
-					)
-				);
+			// Check if generation was successful.
+			if ( $image_result['success'] ) {
+				if ( ! empty( $image_result['skipped'] ) ) {
+					$reason = $image_result['reason'] ?? __( 'Unknown reason', 'travelopia-wp-ai' );
+					WP_CLI::log(
+						sprintf(
+							/* translators: 1: image ID, 2: reason */
+							__( 'Skipped image ID %1$d: %2$s', 'travelopia-wp-ai' ),
+							$image_id,
+							$reason
+						)
+					);
+				} elseif ( ! empty( $image_result['alt_text'] ) ) {
+					WP_CLI::success(
+						sprintf(
+							/* translators: 1: image ID, 2: alt text */
+							__( 'Generated alt text for image ID %1$d: %2$s', 'travelopia-wp-ai' ),
+							$image_id,
+							$image_result['alt_text']
+						)
+					);
+				}
 			} else {
-				++$failed;
-				$error_msg = $result['error'] ?? __( 'Unknown error', 'travelopia-wp-ai' );
+				$error_msg = $image_result['error'] ?? __( 'Unknown error', 'travelopia-wp-ai' );
 				$wp_error  = new WP_Error(
 					'alt_text_generation_failed',
 					sprintf(
@@ -223,18 +339,19 @@ class Alt_Text {
 
 		// Display summary.
 		WP_CLI::log( __( 'Alt text generation completed!', 'travelopia-wp-ai' ) );
-		WP_CLI::log( WP_CLI::colorize( '%G' . __( 'Success:', 'travelopia-wp-ai' ) . ' %n' . $success ) );
-		WP_CLI::log( WP_CLI::colorize( '%R' . __( 'Failed:', 'travelopia-wp-ai' ) . ' %n' . $failed ) );
+		WP_CLI::log( WP_CLI::colorize( '%G' . __( 'Success:', 'travelopia-wp-ai' ) . ' %n' . $result['success_count'] ) );
+		WP_CLI::log( WP_CLI::colorize( '%R' . __( 'Failed:', 'travelopia-wp-ai' ) . ' %n' . $result['failed_count'] ) );
+		WP_CLI::log( WP_CLI::colorize( '%B' . __( 'Total processed:', 'travelopia-wp-ai' ) . ' %n' . $result['processed'] ) );
 
 		// Final status.
-		if ( 0 === $failed ) {
+		if ( 0 === $result['failed_count'] ) {
 			WP_CLI::success( __( 'All images processed successfully!', 'travelopia-wp-ai' ) );
 		} else {
 			WP_CLI::warning(
 				sprintf(
 					/* translators: %d: number of failures */
 					__( 'Processing completed with %d failures. Check the log above for details.', 'travelopia-wp-ai' ),
-					$failed
+					$result['failed_count']
 				)
 			);
 		}

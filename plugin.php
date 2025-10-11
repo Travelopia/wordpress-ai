@@ -29,7 +29,6 @@ require_once __DIR__ . '/inc/alt-text/namespace.php';
 // Kick it off.
 add_action( 'plugins_loaded', __NAMESPACE__ . '\\bootstrap' );
 add_action( 'plugins_loaded', __NAMESPACE__ . '\\Admin\\bootstrap' );
-add_action( 'plugins_loaded', __NAMESPACE__ . '\\Alt_Text\\bootstrap' );
 
 // Plugin activation hook.
 register_activation_hook( __FILE__, __NAMESPACE__ . '\\activate_plugin' );

@@ -15,6 +15,8 @@ use WP_Post;
 
 use function Travelopia_WordPress_AI\Admin\get_default_settings;
 
+use function Travelopia_WordPress_AI\Alt_Text\get_default_ai_alt_text_prompt;
+
 /**
  * Bootstrap plugin.
  *
@@ -315,7 +317,7 @@ function activate_plugin(): void {
 	// Initialize default settings if they don't exist.
 	$default_settings = [
 		'ai_alt_text_enabled' => false,
-		'ai_prompt'           => __( 'Describe this image in a concise, informative way for alt text. Focus on the main subject and important details that would help someone understand what is in the image.', 'travelopia-wp-ai' ),
+		'ai_alt_text_prompt'  => get_default_ai_alt_text_prompt(),
 	];
 
 	// Only set defaults if no settings exist yet.

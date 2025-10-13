@@ -7,6 +7,8 @@
 
 namespace Travelopia_WordPress_AI\Admin;
 
+use function Travelopia_WordPress_AI\Alt_Text\get_default_ai_alt_text_prompt;
+
 /**
  * Bootstrap admin functionality.
  *
@@ -97,7 +99,7 @@ function get_default_settings(): array {
 	// Return default settings.
 	return [
 		'ai_alt_text_enabled' => false,
-		'ai_alt_text_prompt'  => __( 'Look at the image and generate a short, accurate alt text (less than 15 words) describing exactly what`s in the image, without assumptions.', 'travelopia-wp-ai' ),
+		'ai_alt_text_prompt'  => get_default_ai_alt_text_prompt(),
 	];
 }
 

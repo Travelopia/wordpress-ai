@@ -15,6 +15,16 @@ use function Travelopia_WordPress_AI\generate_alt_text_for_attachment;
 use function Travelopia_WordPress_AI\get_setting;
 
 /**
+ * Get the translated default AI prompt.
+ *
+ * @return string Translated default prompt.
+ */
+function get_default_ai_alt_text_prompt(): string {
+	// Return the prompt.
+	return __( 'Describe this image in a concise, informative way for alt text. Focus on the main subject and important details that would help someone understand what is in the image.', 'travelopia-wp-ai' );
+}
+
+/**
  * Create a standardized WP_Error for alt text operations.
  *
  * @param string               $error_code    Error code.

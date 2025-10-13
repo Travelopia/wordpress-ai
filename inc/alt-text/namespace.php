@@ -15,6 +15,11 @@ use function Travelopia_WordPress_AI\generate_alt_text_for_attachment;
 use function Travelopia_WordPress_AI\get_setting;
 
 /**
+ * Alt Text Constants.
+ */
+const DEFAULT_BATCH_SIZE = 50;
+
+/**
  * Get the translated default AI prompt.
  *
  * @return string Translated default prompt.
@@ -22,6 +27,27 @@ use function Travelopia_WordPress_AI\get_setting;
 function get_default_ai_alt_text_prompt(): string {
 	// Return the prompt.
 	return __( 'Describe this image in a concise, informative way for alt text. Focus on the main subject and important details that would help someone understand what is in the image.', 'travelopia-wp-ai' );
+}
+
+/**
+ * Get meta query for missing alt text filter.
+ *
+ * @return array<int|string, mixed> Meta query array.
+ */
+function get_missing_alt_text_meta_query(): array {
+	// Return meta query for missing alt text filter.
+	return [
+		'relation' => 'OR',
+		[
+			'key'     => '_wp_attachment_image_alt',
+			'compare' => 'NOT EXISTS',
+		],
+		[
+			'key'     => '_wp_attachment_image_alt',
+			'value'   => '',
+			'compare' => '=',
+		],
+	];
 }
 
 /**
@@ -89,19 +115,7 @@ function get_images_to_process( array $image_ids = [], bool $missing_only = fals
 
 	// Filter for images missing alt text if requested.
 	if ( $missing_only ) {
-		// Add meta query to filter for missing alt text.
-		$query_args['meta_query'] = [
-			'relation' => 'OR',
-			[
-				'key'     => '_wp_attachment_image_alt',
-				'compare' => 'NOT EXISTS',
-			],
-			[
-				'key'     => '_wp_attachment_image_alt',
-				'value'   => '',
-				'compare' => '=',
-			],
-		];
+		$query_args['meta_query'] = get_missing_alt_text_meta_query();
 	}
 
 	// Get images.
@@ -112,47 +126,70 @@ function get_images_to_process( array $image_ids = [], bool $missing_only = fals
 }
 
 /**
- * Get all images on the site.
+ * Get all images on the site with pagination.
  *
  * @param bool $missing_only Whether to only get images missing alt text.
+ * @param int  $page         Page number.
+ * @param int  $per_page     Number of images per page.
  *
  * @return array<int> Array of image IDs.
  */
-function get_all_images( bool $missing_only = false ): array {
+function get_all_images( bool $missing_only = false, int $page = 1, int $per_page = DEFAULT_BATCH_SIZE ): array {
 	// Build query arguments for all images.
 	$query_args = [
 		'post_type'              => 'attachment',
 		'post_mime_type'         => 'image',
 		'post_status'            => 'inherit',
-		'posts_per_page'         => -1,
+		'posts_per_page'         => $per_page,
+		'paged'                  => $page,
 		'fields'                 => 'ids',
-		'no_found_rows'          => true, // Performance optimization.
-		'update_post_meta_cache' => false, // Performance optimization.
-		'update_post_term_cache' => false, // Performance optimization.
+		'no_found_rows'          => false,
+		'update_post_meta_cache' => false,
+		'update_post_term_cache' => false,
 	];
 
 	// Filter for images missing alt text if requested.
 	if ( $missing_only ) {
-		// Add meta query to filter for missing alt text.
-		$query_args['meta_query'] = [
-			'relation' => 'OR',
-			[
-				'key'     => '_wp_attachment_image_alt',
-				'compare' => 'NOT EXISTS',
-			],
-			[
-				'key'     => '_wp_attachment_image_alt',
-				'value'   => '',
-				'compare' => '=',
-			],
-		];
+		$query_args['meta_query'] = get_missing_alt_text_meta_query();
 	}
 
-	// Get all images.
+	// Get images.
 	$images_query = new WP_Query( $query_args );
 
 	// Return images.
 	return array_map( 'absint', $images_query->posts );
+}
+
+/**
+ * Get total count of images on the site.
+ *
+ * @param bool $missing_only Whether to only count images missing alt text.
+ *
+ * @return int Total count of images.
+ */
+function get_images_count( bool $missing_only = false ): int {
+	// Build query arguments for counting.
+	$query_args = [
+		'post_type'              => 'attachment',
+		'post_mime_type'         => 'image',
+		'post_status'            => 'inherit',
+		'posts_per_page'         => 1,
+		'fields'                 => 'ids',
+		'no_found_rows'          => false,
+		'update_post_meta_cache' => false,
+		'update_post_term_cache' => false,
+	];
+
+	// Filter for images missing alt text if requested.
+	if ( $missing_only ) {
+		$query_args['meta_query'] = get_missing_alt_text_meta_query();
+	}
+
+	// Get count using WP_Query.
+	$images_query = new WP_Query( $query_args );
+
+	// Return total count.
+	return $images_query->found_posts;
 }
 
 /**
@@ -167,7 +204,15 @@ function validate_ai_configuration(): array {
 	// Bail if AI is not enabled.
 	if ( ! $ai_enabled ) {
 		// Fire error action hook.
-		do_action( 'trav_ai_alt_text_error', 'ai_not_enabled', __( 'AI alt text generation is not enabled. Please enable it in Settings > Travelopia WP AI.', 'travelopia-wp-ai' ) );
+		do_action(
+			'trav_ai_alt_text_error',
+			'ai_not_enabled',
+			sprintf(
+				/* translators: %s: settings page URL */
+				__( 'AI alt text generation is not enabled. Please enable it in Settings > Travelopia WP AI.', 'travelopia-wp-ai' ),
+				admin_url( 'options-general.php?page=travelopia-wp-ai-settings' )
+			)
+		);
 
 		// Return error if AI is not enabled.
 		return [
@@ -182,8 +227,16 @@ function validate_ai_configuration(): array {
 
 	// Bail if AI prompt is not configured.
 	if ( empty( $ai_prompt ) ) {
-		// Fire error action hook.
-		do_action( 'trav_ai_alt_text_error', 'ai_prompt_not_configured', __( 'AI prompt is not configured. Please set it in Settings > Travelopia WP AI.', 'travelopia-wp-ai' ) );
+		// Error action hook.
+		do_action(
+			'trav_ai_alt_text_error',
+			'ai_prompt_not_configured',
+			sprintf(
+				/* translators: %s: settings page URL */
+				__( 'AI prompt is not configured. Please set it in Settings > Travelopia WP AI.', 'travelopia-wp-ai' ),
+				admin_url( 'options-general.php?page=travelopia-wp-ai-settings' )
+			)
+		);
 
 		// Return error if AI prompt is not configured.
 		return [
@@ -198,8 +251,16 @@ function validate_ai_configuration(): array {
 
 	// Validate API key presence.
 	if ( false === $api_key || '' === $api_key ) {
-		// Fire error action hook.
-		do_action( 'trav_ai_alt_text_error', 'api_key_not_configured', __( 'OpenAI API key not configured. Please set OPENAI_API_KEY in wp-config.php or environment.', 'travelopia-wp-ai' ) );
+		// Error action hook.
+		do_action(
+			'trav_ai_alt_text_error',
+			'api_key_not_configured',
+			sprintf(
+				/* translators: %s: settings page URL */
+				__( 'OpenAI API key not configured. Please set OPENAI_API_KEY in wp-config.php or environment.', 'travelopia-wp-ai' ),
+				admin_url( 'options-general.php?page=travelopia-wp-ai-settings' )
+			)
+		);
 
 		// Return error result.
 		return [
@@ -262,7 +323,7 @@ function parse_cli_arguments( array $args_assoc ): array {
 			'ids'        => [],
 			'missing'    => false,
 			'all'        => false,
-			'batch-size' => 50,
+			'batch-size' => DEFAULT_BATCH_SIZE,
 		]
 	);
 
@@ -338,11 +399,13 @@ function get_cli_images_to_process( array $options = [] ): array {
 		return get_images_to_process( $ids, $missing );
 	}
 
-	// Use get_all_images for bulk operations.
-	$missing = isset( $options['missing'] ) ? (bool) $options['missing'] : false;
+	// Use get_all_images for bulk operations with pagination.
+	$missing  = isset( $options['missing'] ) ? (bool) $options['missing'] : false;
+	$page     = isset( $options['page'] ) ? max( 1, absint( $options['page'] ) ) : 1;
+	$per_page = isset( $options['per_page'] ) ? max( 1, absint( $options['per_page'] ) ) : DEFAULT_BATCH_SIZE;
 
 	// Return images to process.
-	return get_all_images( $missing );
+	return get_all_images( $missing, $page, $per_page );
 }
 
 /**
@@ -361,7 +424,7 @@ function process_cli_images( array $image_ids, array $options ): array {
 			'ids'        => [],
 			'all'        => false,
 			'missing'    => false,
-			'batch-size' => 50, // Default batch size.
+			'batch-size' => DEFAULT_BATCH_SIZE,
 		]
 	);
 

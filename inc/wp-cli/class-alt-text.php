@@ -9,14 +9,16 @@ namespace Travelopia_WordPress_AI\WP_CLI;
 
 use WP_CLI;
 
-use function Travelopia_WordPress_AI\Alt_Text\get_all_images;
 use function Travelopia_WordPress_AI\Alt_Text\get_ai_configuration;
 use function Travelopia_WordPress_AI\Alt_Text\get_image_details;
 use function Travelopia_WordPress_AI\Alt_Text\get_cli_images_to_process;
 use function Travelopia_WordPress_AI\Alt_Text\parse_cli_arguments;
 use function Travelopia_WordPress_AI\Alt_Text\format_processing_time;
 use function Travelopia_WordPress_AI\Alt_Text\create_alt_text_error;
+use function Travelopia_WordPress_AI\Alt_Text\get_images_count;
 use function Travelopia_WordPress_AI\generate_alt_text_for_attachment;
+
+use const Travelopia_WordPress_AI\Alt_Text\DEFAULT_BATCH_SIZE;
 
 /**
  * Class Alt_Text.
@@ -158,7 +160,7 @@ class Alt_Text {
 
 		// Get count of images that will be processed.
 		$missing_only = isset( $args['missing'] ) ? (bool) $args['missing'] : false;
-		$image_count  = count( get_all_images( $missing_only ) );
+		$image_count  = get_images_count( $missing_only );
 
 		// Display warning and request confirmation.
 		WP_CLI::log(
@@ -195,7 +197,7 @@ class Alt_Text {
 				'ids'        => [],
 				'missing'    => false,
 				'all'        => false,
-				'batch-size' => 50,
+				'batch-size' => DEFAULT_BATCH_SIZE,
 			]
 		);
 
@@ -317,135 +319,243 @@ class Alt_Text {
 
 		// Return empty result if no images found.
 		if ( empty( $image_ids ) ) {
-			return [
-				'success'       => false,
-				'processed'     => 0,
-				'success_count' => 0,
-				'failed_count'  => 0,
-				'images'        => [],
-				'total_time'    => 0.0,
-				'average_time'  => 0.0,
-			];
+			return $this->get_empty_result();
 		}
 
-		// Process images in batches with real-time streaming.
-		$success_count = 0;
-		$failed_count  = 0;
-		$images        = [];
-		$start_time    = microtime( true );
-		$batch_size    = isset( $args['batch-size'] ) ? max( 1, absint( $args['batch-size'] ) ) : 50;
-		$batches       = array_chunk( $image_ids, $batch_size );
-		$total_batches = count( $batches );
-		$current_batch = 0;
+		// Initialize processing variables.
+		$processing_data = $this->initialize_processing_data( $args, $image_ids );
 
 		// Process each batch of images.
-		foreach ( $batches as $batch ) {
-			++$current_batch;
-			$batch_start_time = microtime( true );
+		$batches = $processing_data['batches'];
 
-			// Display batch progress.
-			$progress_percent = round( ( ( $current_batch - 1 ) / $total_batches ) * 100, 1 );
-			$processed_images = ( $current_batch - 1 ) * $args['batch-size'];
-			$total_images     = count( $image_ids );
+		// Process each batch of images.
+		if ( is_array( $batches ) ) {
+			foreach ( $batches as $batch ) {
+				++$processing_data['current_batch'];
 
-			// Calculate ETA only after first batch is processed.
-			$eta_formatted = '';
-
-			// Calculate ETA only after first batch is processed.
-			if ( $current_batch > 1 ) {
-				// Calculate elapsed time and average batch processing time.
-				$elapsed_time       = microtime( true ) - $start_time;
-				$average_batch_time = $elapsed_time / ( $current_batch - 1 );
-				$remaining_batches  = $total_batches - $current_batch + 1;
-				$eta_seconds        = $remaining_batches * $average_batch_time;
-				$eta_formatted      = ' - ETA: ' . round( $eta_seconds, 1 ) . 's';
+				// Display batch progress and process images.
+				$this->display_batch_progress( $processing_data );
+				$this->process_batch( $batch, $processing_data );
+				$this->cleanup_after_batch( $processing_data['current_batch'] );
 			}
-
-			// Display batch start information.
-			$batch_message = sprintf(
-				'Batch %d/%d (%s%%) - Images: %d/%d%s',
-				$current_batch,
-				$total_batches,
-				$progress_percent,
-				$processed_images + 1,
-				$total_images,
-				$eta_formatted
-			);
-			$this->cli_output( $batch_message );
-
-			// Process each image in the batch.
-			foreach ( $batch as $image_id ) {
-				$image_start_time = microtime( true );
-
-				// Display processing start for this image.
-				$image_details      = get_image_details( $image_id );
-				$image_title        = isset( $image_details['title'] ) ? strval( $image_details['title'] ) : 'Unknown';
-				$processing_message = sprintf( 'Processing image ID %d: %s', $image_id, $image_title );
-				$this->cli_output( $processing_message );
-
-				// Generate alt text for this image.
-				$image_result = generate_alt_text_for_attachment( $image_id );
-
-				// Calculate processing time for this image.
-				$processing_time = microtime( true ) - $image_start_time;
-
-				// Check if result is successful or failed.
-				if ( $image_result['success'] ) {
-					// Handle success case.
-					$alt_text            = $image_result['alt_text'] ?? '';
-					$images[ $image_id ] = [
-						'id'              => $image_id,
-						'success'         => true,
-						'processing_time' => round( $processing_time, 3 ),
-						'alt_text'        => $alt_text,
-						'error'           => null,
-						'skipped'         => null,
-						'reason'          => null,
-					];
-
-					// Increment success counter.
-					++$success_count;
-
-					// Display success message.
-					$message = sprintf( 'Success: Generated alt text for image ID %d: %s', $image_id, $alt_text );
-					$this->cli_output( $message, 'success' );
-				} else {
-					// Handle error case.
-					$images[ $image_id ] = [
-						'id'              => $image_id,
-						'success'         => false,
-						'processing_time' => round( $processing_time, 3 ),
-						'alt_text'        => null,
-						'error'           => $image_result['error'] ?? 'Unknown error',
-						'skipped'         => null,
-						'reason'          => null,
-					];
-
-					// Increment failed counter.
-					++$failed_count;
-
-					// Display error message.
-					$message = sprintf( 'Warning: Failed to generate alt text for image ID %d: %s', $image_id, $image_result['error'] ?? 'Unknown error' );
-					$this->cli_output( $message, 'warning' );
-				}
-			}
-
-			// Clean up memory after each batch.
-			wp_cache_flush();
 		}
 
-		// Calculate total time and average time.
-		$total_time      = microtime( true ) - $start_time;
+		// Calculate and return final results.
+		return $this->calculate_final_results( $processing_data );
+	}
+
+	/**
+	 * Get empty result structure.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function get_empty_result(): array {
+		// Return empty result structure.
+		return [
+			'success'       => false,
+			'processed'     => 0,
+			'success_count' => 0,
+			'failed_count'  => 0,
+			'images'        => [],
+			'total_time'    => 0.0,
+			'average_time'  => 0.0,
+		];
+	}
+
+	/**
+	 * Initialize processing data.
+	 *
+	 * @param array<string, mixed> $args      Command arguments.
+	 * @param array<int>           $image_ids Image IDs to process.
+	 *
+	 * @return array{success_count: int, failed_count: int, images: array<int, array<string, mixed>>, start_time: float, batch_size: int, batches: array<int, array<int>>, total_batches: int, current_batch: int, total_images: int}
+	 */
+	private function initialize_processing_data( array $args, array $image_ids ): array {
+		// Get batch size with validation.
+		$batch_size = isset( $args['batch-size'] ) ? max( 1, absint( $args['batch-size'] ) ) : DEFAULT_BATCH_SIZE;
+
+		// Return processing data structure.
+		return [
+			'success_count' => 0,
+			'failed_count'  => 0,
+			'images'        => [],
+			'start_time'    => microtime( true ),
+			'batch_size'    => $batch_size,
+			'batches'       => array_chunk( $image_ids, $batch_size ),
+			'total_batches' => 0,
+			'current_batch' => 0,
+			'total_images'  => count( $image_ids ),
+		];
+	}
+
+	/**
+	 * Display batch progress information.
+	 *
+	 * @param array<string, mixed> $processing_data Processing data.
+	 *
+	 * @return void
+	 */
+	private function display_batch_progress( array &$processing_data ): void {
+		// Get batch progress information.
+		$current_batch    = isset( $processing_data['current_batch'] ) && is_numeric( $processing_data['current_batch'] ) ? absint( $processing_data['current_batch'] ) : 0;
+		$batches          = $processing_data['batches'];
+		$total_batches    = is_array( $batches ) ? count( $batches ) : 0;
+		$progress_percent = $total_batches > 0 ? round( ( ( $current_batch - 1 ) / $total_batches ) * 100, 1 ) : 0.0;
+		$batch_size       = isset( $processing_data['batch_size'] ) && is_numeric( $processing_data['batch_size'] ) ? absint( $processing_data['batch_size'] ) : 0;
+		$processed_images = ( $current_batch - 1 ) * $batch_size;
+
+		// Calculate ETA only after first batch is processed.
+		$eta_formatted = '';
+
+		// Calculate ETA only after first batch is processed.
+		if ( $current_batch > 1 ) {
+			$elapsed_time       = microtime( true ) - $processing_data['start_time'];
+			$average_batch_time = $elapsed_time / ( $current_batch - 1 );
+			$remaining_batches  = $total_batches - $current_batch + 1;
+			$eta_seconds        = $remaining_batches * $average_batch_time;
+			$eta_formatted      = ' - ETA: ' . round( $eta_seconds, 1 ) . 's';
+		}
+
+		// Display batch start information.
+		$total_images  = isset( $processing_data['total_images'] ) && is_numeric( $processing_data['total_images'] ) ? absint( $processing_data['total_images'] ) : 0;
+		$batch_message = sprintf(
+			'Batch %d/%d (%s%%) - Images: %d/%d%s',
+			$current_batch,
+			$total_batches,
+			strval( $progress_percent ),
+			$processed_images + 1,
+			$total_images,
+			strval( $eta_formatted )
+		);
+		$this->cli_output( $batch_message );
+	}
+
+	/**
+	 * Process a batch of images.
+	 *
+	 * @param array<int>           $batch           Batch of image IDs.
+	 * @param array<string, mixed> $processing_data Processing data.
+	 *
+	 * @return void
+	 */
+	private function process_batch( array $batch, array &$processing_data ): void {
+		// Process each image in the batch.
+		foreach ( $batch as $image_id ) {
+			// Ensure image_id is an integer.
+			$image_id         = absint( $image_id );
+			$image_start_time = microtime( true );
+
+			// Display processing start for this image.
+			$image_details      = get_image_details( $image_id );
+			$image_title        = isset( $image_details['title'] ) ? strval( $image_details['title'] ) : 'Unknown';
+			$processing_message = sprintf( 'Processing image ID %d: %s', $image_id, $image_title );
+			$this->cli_output( $processing_message );
+
+			// Generate alt text for this image.
+			$image_result    = generate_alt_text_for_attachment( $image_id );
+			$processing_time = microtime( true ) - $image_start_time;
+
+			// Process result and update counters.
+			$this->process_image_result( $image_id, $image_result, $processing_time, $processing_data );
+		}
+	}
+
+	/**
+	 * Process individual image result.
+	 *
+	 * @param int                  $image_id        Image ID.
+	 * @param array<string, mixed> $image_result    Image processing result.
+	 * @param float                $processing_time Processing time.
+	 * @param array<string, mixed> $processing_data Processing data.
+	 *
+	 * @return void
+	 */
+	private function process_image_result( int $image_id, array $image_result, float $processing_time, array &$processing_data ): void {
+		// Build result entry for this image.
+		$result_entry = [
+			'id'              => $image_id,
+			'success'         => (bool) $image_result['success'],
+			'processing_time' => round( $processing_time, 3 ),
+			'alt_text'        => null,
+			'error'           => null,
+			'skipped'         => null,
+			'reason'          => null,
+		];
+
+		// Handle success case.
+		if ( isset( $image_result['success'] ) && $image_result['success'] ) {
+			$alt_text                 = isset( $image_result['alt_text'] ) && is_string( $image_result['alt_text'] ) ? $image_result['alt_text'] : '';
+			$result_entry['alt_text'] = $alt_text;
+
+			// Ensure images array exists and is array.
+			if ( ! isset( $processing_data['images'] ) || ! is_array( $processing_data['images'] ) ) {
+				$processing_data['images'] = [];
+			}
+			$processing_data['images'][ $image_id ] = $result_entry;
+			++$processing_data['success_count'];
+
+			// Display success message.
+			$message = sprintf( 'Success: Generated alt text for image ID %d: %s', $image_id, $alt_text );
+			$this->cli_output( $message, 'success' );
+		} else {
+			// Handle error case.
+			$error_message         = isset( $image_result['error'] ) && is_string( $image_result['error'] ) ? $image_result['error'] : 'Unknown error';
+			$result_entry['error'] = $error_message;
+
+			// Ensure images array exists and is array.
+			if ( ! isset( $processing_data['images'] ) || ! is_array( $processing_data['images'] ) ) {
+				$processing_data['images'] = [];
+			}
+			$processing_data['images'][ $image_id ] = $result_entry;
+			++$processing_data['failed_count'];
+
+			// Display warning message.
+			$message = sprintf( 'Warning: Failed to generate alt text for image ID %d: %s', $image_id, $error_message );
+			$this->cli_output( $message, 'warning' );
+		}
+	}
+
+	/**
+	 * Cleanup after processing a batch.
+	 *
+	 * @param int $current_batch Current batch number.
+	 *
+	 * @return void
+	 */
+	private function cleanup_after_batch( int $current_batch ): void {
+		// Clean up memory after each batch.
+		wp_cache_flush();
+
+		// Additional memory cleanup for large batches.
+		if ( 0 === $current_batch % 5 ) {
+			if ( function_exists( 'gc_collect_cycles' ) ) {
+				gc_collect_cycles();
+			}
+		}
+	}
+
+	/**
+	 * Calculate final processing results.
+	 *
+	 * @param array<string, mixed> $processing_data Processing data.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function calculate_final_results( array $processing_data ): array {
+		// Calculate timing and statistics.
+		$total_time      = microtime( true ) - $processing_data['start_time'];
+		$success_count   = isset( $processing_data['success_count'] ) && is_numeric( $processing_data['success_count'] ) ? absint( $processing_data['success_count'] ) : 0;
+		$failed_count    = isset( $processing_data['failed_count'] ) && is_numeric( $processing_data['failed_count'] ) ? absint( $processing_data['failed_count'] ) : 0;
 		$processed_count = $success_count + $failed_count;
 		$average_time    = $processed_count > 0 ? $total_time / $processed_count : 0.0;
 
-		// Return final results.
+		// Return final results array.
 		return [
 			'success'       => true,
-			'processed'     => $success_count + $failed_count,
+			'processed'     => $processed_count,
 			'success_count' => $success_count,
 			'failed_count'  => $failed_count,
-			'images'        => $images,
+			'images'        => $processing_data['images'],
 			'total_time'    => round( $total_time, 3 ),
 			'average_time'  => round( $average_time, 3 ),
 		];

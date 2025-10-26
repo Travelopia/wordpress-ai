@@ -13,6 +13,7 @@
     "lint:css": "stylelint 'src/**/*.{css,scss}'",
     "lint:php": "composer run lint",
     "lint-test": "npm run lint && npm run static-analysis:php",
+    "test:php": "composer test",
     "static-analysis:php": "composer static-analysis"
   },
   "devDependencies": {

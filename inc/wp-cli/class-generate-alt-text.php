@@ -13,6 +13,7 @@ use WP_Post;
 
 use function WP_CLI\Utils\make_progress_bar;
 use function TravAI\generate_alt_text_for_attachment;
+use function TravAI\get_ai_setting;
 
 /**
  * Class Generate_Alt_Text.
@@ -31,7 +32,7 @@ class Generate_Alt_Text {
 	 *
 	 * @return void
 	 */
-	public function generate( array $args, array $args_assoc ): void {
+	public function generate( array $args = [], array $args_assoc = [] ): void {
 		// Ensure WP_CLI is available.
 		if ( ! class_exists( 'WP_CLI' ) ) {
 			return;
@@ -59,7 +60,7 @@ class Generate_Alt_Text {
 		}
 
 		// Check if AI alt text generation is enabled.
-		$ai_enabled = \TravAI\get_ai_setting( 'ai_alt_text_enabled', false );
+		$ai_enabled = get_ai_setting( 'ai_alt_text_enabled', false );
 
 		// If not enabled, show error and exit.
 		if ( ! $ai_enabled ) {
@@ -67,7 +68,7 @@ class Generate_Alt_Text {
 		}
 
 		// Get the AI prompt.
-		$ai_prompt = \TravAI\get_ai_setting( 'ai_alt_text_prompt', '' );
+		$ai_prompt = get_ai_setting( 'ai_alt_text_prompt', '' );
 
 		// Validate prompt is configured.
 		if ( empty( $ai_prompt ) ) {

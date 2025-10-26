@@ -1,28 +1,7 @@
 <?xml version="1.0"?>
 <ruleset name="WordPress Coding Standards">
-	<rule ref="Travelopia-WordPress">
-		<!--@TODO: Fix these exclusions as a part of new ticket.-->
-		<exclude name="Travelopia.PHP.NamespaceLeadingSlash.Avoid" />
-		<exclude name="Travelopia.Functions.FunctionReturnType.Missing" />
-		<exclude name="Travelopia.PHP.PreferTheContentOverWPAutoP.UseTheContent" />
-		<exclude name="Travelopia.Functions.FunctionArgsDefaultValue.Missing" />
-	</rule>
-
-	<rule ref="WordPress.NamingConventions.ValidVariableName">
-		<properties>
-			<property name="allowed_custom_properties" type="array">
-				<element value="tagName"/>
-				<element value="textContent"/>
-				<element value="nextSibling"/>
-				<element value="parentNode"/>
-			</property>
-		</properties>
-	</rule>
-
+	<rule ref="Travelopia-WordPress" />
 	<file>./inc</file>
-
 	<!-- Check up to 20 files simultaneously. -->
 	<arg name="parallel" value="20"/>
 </ruleset>
-
-

@@ -2,6 +2,7 @@
 <ruleset name="WordPress Coding Standards">
 	<rule ref="Travelopia-WordPress" />
 	<file>./inc</file>
+	<file>./.tests</file>
 	<!-- Check up to 20 files simultaneously. -->
 	<arg name="parallel" value="20"/>
 </ruleset>

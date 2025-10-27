@@ -2,10 +2,10 @@
 /**
  * Namespace functions.
  *
- * @package trav-ai
+ * @package travelopia-wp-ai
  */
 
-namespace TravAI;
+namespace Travelopia_WordPress_AI;
 
 use WordPress\AiClient\AiClient;
 use WordPress\AiClient\ProviderImplementations\OpenAi\OpenAiProvider;
@@ -13,7 +13,9 @@ use Exception;
 use WP_CLI;
 use WP_Post;
 
-use function TravAI\Admin\get_default_settings;
+use function Travelopia_WordPress_AI\Admin\get_default_settings;
+
+use function Travelopia_WordPress_AI\Alt_Text\get_default_ai_alt_text_prompt;
 
 /**
  * Bootstrap plugin.
@@ -33,10 +35,10 @@ function bootstrap(): void {
 
 	// Register WP CLI commands.
 	if ( defined( 'WP_CLI' ) && true === WP_CLI && class_exists( 'WP_CLI' ) ) {
-		require_once __DIR__ . '/wp-cli/class-generate-alt-text.php';
+		require_once __DIR__ . '/wp-cli/class-alt-text.php';
 
 		// Register commands.
-		WP_CLI::add_command( 'travai alt-text', __NAMESPACE__ . '\\WP_CLI\\Generate_Alt_Text' );
+		WP_CLI::add_command( 'travelopia-wp-ai alt-text', __NAMESPACE__ . '\\WP_CLI\\Alt_Text' );
 	}
 }
 
@@ -51,7 +53,7 @@ function maybe_generate_alt_text_on_upload( int $attachment_id ): void {
 	// Validate attachment is an image and plugin is enabled.
 	if (
 			! wp_attachment_is_image( $attachment_id )
-			|| ! get_ai_setting( 'ai_alt_text_enabled', false )
+			|| ! get_setting( 'ai_alt_text_enabled', false )
 	) {
 		return;
 	}
@@ -68,9 +70,9 @@ function maybe_generate_alt_text_on_upload( int $attachment_id ): void {
  *
  * @return mixed Setting value or default.
  */
-function get_ai_setting( string $key, mixed $default_value = null ): mixed {
+function get_setting( string $key, mixed $default_value = null ): mixed {
 	// Fetch settings with default fallback.
-	$settings = get_option( 'travai_settings', get_default_settings() );
+	$settings = get_option( 'travelopia_wp_ai_settings', get_default_settings() );
 
 	// Ensure settings is an array.
 	if ( ! is_array( $settings ) ) {
@@ -94,7 +96,7 @@ function admin_enqueue_scripts(): void {
 	// Localize script with AJAX data and nonce.
 	wp_localize_script(
 		'trav-ai-editor',
-		'travAi',
+		'travelopiaWpAi',
 		[
 			'ajax'   => [
 				'url' => admin_url( 'admin-ajax.php' ),
@@ -120,28 +122,28 @@ function generate_alt_text_for_attachment( int $attachment_id, bool $update = tr
 		return [
 			'success'  => false,
 			'alt_text' => '',
-			'error'    => __( 'Invalid attachment ID or not an image', 'trav-ai' ),
+			'error'    => __( 'Invalid attachment ID or not an image', 'travelopia-wp-ai' ),
 		];
 	}
 
 	// Check if AI alt text generation is enabled.
-	if ( ! get_ai_setting( 'ai_alt_text_enabled', false ) ) {
+	if ( ! get_setting( 'ai_alt_text_enabled', false ) ) {
 		return [
 			'success'  => false,
 			'alt_text' => '',
-			'error'    => __( 'AI alt text generation is not enabled', 'trav-ai' ),
+			'error'    => __( 'AI alt text generation is not enabled', 'travelopia-wp-ai' ),
 		];
 	}
 
 	// Get the AI prompt from settings.
-	$ai_prompt = get_ai_setting( 'ai_alt_text_prompt', '' );
+	$ai_prompt = get_setting( 'ai_alt_text_prompt', '' );
 
 	// Validate prompt is configured.
 	if ( empty( $ai_prompt ) || ! is_string( $ai_prompt ) ) {
 		return [
 			'success'  => false,
 			'alt_text' => '',
-			'error'    => __( 'AI prompt is not configured', 'trav-ai' ),
+			'error'    => __( 'AI prompt is not configured', 'travelopia-wp-ai' ),
 		];
 	}
 
@@ -150,7 +152,7 @@ function generate_alt_text_for_attachment( int $attachment_id, bool $update = tr
 		return [
 			'alt_text' => '',
 			'success'  => false,
-			'error'    => __( 'AI Client not available', 'trav-ai' ),
+			'error'    => __( 'AI Client not available', 'travelopia-wp-ai' ),
 		];
 	}
 
@@ -199,7 +201,7 @@ function generate_alt_text_for_attachment( int $attachment_id, bool $update = tr
 		if ( $title ) {
 			$context_parts[] = sprintf(
 				/* translators: %s: title */
-				__( 'title: %s', 'trav-ai' ),
+				__( 'title: %s', 'travelopia-wp-ai' ),
 				$title
 			);
 		}
@@ -212,7 +214,7 @@ function generate_alt_text_for_attachment( int $attachment_id, bool $update = tr
 	if ( $context ) {
 		$prompt .= sprintf(
 			/* translators: %s: context */
-			__( ' Additional context: %s', 'trav-ai' ),
+			__( ' Additional context: %s', 'travelopia-wp-ai' ),
 			$context
 		);
 	}
@@ -224,19 +226,19 @@ function generate_alt_text_for_attachment( int $attachment_id, bool $update = tr
 			return [
 				'success'  => false,
 				'alt_text' => '',
-				'error'    => __( 'OpenAI API key not configured', 'trav-ai' ),
+				'error'    => __( 'OpenAI API key not configured', 'travelopia-wp-ai' ),
 			];
 		}
 
 		// Get the API key.
-		$api_key = defined( 'OPENAI_API_KEY' ) ? OPENAI_API_KEY : getenv( 'OPENAI_API_KEY' );
+		$api_key = defined( 'OPENAI_API_KEY' ) ? constant( 'OPENAI_API_KEY' ) : getenv( 'OPENAI_API_KEY' );
 
 		// Validate API key is not empty.
 		if ( empty( $api_key ) ) {
 			return [
 				'success'  => false,
 				'alt_text' => '',
-				'error'    => __( 'OpenAI API key is empty', 'trav-ai' ),
+				'error'    => __( 'OpenAI API key is empty', 'travelopia-wp-ai' ),
 			];
 		}
 
@@ -251,13 +253,12 @@ function generate_alt_text_for_attachment( int $attachment_id, bool $update = tr
 			return [
 				'success'  => false,
 				'alt_text' => '',
-				'error'    => __( 'Could not get image URL or is not a string.', 'trav-ai' ),
+				'error'    => __( 'Could not get image URL or is not a string.', 'travelopia-wp-ai' ),
 			];
 		}
 
-
 		// Generate AI response.
-		$generated = AiClient::prompt( $prompt )
+		$generated = AiClient::prompt( is_string( $prompt ) ? $prompt : '' )
 			->usingModel( OpenAiProvider::model( strval( $options['model'] ) ) )
 			->usingTemperature( floatval( $options['temperature'] ) )
 			->withFile( $image_url )
@@ -272,7 +273,7 @@ function generate_alt_text_for_attachment( int $attachment_id, bool $update = tr
 			return [
 				'success'  => false,
 				'alt_text' => '',
-				'error'    => __( 'AI generated empty response', 'trav-ai' ),
+				'error'    => __( 'AI generated empty response', 'travelopia-wp-ai' ),
 			];
 		}
 
@@ -296,7 +297,7 @@ function generate_alt_text_for_attachment( int $attachment_id, bool $update = tr
 			'alt_text' => '',
 			'error'    => sprintf(
 				/* translators: %s: error message */
-				__( 'AI generation failed: %s', 'trav-ai' ),
+				__( 'AI generation failed: %s', 'travelopia-wp-ai' ),
 				$e->getMessage()
 			),
 		];
@@ -316,12 +317,12 @@ function activate_plugin(): void {
 	// Initialize default settings if they don't exist.
 	$default_settings = [
 		'ai_alt_text_enabled' => false,
-		'ai_prompt'           => __( 'Describe this image in a concise, informative way for alt text. Focus on the main subject and important details that would help someone understand what is in the image.', 'trav-ai' ),
+		'ai_alt_text_prompt'  => get_default_ai_alt_text_prompt(),
 	];
 
 	// Only set defaults if no settings exist yet.
-	if ( false === get_option( 'travai_settings' ) ) {
-		add_option( 'travai_settings', $default_settings );
+	if ( false === get_option( 'travelopia_wp_ai_settings' ) ) {
+		add_option( 'travelopia_wp_ai_settings', $default_settings );
 	}
 }
 
@@ -350,7 +351,7 @@ function media_row_actions( array $actions, WP_Post $post ): array {
 			'generate_alt_text_' . $post->ID,
 			'tp_nonce'
 		),
-		empty( $alt_text ) ? __( 'Generate Alt Text', 'et' ) : __( 'Regenerate Alt Text', 'et' )
+		empty( $alt_text ) ? __( 'Generate Alt Text', 'travelopia-wp-ai' ) : __( 'Regenerate Alt Text', 'travelopia-wp-ai' )
 	);
 
 	// Return the updated actions.
@@ -407,7 +408,7 @@ function modify_image_editor( WP_Post $post ): void {
 	// If query args has tp_generate_alt_text, then generate the alt text and save it.
 	if ( $is_generation && $valid_request && $is_empty_alt ) {
 		$result       = generate_alt_text_for_attachment( $post->ID, true );
-		$alt_text     = $result['alt_text'];
+		$alt_text     = $result['alt_text'] ?? '';
 		$is_empty_alt = false;
 	}
 
@@ -417,7 +418,7 @@ function modify_image_editor( WP_Post $post ): void {
 
 		// On success, update the alt text only on the frontend.
 		if ( $result['success'] ) {
-			$alt_text = $result['alt_text'];
+			$alt_text = $result['alt_text'] ?? '';
 		}
 	}
 
@@ -430,15 +431,15 @@ function modify_image_editor( WP_Post $post ): void {
 	ob_start();
 	?>
 	<div style="display: flex; gap: 10px;">
-		<textarea class="widefat" name="_wp_attachment_image_alt" id="attachment_alt" aria-describedby="alt-text-description"><?php echo esc_attr( $alt_text ); ?></textarea>
+		<textarea class="widefat" name="_wp_attachment_image_alt" id="attachment_alt" aria-describedby="alt-text-description"><?php echo esc_attr( is_string( $alt_text ) ? $alt_text : '' ); ?></textarea>
 
 		<?php if ( $is_regeneration ) : ?>
-			<input type="hidden" name="alt_text" value="<?php echo esc_attr( $alt_text ); ?>">
+			<input type="hidden" name="alt_text" value="<?php echo esc_attr( is_string( $alt_text ) ? $alt_text : '' ); ?>">
 			<button type="button" class="button button-success" value="accept">
-				<?php esc_attr_e( 'Accept', 'et' ); ?>
+				<?php esc_attr_e( 'Accept', 'travelopia-wp-ai' ); ?>
 			</button>
 			<a class="button button-error" href="<?php echo esc_url( admin_url( 'post.php?post=' . $post->ID . '&action=edit' ) ); ?>">
-				<?php esc_attr_e( 'Reject', 'et' ); ?>
+				<?php esc_attr_e( 'Reject', 'travelopia-wp-ai' ); ?>
 			</a>
 			<a
 				type="button"
@@ -446,14 +447,14 @@ function modify_image_editor( WP_Post $post ): void {
 				value="regenerate"
 				href="<?php echo esc_url( get_cta_link( $post, true ) ); ?>"
 			>
-				<?php esc_attr_e( 'Regenerate', 'et' ); ?>
+				<?php esc_attr_e( 'Regenerate', 'travelopia-wp-ai' ); ?>
 			</a>
 		<?php else : ?>
 			<a
 				class="button button-primary"
 				href="<?php echo esc_url( get_cta_link( $post, ! $is_empty_alt ) ); ?>"
 			>
-				<?php $is_empty_alt ? esc_attr_e( 'Generate Alt Text', 'et' ) : esc_attr_e( 'Regenerate Alt Text', 'et' ); ?>
+				<?php $is_empty_alt ? esc_attr_e( 'Generate Alt Text', 'travelopia-wp-ai' ) : esc_attr_e( 'Regenerate Alt Text', 'travelopia-wp-ai' ); ?>
 			</a>
 		<?php endif; ?>
 	</div>
@@ -463,8 +464,8 @@ function modify_image_editor( WP_Post $post ): void {
 	// Modify the original output with the new one.
 	$output = preg_replace(
 		'/<textarea[^>]*\bname=["\']_wp_attachment_image_alt["\'][^>]*\bid=["\']attachment_alt[^"\']*["\'][^>]*>.*?<\/textarea>/is',
-		$new_output,
-		$output
+		$new_output ?: '',
+		$output ?: ''
 	);
 
 	// Output the modified output.
@@ -485,7 +486,7 @@ function ajax_modify_attachment_alt_text(): void {
 	if ( ! current_user_can( 'edit_posts' ) ) {
 		wp_send_json_error(
 			[
-				'message' => __( 'You do not have permission to modify alt text.', 'trav-ai' ),
+				'message' => __( 'You do not have permission to modify alt text.', 'travelopia-wp-ai' ),
 			],
 			403
 		);
@@ -502,7 +503,7 @@ function ajax_modify_attachment_alt_text(): void {
 		// Send JSON error.
 		wp_send_json_error(
 			[
-				'message' => __( 'Invalid attachment ID or not an image.', 'trav-ai' ),
+				'message' => __( 'Invalid attachment ID or not an image.', 'travelopia-wp-ai' ),
 			],
 			400
 		);
@@ -516,7 +517,7 @@ function ajax_modify_attachment_alt_text(): void {
 		// Send JSON error.
 		wp_send_json_error(
 			[
-				'message' => __( 'You do not have permission to edit this attachment.', 'trav-ai' ),
+				'message' => __( 'You do not have permission to edit this attachment.', 'travelopia-wp-ai' ),
 			],
 			403
 		);
@@ -533,7 +534,7 @@ function ajax_modify_attachment_alt_text(): void {
 		// Send JSON error.
 		wp_send_json_error(
 			[
-				'message' => __( 'Alt text should be 125 characters or less for optimal accessibility.', 'trav-ai' ),
+				'message' => __( 'Alt text should be 125 characters or less for optimal accessibility.', 'travelopia-wp-ai' ),
 			],
 			400
 		);
@@ -550,7 +551,7 @@ function ajax_modify_attachment_alt_text(): void {
 		// Send JSON error.
 		wp_send_json_error(
 			[
-				'message' => __( 'Failed to update alt text. Please try again.', 'trav-ai' ),
+				'message' => __( 'Failed to update alt text. Please try again.', 'travelopia-wp-ai' ),
 			],
 			500
 		);
@@ -565,7 +566,7 @@ function ajax_modify_attachment_alt_text(): void {
 	// Return success response.
 	wp_send_json_success(
 		[
-			'message'       => __( 'Alt text updated successfully.', 'trav-ai' ),
+			'message'       => __( 'Alt text updated successfully.', 'travelopia-wp-ai' ),
 			'attachment_id' => $attachment_id,
 			'alt_text'      => $alt_text,
 		]

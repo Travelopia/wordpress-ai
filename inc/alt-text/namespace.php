@@ -59,7 +59,7 @@ function get_missing_alt_text_meta_query(): array {
  *
  * @return WP_Error
  */
-function create_alt_text_error( string $error_code, string $error_message, array $error_data = [] ): WP_Error {
+function create_alt_text_error( string $error_code = '', string $error_message = '', array $error_data = [] ): WP_Error {
 	// Create WP_Error instance.
 	$error = new WP_Error( $error_code, $error_message, $error_data );
 
@@ -79,7 +79,7 @@ function create_alt_text_error( string $error_code, string $error_message, array
  *
  * @return array<string, mixed>
  */
-function handle_alt_text_error( string $error_code, string $error_message, array $error_data = [] ): array {
+function handle_alt_text_error( string $error_code = '', string $error_message = '', array $error_data = [] ): array {
 	// Create error and fire action hook.
 	$error = create_alt_text_error( $error_code, $error_message, $error_data );
 
@@ -294,7 +294,7 @@ function get_ai_configuration(): array {
  *
  * @return array<string, mixed>
  */
-function get_image_details( int $image_id ): array {
+function get_image_details( int $image_id = 0 ): array {
 	// Get image post and alt text data.
 	$image_post = get_post( $image_id );
 	$alt_text   = get_post_meta( $image_id, '_wp_attachment_image_alt', true );
@@ -315,7 +315,7 @@ function get_image_details( int $image_id ): array {
  *
  * @return array<string, mixed>
  */
-function parse_cli_arguments( array $args_assoc ): array {
+function parse_cli_arguments( array $args_assoc = [] ): array {
 	// Parse and validate command arguments.
 	$options = wp_parse_args(
 		$args_assoc,
@@ -416,7 +416,7 @@ function get_cli_images_to_process( array $options = [] ): array {
  *
  * @return array<string, mixed> Results.
  */
-function process_cli_images( array $image_ids, array $options ): array {
+function process_cli_images( array $image_ids = [], array $options = [] ): array {
 	// Initialize options with defaults.
 	$options = wp_parse_args(
 		$options,
@@ -544,7 +544,7 @@ function process_cli_images( array $image_ids, array $options ): array {
  *
  * @return array<string, mixed> Error result.
  */
-function create_error_result( string $error_message ): array {
+function create_error_result( string $error_message = '' ): array {
 	// Return error result structure.
 	return [
 		'success'       => false,
@@ -563,7 +563,7 @@ function create_error_result( string $error_message ): array {
  *
  * @return string Formatted time string.
  */
-function format_processing_time( float $seconds ): string {
+function format_processing_time( float $seconds = 0.0 ): string {
 	// Format time based on duration.
 	if ( $seconds < 60 ) {
 		return sprintf( '%.2fs', $seconds );

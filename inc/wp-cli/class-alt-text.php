@@ -99,7 +99,7 @@ class Alt_Text {
 	 *
 	 * @return void
 	 */
-	public function generate( array $args, array $args_assoc ): void {
+	public function generate( array $args = [], array $args_assoc = [] ): void {
 		// Ensure WP_CLI is available.
 		if ( ! class_exists( 'WP_CLI' ) ) {
 			return;
@@ -142,7 +142,7 @@ class Alt_Text {
 	 *
 	 * @return void
 	 */
-	private function request_confirmation( array $args ): void {
+	private function request_confirmation( array $args = [] ): void {
 		// Determine operation description.
 		if ( ! empty( $args['ids'] ) ) {
 			if ( $args['missing'] ) {
@@ -186,7 +186,7 @@ class Alt_Text {
 	 *
 	 * @return void
 	 */
-	private function display_command_info( array $args ): void {
+	private function display_command_info( array $args = [] ): void {
 		// Get AI configuration.
 		$config = get_ai_configuration();
 
@@ -254,7 +254,7 @@ class Alt_Text {
 	 *
 	 * @return void
 	 */
-	private function display_results( array $result ): void {
+	private function display_results( array $result = [] ): void {
 		// Check if the operation failed completely (no images processed).
 		if ( ! $result['success'] && isset( $result['error'] ) ) {
 			// Display error message.
@@ -313,7 +313,7 @@ class Alt_Text {
 	 *
 	 * @return array<string, mixed> Results.
 	 */
-	private function process_images_with_streaming( array $args ): array {
+	private function process_images_with_streaming( array $args = [] ): array {
 		// Get images to process.
 		$image_ids = get_cli_images_to_process( $args );
 
@@ -370,7 +370,7 @@ class Alt_Text {
 	 *
 	 * @return array{success_count: int, failed_count: int, images: array<int, array<string, mixed>>, start_time: float, batch_size: int, batches: array<int, array<int>>, total_batches: int, current_batch: int, total_images: int}
 	 */
-	private function initialize_processing_data( array $args, array $image_ids ): array {
+	private function initialize_processing_data( array $args = [], array $image_ids = [] ): array {
 		// Get batch size with validation.
 		$batch_size = isset( $args['batch-size'] ) ? max( 1, absint( $args['batch-size'] ) ) : DEFAULT_BATCH_SIZE;
 
@@ -395,7 +395,7 @@ class Alt_Text {
 	 *
 	 * @return void
 	 */
-	private function display_batch_progress( array &$processing_data ): void {
+	private function display_batch_progress( array &$processing_data = [] ): void {
 		// Get batch progress information.
 		$current_batch    = isset( $processing_data['current_batch'] ) && is_numeric( $processing_data['current_batch'] ) ? absint( $processing_data['current_batch'] ) : 0;
 		$batches          = $processing_data['batches'];
@@ -438,7 +438,7 @@ class Alt_Text {
 	 *
 	 * @return void
 	 */
-	private function process_batch( array $batch, array &$processing_data ): void {
+	private function process_batch( array $batch = [], array &$processing_data = [] ): void {
 		// Process each image in the batch.
 		foreach ( $batch as $image_id ) {
 			// Ensure image_id is an integer.
@@ -470,7 +470,7 @@ class Alt_Text {
 	 *
 	 * @return void
 	 */
-	private function process_image_result( int $image_id, array $image_result, float $processing_time, array &$processing_data ): void {
+	private function process_image_result( int $image_id = 0, array $image_result = [], float $processing_time = 0.0, array &$processing_data = [] ): void {
 		// Build result entry for this image.
 		$result_entry = [
 			'id'              => $image_id,
@@ -522,7 +522,7 @@ class Alt_Text {
 	 *
 	 * @return void
 	 */
-	private function cleanup_after_batch( int $current_batch ): void {
+	private function cleanup_after_batch( int $current_batch = 0 ): void {
 		// Clean up memory after each batch.
 		wp_cache_flush();
 
@@ -541,7 +541,7 @@ class Alt_Text {
 	 *
 	 * @return array<string, mixed>
 	 */
-	private function calculate_final_results( array $processing_data ): array {
+	private function calculate_final_results( array $processing_data = [] ): array {
 		// Calculate timing and statistics.
 		$total_time      = microtime( true ) - $processing_data['start_time'];
 		$success_count   = isset( $processing_data['success_count'] ) && is_numeric( $processing_data['success_count'] ) ? absint( $processing_data['success_count'] ) : 0;
@@ -569,7 +569,7 @@ class Alt_Text {
 	 *
 	 * @return void
 	 */
-	private function cli_output( string $message, string $type = 'log' ): void {
+	private function cli_output( string $message = '', string $type = 'log' ): void {
 		// Handle different message types.
 		switch ( $type ) {
 			// Output success message.

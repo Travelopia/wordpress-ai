@@ -1,5 +1,5 @@
 {
-  "name": "trav-ai-wordpress",
+  "name": "travelopia-wp-ai",
   "version": "0.1.0",
   "type": "module",
   "description": "AI-powered alt text generation for WordPress.",
@@ -30,6 +30,6 @@
     "webpack-cli": "^5.1.4",
     "@travelopia/eslint-plugin-wordpress-coding-standards": "^1.0.0"
   },
-  "author": "TravAI Team",
+  "author": "Travelopia Team",
   "license": "MIT"
 }

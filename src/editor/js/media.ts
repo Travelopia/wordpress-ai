@@ -55,8 +55,8 @@ class MediaEditor {
 		}
 
 		// Get AJAX URL and nonce (with fallbacks).
-		const ajaxUrl = travAi?.ajax?.url || '/wp-admin/admin-ajax.php';
-		const nonce = travAi?.nonces?.modifyAltText || '';
+		const ajaxUrl = travelopiaWpAi?.ajax?.url || '/wp-admin/admin-ajax.php';
+		const nonce = travelopiaWpAi?.nonces?.modifyAltText || '';
 
 		// Check if the nonce is valid.
 		if ( ! nonce ) {

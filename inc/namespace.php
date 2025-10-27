@@ -12,6 +12,7 @@ use WordPress\AiClient\ProviderImplementations\OpenAi\OpenAiProvider;
 use Exception;
 use WP_CLI;
 use WP_Post;
+use WP_REST_Request;
 
 use function TravAI\Admin\get_default_settings;
 
@@ -23,10 +24,8 @@ use function TravAI\Admin\get_default_settings;
 function bootstrap(): void {
 	// Actions.
 	add_action( 'add_attachment', __NAMESPACE__ . '\\maybe_generate_alt_text_on_upload', 20 );
-	add_action( 'add_meta_boxes', __NAMESPACE__ . '\\remove_image_editor' );
-	add_action( 'edit_form_after_title', __NAMESPACE__ . '\\modify_image_editor', 11 );
 	add_action( 'admin_enqueue_scripts', __NAMESPACE__ . '\\admin_enqueue_scripts' );
-	add_action( 'wp_ajax_modify_attachment_alt_text', __NAMESPACE__ . '\\ajax_modify_attachment_alt_text' );
+	add_action( 'rest_after_insert_attachment', __NAMESPACE__ . '\\handle_rest_alt_text_update', 10, 2 );
 
 	// Filters.
 	add_filter( 'media_row_actions', __NAMESPACE__ . '\\media_row_actions', 10, 2 );
@@ -47,12 +46,9 @@ function bootstrap(): void {
  *
  * @return void
  */
-function maybe_generate_alt_text_on_upload( int $attachment_id ): void {
+function maybe_generate_alt_text_on_upload( int $attachment_id = 0 ): void {
 	// Validate attachment is an image and plugin is enabled.
-	if (
-			! wp_attachment_is_image( $attachment_id )
-			|| ! get_ai_setting( 'ai_alt_text_enabled', false )
-	) {
+	if ( ! wp_attachment_is_image( $attachment_id ) || ! get_ai_setting( 'ai_alt_text_enabled', false ) ) {
 		return;
 	}
 
@@ -68,7 +64,7 @@ function maybe_generate_alt_text_on_upload( int $attachment_id ): void {
  *
  * @return mixed Setting value or default.
  */
-function get_ai_setting( string $key, mixed $default_value = null ): mixed {
+function get_ai_setting( string $key = '', mixed $default_value = null ): mixed {
 	// Fetch settings with default fallback.
 	$settings = get_option( 'travai_settings', get_default_settings() );
 
@@ -82,25 +78,130 @@ function get_ai_setting( string $key, mixed $default_value = null ): mixed {
 }
 
 /**
+ * Get attachment data for alt text editor.
+ *
+ * @return array<string, mixed>|null Array with post, alt_text, and mode, or null if invalid.
+ */
+function get_attachment_editor_data(): ?array {
+	// Get current screen.
+	$screen = get_current_screen();
+
+	// Only proceed on attachment edit screen.
+	if ( ! $screen || 'attachment' !== $screen->id ) {
+		return null;
+	}
+
+	// Get post ID from URL.
+	$post_id = isset( $_GET['post'] ) ? absint( $_GET['post'] ) : 0;
+
+	// Return if no valid post ID.
+	if ( ! $post_id ) {
+		return null;
+	}
+
+	// Get post object.
+	$post = get_post( $post_id );
+
+	// Return if not a valid WP_Post object.
+	if ( ! $post instanceof WP_Post ) {
+		return null;
+	}
+
+	// Return if not an image attachment.
+	if ( 'attachment' !== $post->post_type || false === strpos( $post->post_mime_type, 'image' ) ) {
+		return null;
+	}
+
+	// Get the existing alt text.
+	$is_regeneration = isset( $_GET['tp_regenerate_alt_text'] );
+	$valid_request   = ! isset( $_GET['tp_nonce'] ) ? false : wp_verify_nonce( $_GET['tp_nonce'], 'generate_alt_text_' . $post->ID );
+	$is_generation   = isset( $_GET['tp_generate_alt_text'] );
+	$alt_text        = get_post_meta( $post->ID, '_wp_attachment_image_alt', true );
+	$is_empty_alt    = empty( $alt_text );
+
+	// If query args has tp_generate_alt_text, then generate the alt text and save it.
+	if ( $is_generation && $valid_request && $is_empty_alt ) {
+		$result       = generate_alt_text_for_attachment( $post->ID, true );
+		$alt_text     = $result['alt_text'] ?? '';
+		$is_empty_alt = false;
+	}
+
+	// If query args has tp_regenerate_alt_text, then regenerate the alt text.
+	if ( $is_regeneration && $valid_request ) {
+		$result = generate_alt_text_for_attachment( $post->ID, false );
+
+		// On success, update the alt text.
+		if ( ! empty( $result['success'] ) ) {
+			$alt_text = $result['alt_text'] ?? '';
+		}
+	}
+
+	// Determine the mode for the component.
+	$mode = $is_regeneration ? 'regenerate' : 'default';
+
+	// Return the attachment editor data.
+	return [
+		'post'     => $post,
+		'alt_text' => $alt_text,
+		'mode'     => $mode,
+	];
+}
+
+/**
  * Enqueue editor assets.
  *
  * @return void
  */
 function admin_enqueue_scripts(): void {
+	// Get attachment data.
+	$data = get_attachment_editor_data();
+
+	// Return if no valid data.
+	if ( ! $data ) {
+		return;
+	}
+
+	// Extract post from data and ensure it's a WP_Post object.
+	$post = $data['post'] ?? null;
+
+	// Return if post is not a valid WP_Post instance.
+	if ( ! $post instanceof WP_Post ) {
+		return;
+	}
+
 	// Enqueue editor scripts.
 	wp_enqueue_script( 'trav-ai-editor', plugins_url( 'dist/editor.js', __DIR__ ), [ 'wp-dom-ready', 'media-editor' ], '1.0.0', true );
 	wp_enqueue_style( 'trav-ai-editor', plugins_url( 'dist/editor.css', __DIR__ ), [], '1.0.0' );
 
-	// Localize script with AJAX data and nonce.
+	// Localize script with all necessary data.
 	wp_localize_script(
 		'trav-ai-editor',
 		'travAi',
 		[
-			'ajax'   => [
-				'url' => admin_url( 'admin-ajax.php' ),
+			'api'        => [
+				'root'  => rest_url(),
+				'nonce' => wp_create_nonce( 'wp_rest' ),
 			],
-			'nonces' => [
-				'modifyAltText' => wp_create_nonce( 'modify_alt_text_nonce' ),
+			'nonces'     => [
+				'rest' => wp_create_nonce( 'wp_rest' ),
+			],
+			'attachment' => [
+				'id'      => $post->ID,
+				'altText' => $data['alt_text'],
+				'mode'    => $data['mode'],
+			],
+			'urls'       => [
+				'generate'   => get_alt_text_action_url( $post, false ),
+				'regenerate' => get_alt_text_action_url( $post, true ),
+				'reject'     => admin_url( 'post.php?post=' . $post->ID . '&action=edit' ),
+			],
+			'labels'     => [
+				'generateAltText'   => __( 'Generate Alt Text', 'trav-ai' ),
+				'regenerateAltText' => __( 'Regenerate Alt Text', 'trav-ai' ),
+				'accept'            => __( 'Accept', 'trav-ai' ),
+				'reject'            => __( 'Reject', 'trav-ai' ),
+				'regenerate'        => __( 'Regenerate', 'trav-ai' ),
+				'saving'            => __( 'Saving...', 'trav-ai' ),
 			],
 		]
 	);
@@ -114,7 +215,7 @@ function admin_enqueue_scripts(): void {
  *
  * @return array{success: bool, alt_text?: string, error?: string}
  */
-function generate_alt_text_for_attachment( int $attachment_id, bool $update = true ) {
+function generate_alt_text_for_attachment( int $attachment_id = 0, bool $update = true ): array {
 	// Early validation checks.
 	if ( ! function_exists( 'wp_attachment_is_image' ) || ! wp_attachment_is_image( $attachment_id ) ) {
 		return [
@@ -187,6 +288,15 @@ function generate_alt_text_for_attachment( int $attachment_id, bool $update = tr
 	 */
 	$prompt = apply_filters( 'trav_ai_alt_text_prompt', $prompt, $attachment_id );
 
+	// Validate prompt is a string after filtering.
+	if ( ! is_string( $prompt ) ) {
+		return [
+			'success'  => false,
+			'alt_text' => '',
+			'error'    => __( 'Invalid prompt type after filtering', 'trav-ai' ),
+		];
+	}
+
 	// Initialize context.
 	$context = '';
 
@@ -241,7 +351,7 @@ function generate_alt_text_for_attachment( int $attachment_id, bool $update = tr
 		}
 
 		// Get actual image URL for the attachment.
-		$image_url = wp_get_attachment_url( $attachment_id );
+		$image_url = get_the_guid( $attachment_id );
 
 		// Filter the image URL if needed.
 		$image_url = apply_filters( 'trav_ai_image_url', $image_url, $attachment_id );
@@ -254,7 +364,6 @@ function generate_alt_text_for_attachment( int $attachment_id, bool $update = tr
 				'error'    => __( 'Could not get image URL or is not a string.', 'trav-ai' ),
 			];
 		}
-
 
 		// Generate AI response.
 		$generated = AiClient::prompt( $prompt )
@@ -333,7 +442,12 @@ function activate_plugin(): void {
  *
  * @return mixed[]
  */
-function media_row_actions( array $actions, WP_Post $post ): array {
+function media_row_actions( array $actions = [], ?WP_Post $post = null ): array {
+	// Return early if post is null.
+	if ( ! $post ) {
+		return $actions;
+	}
+
 	// Return early if the post is not an image.
 	if ( 'attachment' !== $post->post_type || strpos( $post->post_mime_type, 'image' ) === false ) {
 		return $actions;
@@ -343,28 +457,19 @@ function media_row_actions( array $actions, WP_Post $post ): array {
 	$alt_text = get_post_meta( $post->ID, '_wp_attachment_image_alt', true );
 
 	// Check if the image has alt text or not.
+	$base_url = admin_url( 'post.php?post=' . $post->ID . '&action=edit&' . ( empty( $alt_text ) ? 'tp_generate_alt_text=true' : 'tp_regenerate_alt_text=true' ) );
+	$nonce    = wp_create_nonce( 'generate_alt_text_' . $post->ID );
+	$url      = add_query_arg( 'tp_nonce', $nonce, $base_url );
+
+	// Add the CTA on the actions row of the media item in list view.
 	$actions['generate_alt_text'] = sprintf(
 		'<a href="%s">%s</a>',
-		wp_nonce_url(
-			admin_url( 'post.php?post=' . $post->ID . '&action=edit&' . ( empty( $alt_text ) ? 'tp_generate_alt_text=true' : 'tp_regenerate_alt_text=true' ) ),
-			'generate_alt_text_' . $post->ID,
-			'tp_nonce'
-		),
-		empty( $alt_text ) ? __( 'Generate Alt Text', 'et' ) : __( 'Regenerate Alt Text', 'et' )
+		esc_url( $url ),
+		empty( $alt_text ) ? __( 'Generate Alt Text', 'trav-ai' ) : __( 'Regenerate Alt Text', 'trav-ai' )
 	);
 
 	// Return the updated actions.
 	return $actions;
-}
-
-/**
- * Removes the editor options for the images. Its modified output is shown via modify_image_editor function.
- *
- * @return void
- */
-function remove_image_editor(): void {
-	// Remove the editor options for the images to be replaced by our own.
-	remove_action( 'edit_form_after_title', 'edit_form_image_editor' );
 }
 
 /**
@@ -375,199 +480,47 @@ function remove_image_editor(): void {
  *
  * @return string
  */
-function get_cta_link( WP_Post $post, bool $is_regeneration ): string {
-	// Return the nonce URL.
-	return wp_nonce_url(
-		admin_url( 'post.php?post=' . $post->ID . '&action=edit&' . ( $is_regeneration ? 'tp_regenerate_alt_text=true' : 'tp_generate_alt_text=true' ) ),
-		'generate_alt_text_' . $post->ID,
-		'tp_nonce'
-	);
+function get_alt_text_action_url( ?WP_Post $post = null, bool $is_regeneration = false ): string {
+	// Return empty string if post is null.
+	if ( ! $post ) {
+		return '';
+	}
+
+	// Build base URL.
+	$base_url = admin_url( 'post.php?post=' . $post->ID . '&action=edit&' . ( $is_regeneration ? 'tp_regenerate_alt_text=true' : 'tp_generate_alt_text=true' ) );
+
+	// Add nonce parameter.
+	$nonce = wp_create_nonce( 'generate_alt_text_' . $post->ID );
+
+	// Return the URL with nonce.
+	return add_query_arg( 'tp_nonce', $nonce, $base_url );
 }
 
 /**
- * Modifies the image editor to show the Alt Text Field with Button to generate/regenerate alt text.
+ * Handle REST API alt text update.
  *
- * @param WP_Post $post Post object.
+ * This function hooks into the REST API after an attachment is updated
+ * to trigger our custom action and maintain compatibility with existing hooks.
  *
- * @return void
- */
-function modify_image_editor( WP_Post $post ): void {
-	// Return early if the post is not an image.
-	if ( 'attachment' !== $post->post_type || strpos( $post->post_mime_type, 'image' ) === false ) {
-		return;
-	}
-
-	// Get the existing alt text.
-	$is_regeneration = isset( $_GET['tp_regenerate_alt_text'] );
-	$valid_request   = ! isset( $_GET['tp_nonce'] ) ? false : wp_verify_nonce( $_GET['tp_nonce'], 'generate_alt_text_' . $post->ID );
-	$is_generation   = isset( $_GET['tp_generate_alt_text'] );
-	$alt_text        = get_post_meta( $post->ID, '_wp_attachment_image_alt', true );
-	$is_empty_alt    = empty( $alt_text );
-
-	// If query args has tp_generate_alt_text, then generate the alt text and save it.
-	if ( $is_generation && $valid_request && $is_empty_alt ) {
-		$result       = generate_alt_text_for_attachment( $post->ID, true );
-		$alt_text     = $result['alt_text'];
-		$is_empty_alt = false;
-	}
-
-	// If query args has tp_regenerate_alt_text, then regenerate the alt text.
-	if ( $is_regeneration && $valid_request ) {
-		$result = generate_alt_text_for_attachment( $post->ID, false );
-
-		// On success, update the alt text only on the frontend.
-		if ( $result['success'] ) {
-			$alt_text = $result['alt_text'];
-		}
-	}
-
-	// Get the original output as expected from WP Core.
-	ob_start();
-	edit_form_image_editor( $post );
-	$output = ob_get_clean();
-
-	// Add the CTA button alongside the Alt Text Field.
-	ob_start();
-	?>
-	<div style="display: flex; gap: 10px;">
-		<textarea class="widefat" name="_wp_attachment_image_alt" id="attachment_alt" aria-describedby="alt-text-description"><?php echo esc_attr( $alt_text ); ?></textarea>
-
-		<?php if ( $is_regeneration ) : ?>
-			<input type="hidden" name="alt_text" value="<?php echo esc_attr( $alt_text ); ?>">
-			<button type="button" class="button button-success" value="accept">
-				<?php esc_attr_e( 'Accept', 'et' ); ?>
-			</button>
-			<a class="button button-error" href="<?php echo esc_url( admin_url( 'post.php?post=' . $post->ID . '&action=edit' ) ); ?>">
-				<?php esc_attr_e( 'Reject', 'et' ); ?>
-			</a>
-			<a
-				type="button"
-				class="button button-primary"
-				value="regenerate"
-				href="<?php echo esc_url( get_cta_link( $post, true ) ); ?>"
-			>
-				<?php esc_attr_e( 'Regenerate', 'et' ); ?>
-			</a>
-		<?php else : ?>
-			<a
-				class="button button-primary"
-				href="<?php echo esc_url( get_cta_link( $post, ! $is_empty_alt ) ); ?>"
-			>
-				<?php $is_empty_alt ? esc_attr_e( 'Generate Alt Text', 'et' ) : esc_attr_e( 'Regenerate Alt Text', 'et' ); ?>
-			</a>
-		<?php endif; ?>
-	</div>
-	<?php
-	$new_output = ob_get_clean();
-
-	// Modify the original output with the new one.
-	$output = preg_replace(
-		'/<textarea[^>]*\bname=["\']_wp_attachment_image_alt["\'][^>]*\bid=["\']attachment_alt[^"\']*["\'][^>]*>.*?<\/textarea>/is',
-		$new_output,
-		$output
-	);
-
-	// Output the modified output.
-	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-	echo $output;
-}
-
-/**
- * AJAX handler for modifying attachment alt text.
+ * @param WP_Post         $attachment The updated attachment object.
+ * @param WP_REST_Request $request    The request object.
  *
  * @return void
  */
-function ajax_modify_attachment_alt_text(): void {
-	// Check nonce for security.
-	check_ajax_referer( 'modify_alt_text_nonce', 'nonce' );
-
-	// Check user permissions.
-	if ( ! current_user_can( 'edit_posts' ) ) {
-		wp_send_json_error(
-			[
-				'message' => __( 'You do not have permission to modify alt text.', 'trav-ai' ),
-			],
-			403
-		);
-
-		// Bail.
+function handle_rest_alt_text_update( ?WP_Post $attachment = null, ?WP_REST_Request $request = null ): void {
+	// Return early if attachment or request is null.
+	if ( ! $attachment || ! $request ) {
 		return;
 	}
 
-	// Get and validate attachment ID.
-	$attachment_id = isset( $_POST['attachment_id'] ) ? absint( $_POST['attachment_id'] ) : 0;
-
-	// Check if the attachment ID is valid.
-	if ( empty( $attachment_id ) || ! wp_attachment_is_image( $attachment_id ) ) {
-		// Send JSON error.
-		wp_send_json_error(
-			[
-				'message' => __( 'Invalid attachment ID or not an image.', 'trav-ai' ),
-			],
-			400
-		);
-
-		// Bail.
+	// Check if this is an alt text update.
+	if ( ! $request->has_param( 'alt_text' ) ) {
 		return;
 	}
 
-	// Check if user can edit this specific attachment.
-	if ( ! current_user_can( 'edit_post', $attachment_id ) ) {
-		// Send JSON error.
-		wp_send_json_error(
-			[
-				'message' => __( 'You do not have permission to edit this attachment.', 'trav-ai' ),
-			],
-			403
-		);
+	// Get the alt text from the request.
+	$alt_text = $request->get_param( 'alt_text' );
 
-		// Bail.
-		return;
-	}
-
-	// Get and sanitize alt text.
-	$alt_text = isset( $_POST['alt_text'] ) ? sanitize_text_field( $_POST['alt_text'] ) : '';
-
-	// Validate alt text length (WordPress recommends under 125 characters for accessibility).
-	if ( strlen( $alt_text ) > 125 ) {
-		// Send JSON error.
-		wp_send_json_error(
-			[
-				'message' => __( 'Alt text should be 125 characters or less for optimal accessibility.', 'trav-ai' ),
-			],
-			400
-		);
-
-		// Bail.
-		return;
-	}
-
-	// Update the alt text.
-	$updated = update_post_meta( $attachment_id, '_wp_attachment_image_alt', $alt_text );
-
-	// Check if the alt text was updated.
-	if ( false === $updated ) {
-		// Send JSON error.
-		wp_send_json_error(
-			[
-				'message' => __( 'Failed to update alt text. Please try again.', 'trav-ai' ),
-			],
-			500
-		);
-
-		// Bail.
-		return;
-	}
-
-	// Fire action hook after successful alt text modification.
-	do_action( 'trav_ai_alt_text_modified', $attachment_id, $alt_text );
-
-	// Return success response.
-	wp_send_json_success(
-		[
-			'message'       => __( 'Alt text updated successfully.', 'trav-ai' ),
-			'attachment_id' => $attachment_id,
-			'alt_text'      => $alt_text,
-		]
-	);
+	// Fire action hook after successful alt text modification via REST API.
+	do_action( 'trav_ai_alt_text_modified', $attachment->ID, $alt_text );
 }

@@ -12,7 +12,7 @@
     "lint:js": "eslint src --ext .js,.ts,.tsx",
     "lint:css": "stylelint 'src/**/*.{css,scss}'",
     "lint:php": "composer run lint",
-    "lint-test": "npm run lint && npm run static-analysis:php",
+    "lint-test": "npm run lint && npm run test:php && npm run static-analysis:php",
     "test:php": "composer test",
     "static-analysis:php": "composer static-analysis"
   },

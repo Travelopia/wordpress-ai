@@ -114,11 +114,16 @@ function sanitize_settings( ?array $input = null ): array {
 	// Initialize sanitized array.
 	$sanitized = [];
 
+	// Return defaults if input is null.
+	if ( null === $input ) {
+		return get_default_settings();
+	}
+
 	// Sanitize enable checkbox.
 	$sanitized['ai_alt_text_enabled'] = ! empty( $input['ai_alt_text_enabled'] );
 
 	// Sanitize prompt textarea - allow basic HTML but strip scripts.
-	$sanitized['ai_alt_text_prompt'] = sanitize_textarea_field( strval( $input['ai_alt_text_prompt'] ) );
+	$sanitized['ai_alt_text_prompt'] = sanitize_textarea_field( strval( $input['ai_alt_text_prompt'] ?? '' ) );
 
 	// Validate prompt is not empty.
 	if ( empty( trim( $sanitized['ai_alt_text_prompt'] ) ) ) {

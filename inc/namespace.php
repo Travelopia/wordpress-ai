@@ -23,7 +23,7 @@ use function Travelopia_WordPress_AI\Alt_Text\get_default_ai_alt_text_prompt;
  */
 function bootstrap(): void {
 	// Actions.
-	add_action( 'add_attachment', __NAMESPACE__ . '\\maybe_generate_alt_text_on_upload', 20 );	
+	add_action( 'add_attachment', __NAMESPACE__ . '\\maybe_generate_alt_text_on_upload', 20 );
 
 	// Register WP CLI commands.
 	if ( defined( 'WP_CLI' ) && true === WP_CLI && class_exists( 'WP_CLI' ) ) {
@@ -59,7 +59,7 @@ function maybe_generate_alt_text_on_upload( int $attachment_id = 0 ): void {
  *
  * @return mixed Setting value or default.
  */
-function get_setting( string $key, mixed $default_value = null ): mixed {
+function get_setting( string $key = '', mixed $default_value = null ): mixed {
 	// Fetch settings with default fallback.
 	$settings = get_option( 'travelopia_wp_ai_settings', get_default_settings() );
 
@@ -231,7 +231,7 @@ function generate_alt_text_for_attachment( int $attachment_id = 0, bool $update 
 		}
 
 		// Generate AI response.
-		$generated = AiClient::prompt( is_string( $prompt ) ? $prompt : '' )
+		$generated = AiClient::prompt( $prompt )
 			->usingModel( OpenAiProvider::model( strval( $options['model'] ) ) )
 			->usingTemperature( floatval( $options['temperature'] ) )
 			->withFile( $image_url )

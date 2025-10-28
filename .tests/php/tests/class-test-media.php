@@ -8,18 +8,18 @@
  * @package trav-ai
  */
 
-namespace TravAI\Tests;
+namespace Travelopia_WordPress_AI\Tests;
 
 use WP_Post;
 use WP_UnitTestCase;
 use WP_REST_Request;
 
-use function TravAI\admin_enqueue_scripts;
-use function TravAI\bootstrap;
-use function TravAI\get_alt_text_action_url;
-use function TravAI\get_attachment_editor_data;
-use function TravAI\handle_rest_alt_text_update;
-use function TravAI\media_row_actions;
+use function Travelopia_WordPress_AI\Alt_Text\admin_enqueue_scripts;
+use function Travelopia_WordPress_AI\Alt_Text\bootstrap;
+use function Travelopia_WordPress_AI\Alt_Text\get_alt_text_action_url;
+use function Travelopia_WordPress_AI\Alt_Text\get_attachment_editor_data;
+use function Travelopia_WordPress_AI\Alt_Text\handle_rest_alt_text_update;
+use function Travelopia_WordPress_AI\Alt_Text\media_row_actions;
 
 /**
  * Class Test_Media.
@@ -526,26 +526,31 @@ class Test_Media extends WP_UnitTestCase {
 	 */
 	public function test_bootstrap_registers_hooks(): void {
 		// Clear all hooks to test registration from scratch.
-		remove_all_actions( 'add_attachment' );
 		remove_all_actions( 'admin_enqueue_scripts' );
 		remove_all_actions( 'rest_after_insert_attachment' );
 		remove_all_filters( 'media_row_actions' );
+
+		// Enable AI alt text generation for this test.
+		update_option(
+			'travelopia_wp_ai_settings',
+			[
+				'ai_alt_text_enabled' => true,
+				'ai_alt_text_prompt'  => 'Test prompt',
+			]
+		);
 
 		// Call bootstrap to register hooks.
 		bootstrap();
 
 		// Verify hooks are registered.
 		// CRITICAL: All hooks must be registered at correct priorities.
-		// Priority 20 for auto-generation to run after WordPress core.
-		$this->assertEquals( 20, has_action( 'add_attachment', 'TravAI\maybe_generate_alt_text_on_upload' ) );
-
 		// Standard priority 10 for admin scripts.
-		$this->assertEquals( 10, has_action( 'admin_enqueue_scripts', 'TravAI\admin_enqueue_scripts' ) );
+		$this->assertEquals( 10, has_action( 'admin_enqueue_scripts', 'Travelopia_WordPress_AI\Alt_Text\admin_enqueue_scripts' ) );
 
 		// Standard priority 10 for REST API integration.
-		$this->assertEquals( 10, has_action( 'rest_after_insert_attachment', 'TravAI\handle_rest_alt_text_update' ) );
+		$this->assertEquals( 10, has_action( 'rest_after_insert_attachment', 'Travelopia_WordPress_AI\Alt_Text\handle_rest_alt_text_update' ) );
 
 		// Standard priority 10 for media row actions filter.
-		$this->assertEquals( 10, has_filter( 'media_row_actions', 'TravAI\media_row_actions' ) );
+		$this->assertEquals( 10, has_filter( 'media_row_actions', 'Travelopia_WordPress_AI\Alt_Text\media_row_actions' ) );
 	}
 }

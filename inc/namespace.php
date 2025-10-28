@@ -2,10 +2,10 @@
 /**
  * Namespace functions.
  *
- * @package trav-ai
+ * @package travelopia-wp-ai
  */
 
-namespace TravAI;
+namespace Travelopia_WordPress_AI;
 
 use WordPress\AiClient\AiClient;
 use WordPress\AiClient\ProviderImplementations\OpenAi\OpenAiProvider;
@@ -14,7 +14,9 @@ use WP_CLI;
 use WP_Post;
 use WP_REST_Request;
 
-use function TravAI\Admin\get_default_settings;
+use function Travelopia_WordPress_AI\Admin\get_default_settings;
+
+use function Travelopia_WordPress_AI\Alt_Text\get_default_ai_alt_text_prompt;
 
 /**
  * Bootstrap plugin.
@@ -32,10 +34,10 @@ function bootstrap(): void {
 
 	// Register WP CLI commands.
 	if ( defined( 'WP_CLI' ) && true === WP_CLI && class_exists( 'WP_CLI' ) ) {
-		require_once __DIR__ . '/wp-cli/class-generate-alt-text.php';
+		require_once __DIR__ . '/wp-cli/class-alt-text.php';
 
 		// Register commands.
-		WP_CLI::add_command( 'travai alt-text', __NAMESPACE__ . '\\WP_CLI\\Generate_Alt_Text' );
+		WP_CLI::add_command( 'travelopia-wp-ai alt-text', __NAMESPACE__ . '\\WP_CLI\\Alt_Text' );
 	}
 }
 
@@ -48,7 +50,7 @@ function bootstrap(): void {
  */
 function maybe_generate_alt_text_on_upload( int $attachment_id = 0 ): void {
 	// Validate attachment is an image and plugin is enabled.
-	if ( ! wp_attachment_is_image( $attachment_id ) || ! get_ai_setting( 'ai_alt_text_enabled', false ) ) {
+	if ( ! wp_attachment_is_image( $attachment_id ) || ! get_setting( 'ai_alt_text_enabled', false ) ) {
 		return;
 	}
 
@@ -64,9 +66,9 @@ function maybe_generate_alt_text_on_upload( int $attachment_id = 0 ): void {
  *
  * @return mixed Setting value or default.
  */
-function get_ai_setting( string $key = '', mixed $default_value = null ): mixed {
+function get_setting( string $key, mixed $default_value = null ): mixed {
 	// Fetch settings with default fallback.
-	$settings = get_option( 'travai_settings', get_default_settings() );
+	$settings = get_option( 'travelopia_wp_ai_settings', get_default_settings() );
 
 	// Ensure settings is an array.
 	if ( ! is_array( $settings ) ) {
@@ -170,13 +172,13 @@ function admin_enqueue_scripts(): void {
 	}
 
 	// Enqueue editor scripts.
-	wp_enqueue_script( 'trav-ai-editor', plugins_url( 'dist/editor.js', __DIR__ ), [ 'wp-dom-ready', 'media-editor' ], '1.0.0', true );
+	wp_enqueue_script( 'trav-ai-editor', plugins_url( 'dist/editor.js', __DIR__ ), [], '1.0.0', true );
 	wp_enqueue_style( 'trav-ai-editor', plugins_url( 'dist/editor.css', __DIR__ ), [], '1.0.0' );
 
 	// Localize script with all necessary data.
 	wp_localize_script(
 		'trav-ai-editor',
-		'travAi',
+		'travelopiaWpAi',
 		[
 			'api'        => [
 				'root'  => rest_url(),
@@ -196,12 +198,12 @@ function admin_enqueue_scripts(): void {
 				'reject'     => admin_url( 'post.php?post=' . $post->ID . '&action=edit' ),
 			],
 			'labels'     => [
-				'generateAltText'   => __( 'Generate Alt Text', 'trav-ai' ),
-				'regenerateAltText' => __( 'Regenerate Alt Text', 'trav-ai' ),
-				'accept'            => __( 'Accept', 'trav-ai' ),
-				'reject'            => __( 'Reject', 'trav-ai' ),
-				'regenerate'        => __( 'Regenerate', 'trav-ai' ),
-				'saving'            => __( 'Saving...', 'trav-ai' ),
+				'generateAltText'   => __( 'Generate Alt Text', 'travelopia-wp-ai' ),
+				'regenerateAltText' => __( 'Regenerate Alt Text', 'travelopia-wp-ai' ),
+				'accept'            => __( 'Accept', 'travelopia-wp-ai' ),
+				'reject'            => __( 'Reject', 'travelopia-wp-ai' ),
+				'regenerate'        => __( 'Regenerate', 'travelopia-wp-ai' ),
+				'saving'            => __( 'Saving...', 'travelopia-wp-ai' ),
 			],
 		]
 	);
@@ -221,28 +223,28 @@ function generate_alt_text_for_attachment( int $attachment_id = 0, bool $update 
 		return [
 			'success'  => false,
 			'alt_text' => '',
-			'error'    => __( 'Invalid attachment ID or not an image', 'trav-ai' ),
+			'error'    => __( 'Invalid attachment ID or not an image', 'travelopia-wp-ai' ),
 		];
 	}
 
 	// Check if AI alt text generation is enabled.
-	if ( ! get_ai_setting( 'ai_alt_text_enabled', false ) ) {
+	if ( ! get_setting( 'ai_alt_text_enabled', false ) ) {
 		return [
 			'success'  => false,
 			'alt_text' => '',
-			'error'    => __( 'AI alt text generation is not enabled', 'trav-ai' ),
+			'error'    => __( 'AI alt text generation is not enabled', 'travelopia-wp-ai' ),
 		];
 	}
 
 	// Get the AI prompt from settings.
-	$ai_prompt = get_ai_setting( 'ai_alt_text_prompt', '' );
+	$ai_prompt = get_setting( 'ai_alt_text_prompt', '' );
 
 	// Validate prompt is configured.
 	if ( empty( $ai_prompt ) || ! is_string( $ai_prompt ) ) {
 		return [
 			'success'  => false,
 			'alt_text' => '',
-			'error'    => __( 'AI prompt is not configured', 'trav-ai' ),
+			'error'    => __( 'AI prompt is not configured', 'travelopia-wp-ai' ),
 		];
 	}
 
@@ -251,7 +253,7 @@ function generate_alt_text_for_attachment( int $attachment_id = 0, bool $update 
 		return [
 			'alt_text' => '',
 			'success'  => false,
-			'error'    => __( 'AI Client not available', 'trav-ai' ),
+			'error'    => __( 'AI Client not available', 'travelopia-wp-ai' ),
 		];
 	}
 
@@ -293,7 +295,7 @@ function generate_alt_text_for_attachment( int $attachment_id = 0, bool $update 
 		return [
 			'success'  => false,
 			'alt_text' => '',
-			'error'    => __( 'Invalid prompt type after filtering', 'trav-ai' ),
+			'error'    => __( 'Invalid prompt type after filtering', 'travelopia-wp-ai' ),
 		];
 	}
 
@@ -309,7 +311,7 @@ function generate_alt_text_for_attachment( int $attachment_id = 0, bool $update 
 		if ( $title ) {
 			$context_parts[] = sprintf(
 				/* translators: %s: title */
-				__( 'title: %s', 'trav-ai' ),
+				__( 'title: %s', 'travelopia-wp-ai' ),
 				$title
 			);
 		}
@@ -322,7 +324,7 @@ function generate_alt_text_for_attachment( int $attachment_id = 0, bool $update 
 	if ( $context ) {
 		$prompt .= sprintf(
 			/* translators: %s: context */
-			__( ' Additional context: %s', 'trav-ai' ),
+			__( ' Additional context: %s', 'travelopia-wp-ai' ),
 			$context
 		);
 	}
@@ -334,19 +336,19 @@ function generate_alt_text_for_attachment( int $attachment_id = 0, bool $update 
 			return [
 				'success'  => false,
 				'alt_text' => '',
-				'error'    => __( 'OpenAI API key not configured', 'trav-ai' ),
+				'error'    => __( 'OpenAI API key not configured', 'travelopia-wp-ai' ),
 			];
 		}
 
 		// Get the API key.
-		$api_key = defined( 'OPENAI_API_KEY' ) ? OPENAI_API_KEY : getenv( 'OPENAI_API_KEY' );
+		$api_key = defined( 'OPENAI_API_KEY' ) ? constant( 'OPENAI_API_KEY' ) : getenv( 'OPENAI_API_KEY' );
 
 		// Validate API key is not empty.
 		if ( empty( $api_key ) ) {
 			return [
 				'success'  => false,
 				'alt_text' => '',
-				'error'    => __( 'OpenAI API key is empty', 'trav-ai' ),
+				'error'    => __( 'OpenAI API key is empty', 'travelopia-wp-ai' ),
 			];
 		}
 
@@ -361,12 +363,12 @@ function generate_alt_text_for_attachment( int $attachment_id = 0, bool $update 
 			return [
 				'success'  => false,
 				'alt_text' => '',
-				'error'    => __( 'Could not get image URL or is not a string.', 'trav-ai' ),
+				'error'    => __( 'Could not get image URL or is not a string.', 'travelopia-wp-ai' ),
 			];
 		}
 
 		// Generate AI response.
-		$generated = AiClient::prompt( $prompt )
+		$generated = AiClient::prompt( is_string( $prompt ) ? $prompt : '' )
 			->usingModel( OpenAiProvider::model( strval( $options['model'] ) ) )
 			->usingTemperature( floatval( $options['temperature'] ) )
 			->withFile( $image_url )
@@ -381,7 +383,7 @@ function generate_alt_text_for_attachment( int $attachment_id = 0, bool $update 
 			return [
 				'success'  => false,
 				'alt_text' => '',
-				'error'    => __( 'AI generated empty response', 'trav-ai' ),
+				'error'    => __( 'AI generated empty response', 'travelopia-wp-ai' ),
 			];
 		}
 
@@ -405,7 +407,7 @@ function generate_alt_text_for_attachment( int $attachment_id = 0, bool $update 
 			'alt_text' => '',
 			'error'    => sprintf(
 				/* translators: %s: error message */
-				__( 'AI generation failed: %s', 'trav-ai' ),
+				__( 'AI generation failed: %s', 'travelopia-wp-ai' ),
 				$e->getMessage()
 			),
 		];
@@ -425,12 +427,12 @@ function activate_plugin(): void {
 	// Initialize default settings if they don't exist.
 	$default_settings = [
 		'ai_alt_text_enabled' => false,
-		'ai_prompt'           => __( 'Describe this image in a concise, informative way for alt text. Focus on the main subject and important details that would help someone understand what is in the image.', 'trav-ai' ),
+		'ai_alt_text_prompt'  => get_default_ai_alt_text_prompt(),
 	];
 
 	// Only set defaults if no settings exist yet.
-	if ( false === get_option( 'travai_settings' ) ) {
-		add_option( 'travai_settings', $default_settings );
+	if ( false === get_option( 'travelopia_wp_ai_settings' ) ) {
+		add_option( 'travelopia_wp_ai_settings', $default_settings );
 	}
 }
 
@@ -465,7 +467,7 @@ function media_row_actions( array $actions = [], ?WP_Post $post = null ): array 
 	$actions['generate_alt_text'] = sprintf(
 		'<a href="%s">%s</a>',
 		esc_url( $url ),
-		empty( $alt_text ) ? __( 'Generate Alt Text', 'trav-ai' ) : __( 'Regenerate Alt Text', 'trav-ai' )
+		empty( $alt_text ) ? __( 'Generate Alt Text', 'travelopia-wp-ai' ) : __( 'Regenerate Alt Text', 'travelopia-wp-ai' )
 	);
 
 	// Return the updated actions.

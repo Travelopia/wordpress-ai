@@ -1,4 +1,4 @@
-## TravAI WordPress Plugin
+## Travelopia WP AI WordPress Plugin
 
 **What it does**: Automatically generates image alt text using AI when you upload an image to the Media Library, or when editing an existing image.
 
@@ -15,7 +15,7 @@
 
 ### Install
 1. Copy the `wordpress-ai` folder into `wp-content/plugins/`.
-2. Activate "TravAI" in Plugins.
+2. Activate "Travelopia WordPress AI" in Plugins.
 
 ### Configure
 - Set your OpenAI API key (environment variable or wp-config.php).

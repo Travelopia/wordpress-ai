@@ -38,13 +38,13 @@ class AltTextReject extends HTMLElement {
 	 */
 	private render(): void {
 		// Check if we have the necessary data.
-		if ( ! window.travAi || ! window.travAi.urls || ! window.travAi.labels ) {
+		if ( ! window.travelopiaWpAi || ! window.travelopiaWpAi.urls || ! window.travelopiaWpAi.labels ) {
 			// Exit early if required data is not available.
 			return;
 		}
 
 		// Extract URLs and labels from global travAi object.
-		const { urls, labels } = window.travAi;
+		const { urls, labels } = window.travelopiaWpAi;
 
 		// Set the attributes.
 		this.className = 'button button-primary';

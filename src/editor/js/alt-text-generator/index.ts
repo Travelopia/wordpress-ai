@@ -14,11 +14,11 @@ import './alt-text-reject';
  * Initialize alt text action buttons on DOM ready.
  */
 window.addEventListener( 'DOMContentLoaded', () => {
-	// Get the travAi object from window.
-	const { travAi } = window;
+	// Get the travelopiaWpAi object from window.
+	const { travelopiaWpAi } = window;
 
 	// Check if we have the necessary data.
-	if ( ! travAi?.attachment ) {
+	if ( ! travelopiaWpAi?.attachment ) {
 		// Exit early if attachment data is not available.
 		return;
 	}
@@ -34,8 +34,8 @@ window.addEventListener( 'DOMContentLoaded', () => {
 		return;
 	}
 
-	// Extract attachment data from travAi object.
-	const { id, altText, mode } = travAi.attachment;
+	// Extract attachment data from travelopiaWpAi object.
+	const { id, altText, mode } = travelopiaWpAi.attachment;
 
 	// Update textarea if needed.
 	if ( altText && textarea.value !== altText ) {

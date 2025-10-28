@@ -41,13 +41,13 @@ class AltTextGenerator extends HTMLElement {
 		this.innerHTML = '';
 
 		// Check if we have the necessary data.
-		if ( ! window.travAi || ! window.travAi.attachment || ! window.travAi.urls ) {
+		if ( ! window.travelopiaWpAi || ! window.travelopiaWpAi.attachment || ! window.travelopiaWpAi.urls ) {
 			// Exit early if required data is not available.
 			return;
 		}
 
 		// Extract data from global travAi object.
-		const { attachment, urls, labels } = window.travAi;
+		const { attachment, urls, labels } = window.travelopiaWpAi;
 		const { altText } = attachment;
 		const isEmpty = ! altText || altText.trim() === '';
 

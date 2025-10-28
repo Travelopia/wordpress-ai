@@ -35,13 +35,13 @@ class AltTextAccept extends HTMLElement {
 	 */
 	private render(): void {
 		// Check if we have the necessary data.
-		if ( ! window.travAi || ! window.travAi.labels ) {
+		if ( ! window.travelopiaWpAi || ! window.travelopiaWpAi.labels ) {
 			// Exit early if data is not available.
 			return;
 		}
 
 		// Extract labels from global travAi object.
-		const { labels } = window.travAi;
+		const { labels } = window.travelopiaWpAi;
 
 		// Create the accept button.
 		this.className = 'button button-primary';
@@ -80,14 +80,14 @@ class AltTextAccept extends HTMLElement {
 		const altText = textarea?.value || '';
 
 		// Get labels for button text.
-		const savingText = window.travAi?.labels?.saving || 'Saving...';
-		const acceptText = window.travAi?.labels?.accept || 'Accept';
+		const savingText = window.travelopiaWpAi?.labels?.saving || 'Saving...';
+		const acceptText = window.travelopiaWpAi?.labels?.accept || 'Accept';
 
 		// Disable button during request.
 		this.textContent = savingText;
 
 		// Get REST API nonce.
-		const restNonce = window.travAi?.nonces?.rest || '';
+		const restNonce = window.travelopiaWpAi?.nonces?.rest || '';
 
 		// Validate REST API nonce exists.
 		if ( ! restNonce ) {
@@ -102,7 +102,7 @@ class AltTextAccept extends HTMLElement {
 		// Attempt to save alt text via REST API.
 		try {
 			// Use WordPress Media REST API.
-			const restUrl = window.travAi?.api?.root || '/wp-json/';
+			const restUrl = window.travelopiaWpAi?.api?.root || '/wp-json/';
 			const mediaEndpoint = `${ restUrl }wp/v2/media/${ attachmentId }`;
 
 			// Make REST API request.

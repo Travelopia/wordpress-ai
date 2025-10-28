@@ -106,11 +106,11 @@ function get_default_settings(): array {
 /**
  * Sanitize settings input.
  *
- * @param array<string,mixed> $input Raw input from the form.
+ * @param array<string,mixed>|null $input Raw input from the form.
  *
  * @return array<string,mixed> Sanitized settings.
  */
-function sanitize_settings( array $input = [] ): array {
+function sanitize_settings( ?array $input = null ): array {
 	// Initialize sanitized array.
 	$sanitized = [];
 

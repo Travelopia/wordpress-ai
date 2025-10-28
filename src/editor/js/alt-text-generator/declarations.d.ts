@@ -7,7 +7,7 @@
  */
 declare global {
 	interface Window {
-		travAi?: {
+		travelopiaWpAi?: {
 			api: {
 				root: string;
 				nonce: string;

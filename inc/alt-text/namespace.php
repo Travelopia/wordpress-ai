@@ -625,6 +625,14 @@ function get_attachment_editor_data(): ?array {
 		return null;
 	}
 
+	// Validate nonce.
+	$valid_request = ! isset( $_GET['tp_nonce'] ) ? false : wp_verify_nonce( $_GET['tp_nonce'], 'generate_alt_text_' . $post_id );
+
+	// Return if nonce is not valid.
+	if ( ! $valid_request ) {
+		return null;
+	}
+
 	// Get post object.
 	$post = get_post( $post_id );
 
@@ -640,20 +648,19 @@ function get_attachment_editor_data(): ?array {
 
 	// Get the existing alt text.
 	$is_regeneration = isset( $_GET['tp_regenerate_alt_text'] );
-	$valid_request   = ! isset( $_GET['tp_nonce'] ) ? false : wp_verify_nonce( $_GET['tp_nonce'], 'generate_alt_text_' . $post->ID );
 	$is_generation   = isset( $_GET['tp_generate_alt_text'] );
 	$alt_text        = get_post_meta( $post->ID, '_wp_attachment_image_alt', true );
 	$is_empty_alt    = empty( $alt_text );
 
 	// If query args has tp_generate_alt_text, then generate the alt text and save it.
-	if ( $is_generation && $valid_request && $is_empty_alt ) {
+	if ( $is_generation && $is_empty_alt ) {
 		$result       = generate_alt_text_for_attachment( $post->ID, true );
 		$alt_text     = $result['alt_text'] ?? '';
 		$is_empty_alt = false;
 	}
 
 	// If query args has tp_regenerate_alt_text, then regenerate the alt text.
-	if ( $is_regeneration && $valid_request ) {
+	if ( $is_regeneration ) {
 		$result = generate_alt_text_for_attachment( $post->ID, false );
 
 		// On success, update the alt text.
@@ -696,12 +703,12 @@ function admin_enqueue_scripts(): void {
 	}
 
 	// Enqueue editor scripts.
-	wp_enqueue_script( 'trav-ai-editor', plugins_url( 'dist/editor.js', plugin_dir_path( __DIR__ ) ), [], '1.0.0', true );
-	wp_enqueue_style( 'trav-ai-editor', plugins_url( 'dist/editor.css', plugin_dir_path( __DIR__ ) ), [], '1.0.0' );
+	wp_enqueue_script( 'travelopia-wp-ai-editor', plugins_url( 'dist/editor.js', plugin_dir_path( __DIR__ ) ), [], '1.0.0', true );
+	wp_enqueue_style( 'travelopia-wp-ai-editor', plugins_url( 'dist/editor.css', plugin_dir_path( __DIR__ ) ), [], '1.0.0' );
 
 	// Localize script with all necessary data.
 	wp_localize_script(
-		'trav-ai-editor',
+		'travelopia-wp-ai-editor',
 		'travelopiaWpAi',
 		[
 			'api'        => [

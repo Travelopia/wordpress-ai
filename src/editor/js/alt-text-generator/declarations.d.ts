@@ -3,7 +3,7 @@
  */
 
 /**
- * Global travAi object provided by WordPress localization.
+ * Global travelopiaWpAi object provided by WordPress localization.
  */
 declare global {
 	interface Window {

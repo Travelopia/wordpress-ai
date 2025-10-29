@@ -43,7 +43,7 @@ class AltTextReject extends HTMLElement {
 			return;
 		}
 
-		// Extract URLs and labels from global travAi object.
+		// Extract URLs and labels from global travelopiaWpAi object.
 		const { urls, labels } = window.travelopiaWpAi;
 
 		// Set the attributes.

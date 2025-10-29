@@ -216,7 +216,7 @@ function generate_alt_text_for_attachment( int $attachment_id = 0, bool $update 
 		}
 
 		// Get actual image URL for the attachment.
-		$image_url = get_the_guid( $attachment_id );
+		$image_url = wp_get_attachment_url( $attachment_id );
 
 		// Filter the image URL if needed.
 		$image_url = apply_filters( 'trav_ai_image_url', $image_url, $attachment_id );

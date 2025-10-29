@@ -13,14 +13,14 @@ A modular web component system for AI-powered alt text generation in WordPress m
 
 **Data Flow:**
 
-- Global: `window.travAi` (config, URLs, labels, attachment data, nonces)
+- Global: `window.travelopiaWpAi` (config, URLs, labels, attachment data, nonces)
 - Attributes: `attachment-id`, `mode` (observed, reactive)
 - Events: `alttext:generate`, `alttext:accepted`, `alttext:rejected`, `alttext:error`
 
 **API Calls:**
 
 - Accept: `POST /wp/v2/media/{id}` with `alt_text` (REST API, needs X-WP-Nonce)
-- Generator/Reject: Page navigation via URLs from `window.travAi.urls`
+- Generator/Reject: Page navigation via URLs from `window.travelopiaWpAi.urls`
 
 **Files:** 6 total (index.ts, declarations.d.ts, 4 component files)
 
@@ -101,8 +101,8 @@ alt-text-generator/
 **Behavior:**
 
 - Button text: "Generate Alt Text" (empty alt text) or "Regenerate Alt Text" (existing alt text)
-- Click → Dispatches `alttext:generate` event → Navigates to `window.travAi.urls.generate` or `urls.regenerate`
-- URL is determined by checking if `window.travAi.attachment.altText` is empty
+- Click → Dispatches `alttext:generate` event → Navigates to `window.travelopiaWpAi.urls.generate` or `urls.regenerate`
+- URL is determined by checking if `window.travelopiaWpAi.attachment.altText` is empty
 
 **Custom Events:**
 
@@ -129,7 +129,7 @@ alt-text-generator/
 **Behavior:**
 
 - Click → Changes text to "Saving..." → POST to `/wp/v2/media/{id}` → Redirect to clean edit URL
-- Uses REST API nonce from `window.travAi.nonces.rest`
+- Uses REST API nonce from `window.travelopiaWpAi.nonces.rest`
 - Reads alt text from `textarea[name="_wp_attachment_image_alt"]#attachment_alt`
 - Success: Redirects to `post={id}&action=edit` (removes generation parameters)
 - Failure: Restores button text, dispatches error event
@@ -140,7 +140,7 @@ alt-text-generator/
 POST {root}/wp/v2/media/{attachmentId}
 Headers:
   Content-Type: application/json
-  X-WP-Nonce: {window.travAi.nonces.rest}
+  X-WP-Nonce: {window.travelopiaWpAi.nonces.rest}
 Body:
   { "alt_text": "..." }
 ```
@@ -172,7 +172,7 @@ Body:
 
 **Behavior:**
 
-- Click → Dispatches `alttext:rejected` event → Navigates to `window.travAi.urls.reject`
+- Click → Dispatches `alttext:rejected` event → Navigates to `window.travelopiaWpAi.urls.reject`
 - Reject URL typically clears generation parameters and reloads with clean state
 
 **Custom Events:**
@@ -186,10 +186,10 @@ Body:
 
 ### Global Configuration
 
-All components depend on `window.travAi` object injected via WordPress localization:
+All components depend on `window.travelopiaWpAi` object injected via WordPress localization:
 
 ```typescript
-window.travAi = {
+window.travelopiaWpAi = {
 	api: {
 		root: string, // REST API root (/wp-json/)
 		nonce: string, // API nonce
@@ -221,7 +221,7 @@ window.travAi = {
 ### Initialization Flow
 
 1. **DOMContentLoaded**: `index.ts` waits for DOM ready
-2. **Validation**: Checks for `window.travAi.attachment` and textarea element
+2. **Validation**: Checks for `window.travelopiaWpAi.attachment` and textarea element
 3. **Wrapper Creation**: Wraps existing textarea in `.alt-text-wrapper` div
 4. **Container Injection**: Creates `<alt-text-container>` with `mode` and `attachment-id` attributes
 5. **Auto-render**: Container observes attributes and renders appropriate children
@@ -276,7 +276,7 @@ The PHP backend (`inc/namespace.php`) should:
 1. **Localize Script**:
 
 ```php
-wp_localize_script('wordpress-ai-editor', 'travAi', [
+wp_localize_script('travelopia-wp-ai-editor', 'travelopiaWpAi', [
     'api' => [
         'root' => esc_url_raw(rest_url()),
         'nonce' => wp_create_nonce('wp_rest')
@@ -400,8 +400,8 @@ These components rely on backend URL handling. If URLs are invalid, navigation w
 Full type definitions are provided in `declarations.d.ts`. To use types in external code:
 
 ```typescript
-// TypeScript automatically recognizes window.travAi
-const { attachment, urls } = window.travAi;
+// TypeScript automatically recognizes window.travelopiaWpAi
+const { attachment, urls } = window.travelopiaWpAi;
 
 // Custom events are typed via standard DOM events
 document.addEventListener("alttext:accepted", (event: CustomEvent) => {
@@ -432,7 +432,7 @@ npm run watch
 
 ## Best Practices
 
-1. **Always provide `window.travAi`**: Components will exit gracefully if missing, but no UI will render
+1. **Always provide `window.travelopiaWpAi`**: Components will exit gracefully if missing, but no UI will render
 2. **Use observed attributes for state**: Leverage reactive attribute changes instead of manual updates
 3. **Listen to custom events**: Hook into events for logging, analytics, or additional functionality
 4. **Handle errors externally**: Listen to `alttext:error` events for user notifications
@@ -443,9 +443,9 @@ npm run watch
 
 | Issue                   | Cause                          | Solution                              |
 | ----------------------- | ------------------------------ | ------------------------------------- |
-| No buttons appear       | `window.travAi` not defined    | Check script localization             |
+| No buttons appear       | `window.travelopiaWpAi` not defined    | Check script localization             |
 | Accept fails silently   | Invalid REST nonce             | Verify `wp_create_nonce('wp_rest')`   |
-| Wrong button text       | `window.travAi.labels` missing | Ensure all labels are localized       |
+| Wrong button text       | `window.travelopiaWpAi.labels` missing | Ensure all labels are localized       |
 | Attributes not updating | Not in `observedAttributes`    | Add to static getter array            |
 | Events not firing       | No listener attached           | Add event listener before interaction |
 

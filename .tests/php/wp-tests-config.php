@@ -3,9 +3,9 @@
  * WordPress PHPUnit test configuration.
  *
  * Configures the test database, WordPress constants, and directory structure
- * required for running PHPUnit tests for the TravAI plugin.
+ * required for running PHPUnit tests for the WordPress AI plugin.
  *
- * @package wordpress-ai
+ * @package travelopia-wp-ai
  *
  * @phpcs:disable PSR1.Files.SideEffects
  */

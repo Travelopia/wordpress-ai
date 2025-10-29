@@ -40,7 +40,7 @@ class AltTextAccept extends HTMLElement {
 			return;
 		}
 
-		// Extract labels from global travAi object.
+		// Extract labels from global travelopiaWpAi object.
 		const { labels } = window.travelopiaWpAi;
 
 		// Create the accept button.

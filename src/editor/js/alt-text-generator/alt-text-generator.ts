@@ -46,7 +46,7 @@ class AltTextGenerator extends HTMLElement {
 			return;
 		}
 
-		// Extract data from global travAi object.
+		// Extract data from global travelopiaWpAi object.
 		const { attachment, urls, labels } = window.travelopiaWpAi;
 		const { altText } = attachment;
 		const isEmpty = ! altText || altText.trim() === '';

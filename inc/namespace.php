@@ -49,7 +49,7 @@ function bootstrap(): void {
  *
  * @return void
  */
-function maybe_generate_alt_text_on_upload( int $attachment_id ): void {
+function maybe_generate_alt_text_on_upload( int $attachment_id = 0 ): void {
 	// Validate attachment is an image and plugin is enabled.
 	if (
 			! wp_attachment_is_image( $attachment_id )
@@ -70,7 +70,7 @@ function maybe_generate_alt_text_on_upload( int $attachment_id ): void {
  *
  * @return mixed Setting value or default.
  */
-function get_setting( string $key, mixed $default_value = null ): mixed {
+function get_setting( string $key = '', mixed $default_value = null ): mixed {
 	// Fetch settings with default fallback.
 	$settings = get_option( 'travelopia_wp_ai_settings', get_default_settings() );
 
@@ -116,7 +116,7 @@ function admin_enqueue_scripts(): void {
  *
  * @return array{success: bool, alt_text?: string, error?: string}
  */
-function generate_alt_text_for_attachment( int $attachment_id, bool $update = true ) {
+function generate_alt_text_for_attachment( int $attachment_id = 0, bool $update = true ): array {
 	// Early validation checks.
 	if ( ! function_exists( 'wp_attachment_is_image' ) || ! wp_attachment_is_image( $attachment_id ) ) {
 		return [
@@ -334,9 +334,9 @@ function activate_plugin(): void {
  *
  * @return mixed[]
  */
-function media_row_actions( array $actions, WP_Post $post ): array {
-	// Return early if the post is not an image.
-	if ( 'attachment' !== $post->post_type || strpos( $post->post_mime_type, 'image' ) === false ) {
+function media_row_actions( array $actions = [], WP_Post $post = null ): array {
+	// Return early if post is null or not an image.
+	if ( ! $post instanceof WP_Post || 'attachment' !== $post->post_type || strpos( $post->post_mime_type, 'image' ) === false ) {
 		return $actions;
 	}
 
@@ -376,7 +376,12 @@ function remove_image_editor(): void {
  *
  * @return string
  */
-function get_cta_link( WP_Post $post, bool $is_regeneration ): string {
+function get_cta_link( WP_Post $post = null, bool $is_regeneration = false ): string {
+	// Return empty string if post is null.
+	if ( ! $post instanceof WP_Post ) {
+		return '';
+	}
+
 	// Return the nonce URL.
 	return wp_nonce_url(
 		admin_url( 'post.php?post=' . $post->ID . '&action=edit&' . ( $is_regeneration ? 'tp_regenerate_alt_text=true' : 'tp_generate_alt_text=true' ) ),
@@ -392,9 +397,9 @@ function get_cta_link( WP_Post $post, bool $is_regeneration ): string {
  *
  * @return void
  */
-function modify_image_editor( WP_Post $post ): void {
-	// Return early if the post is not an image.
-	if ( 'attachment' !== $post->post_type || strpos( $post->post_mime_type, 'image' ) === false ) {
+function modify_image_editor( WP_Post $post = null ): void {
+	// Return early if post is null or not an image.
+	if ( ! $post instanceof WP_Post || 'attachment' !== $post->post_type || strpos( $post->post_mime_type, 'image' ) === false ) {
 		return;
 	}
 

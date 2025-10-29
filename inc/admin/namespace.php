@@ -110,7 +110,7 @@ function get_default_settings(): array {
  *
  * @return array<string,mixed> Sanitized settings.
  */
-function sanitize_settings( array $input ): array {
+function sanitize_settings( array $input = [] ): array {
 	// Initialize sanitized array.
 	$sanitized = [];
 
@@ -177,7 +177,7 @@ function render_prompt_field(): void {
  *
  * @return array<string> Modified plugin action links.
  */
-function add_settings_link( array $links ): array {
+function add_settings_link( array $links = [] ): array {
 	// Create settings link.
 	$settings_link = sprintf(
 		'<a href="%s">%s</a>',
@@ -199,7 +199,7 @@ function add_settings_link( array $links ): array {
  *
  * @return void
  */
-function enqueue_admin_styles( string $hook_suffix ): void {
+function enqueue_admin_styles( string $hook_suffix = '' ): void {
 	// Only load on our settings page.
 	if ( 'settings_page_travelopia-wp-ai-settings' !== $hook_suffix ) {
 		return;

@@ -12,9 +12,6 @@ use WP_Post;
 use WP_Query;
 use WP_REST_Request;
 
-/**
- * Alt Text class.
- */
 class AltText
 {
 	/**
@@ -31,17 +28,14 @@ class AltText
 	 */
 	public static function bootstrap(): void
 	{
-		// If AI alt text generation is not enabled.
-		if ( ! get_setting( 'ai_alt_text_enabled', false ) ) {
-			// Bail.
+		// Check if this module is enabled.
+		if ( true !== WordPressAI::get_setting( 'alt_text_generation', false ) ) {
 			return;
 		}
 
-		// Actions.
+		// Hooks.
 		add_action( 'admin_enqueue_scripts', [ __CLASS__, 'admin_enqueue_scripts' ] );
 		add_action( 'rest_after_insert_attachment', [ __CLASS__, 'handle_rest_alt_text_update' ], 10, 2 );
-
-		// Filters.
 		add_filter( 'media_row_actions', [ __CLASS__, 'media_row_actions' ], 10, 2 );
 	}
 
@@ -52,7 +46,6 @@ class AltText
 	 */
 	public static function get_default_ai_alt_text_prompt(): string
 	{
-		// Return the prompt.
 		return __( 'Describe this image in a concise, informative way for alt text. Focus on the main subject and important details that would help someone understand what is in the image.', 'travelopia-wp-ai' );
 	}
 
@@ -63,7 +56,6 @@ class AltText
 	 */
 	public static function get_missing_alt_text_meta_query(): array
 	{
-		// Return meta query for missing alt text filter.
 		return [
 			'relation' => 'OR',
 			[
@@ -89,36 +81,9 @@ class AltText
 	 */
 	public static function create_alt_text_error( string $error_code = '', string $error_message = '', array $error_data = [] ): WP_Error
 	{
-		// Create WP_Error instance.
 		$error = new WP_Error( $error_code, $error_message, $error_data );
-
-		// Fire action hook for error tracking.
 		do_action( 'trav_ai_alt_text_error', $error_code, $error_message, $error_data );
-
-		// Return the error instance.
 		return $error;
-	}
-
-	/**
-	 * Handle alt text processing errors consistently.
-	 *
-	 * @param string               $error_code    Error code.
-	 * @param string               $error_message Error message.
-	 * @param array<string, mixed> $error_data    Additional error data.
-	 *
-	 * @return array<string, mixed>
-	 */
-	public static function handle_alt_text_error( string $error_code = '', string $error_message = '', array $error_data = [] ): array
-	{
-		// Create error and fire action hook.
-		$error = self::create_alt_text_error( $error_code, $error_message, $error_data );
-
-		// Return standardized error array.
-		return [
-			'success'    => false,
-			'error'      => $error_message,
-			'error_code' => $error_code,
-		];
 	}
 
 	/**
@@ -131,7 +96,6 @@ class AltText
 	 */
 	public static function get_images_to_process( array $image_ids = [], bool $missing_only = false ): array
 	{
-		// Build query arguments.
 		$query_args = [
 			'post_type'              => 'attachment',
 			'post_mime_type'         => 'image',
@@ -144,15 +108,12 @@ class AltText
 			'update_post_term_cache' => false,
 		];
 
-		// Filter for images missing alt text if requested.
 		if ( $missing_only ) {
 			$query_args['meta_query'] = self::get_missing_alt_text_meta_query();
 		}
 
-		// Get images.
 		$images_query = new WP_Query( $query_args );
 
-		// Return images.
 		return array_map( 'absint', $images_query->posts );
 	}
 
@@ -167,7 +128,6 @@ class AltText
 	 */
 	public static function get_all_images( bool $missing_only = false, int $page = 1, int $per_page = self::DEFAULT_BATCH_SIZE ): array
 	{
-		// Build query arguments for all images.
 		$query_args = [
 			'post_type'              => 'attachment',
 			'post_mime_type'         => 'image',
@@ -180,15 +140,12 @@ class AltText
 			'update_post_term_cache' => false,
 		];
 
-		// Filter for images missing alt text if requested.
 		if ( $missing_only ) {
 			$query_args['meta_query'] = self::get_missing_alt_text_meta_query();
 		}
 
-		// Get images.
 		$images_query = new WP_Query( $query_args );
 
-		// Return images.
 		return array_map( 'absint', $images_query->posts );
 	}
 
@@ -201,7 +158,6 @@ class AltText
 	 */
 	public static function get_images_count( bool $missing_only = false ): int
 	{
-		// Build query arguments for counting.
 		$query_args = [
 			'post_type'              => 'attachment',
 			'post_mime_type'         => 'image',
@@ -213,15 +169,12 @@ class AltText
 			'update_post_term_cache' => false,
 		];
 
-		// Filter for images missing alt text if requested.
 		if ( $missing_only ) {
 			$query_args['meta_query'] = self::get_missing_alt_text_meta_query();
 		}
 
-		// Get count using WP_Query.
 		$images_query = new WP_Query( $query_args );
 
-		// Return total count.
 		return $images_query->found_posts;
 	}
 
@@ -233,11 +186,10 @@ class AltText
 	public static function validate_ai_configuration(): array
 	{
 		// Check if AI alt text generation is enabled.
-		$ai_enabled = get_setting( 'ai_alt_text_enabled', false );
+		$ai_enabled = WordPressAI::get_setting( 'alt_text_generation', false );
 
 		// Bail if AI is not enabled.
 		if ( ! $ai_enabled ) {
-			// Fire error action hook.
 			do_action(
 				'trav_ai_alt_text_error',
 				'ai_not_enabled',
@@ -248,7 +200,6 @@ class AltText
 				),
 			);
 
-			// Return error if AI is not enabled.
 			return [
 				'valid'      => false,
 				'error'      => __( 'AI alt text generation is not enabled. Please enable it in Settings > Travelopia WP AI.', 'travelopia-wp-ai' ),
@@ -257,11 +208,9 @@ class AltText
 		}
 
 		// Get the AI prompt.
-		$ai_prompt = get_setting( 'ai_alt_text_prompt', '' );
+		$ai_prompt = WordPressAI::get_setting( 'ai_alt_text_prompt', '' );
 
-		// Bail if AI prompt is not configured.
 		if ( empty( $ai_prompt ) ) {
-			// Error action hook.
 			do_action(
 				'trav_ai_alt_text_error',
 				'ai_prompt_not_configured',
@@ -272,7 +221,6 @@ class AltText
 				),
 			);
 
-			// Return error if AI prompt is not configured.
 			return [
 				'valid'      => false,
 				'error'      => __( 'AI prompt is not configured. Please set it in Settings > Travelopia WP AI.', 'travelopia-wp-ai' ),
@@ -283,9 +231,7 @@ class AltText
 		// API key presence validation (constant or env).
 		$api_key = defined( 'OPENAI_API_KEY' ) ? constant( 'OPENAI_API_KEY' ) : getenv( 'OPENAI_API_KEY' );
 
-		// Validate API key presence.
 		if ( false === $api_key || '' === $api_key ) {
-			// Error action hook.
 			do_action(
 				'trav_ai_alt_text_error',
 				'api_key_not_configured',
@@ -296,7 +242,6 @@ class AltText
 				),
 			);
 
-			// Return error result.
 			return [
 				'valid'      => false,
 				'error'      => __( 'OpenAI API key not configured. Please set OPENAI_API_KEY in wp-config.php or environment.', 'travelopia-wp-ai' ),
@@ -304,7 +249,6 @@ class AltText
 			];
 		}
 
-		// Return validation result.
 		return [ 'valid' => true ];
 	}
 
@@ -315,10 +259,9 @@ class AltText
 	 */
 	public static function get_ai_configuration(): array
 	{
-		// Get AI configuration settings.
 		return [
-			'enabled' => (bool) get_setting( 'ai_alt_text_enabled', false ),
-			'prompt'  => strval( get_setting( 'ai_alt_text_prompt', '' ) ),
+			'enabled' => (bool) WordPressAI::get_setting( 'alt_text_generation', false ),
+			'prompt'  => strval( WordPressAI::get_setting( 'ai_alt_text_prompt', '' ) ),
 		];
 	}
 
@@ -331,11 +274,9 @@ class AltText
 	 */
 	public static function get_image_details( int $image_id = 0 ): array
 	{
-		// Get image post and alt text data.
 		$image_post = get_post( $image_id );
 		$alt_text   = get_post_meta( $image_id, '_wp_attachment_image_alt', true );
 
-		// Return formatted image details.
 		return [
 			'id'           => $image_id,
 			'title'        => $image_post instanceof WP_Post ? ( $image_post->post_title ?: __( '(no title)', 'travelopia-wp-ai' ) ) : __( '(invalid post)', 'travelopia-wp-ai' ),
@@ -585,7 +526,6 @@ class AltText
 	 */
 	public static function create_error_result( string $error_message = '' ): array
 	{
-		// Return error result structure.
 		return [
 			'success'       => false,
 			'error'         => $error_message,
@@ -605,20 +545,17 @@ class AltText
 	 */
 	public static function format_processing_time( float $seconds = 0.0 ): string
 	{
-		// Format time based on duration.
 		if ( 60 > $seconds ) {
 			return sprintf( '%.2fs', $seconds );
 		} elseif ( 3600 > $seconds ) {
 			$minutes           = floor( $seconds / 60 );
 			$remaining_seconds = $seconds % 60;
 
-			// Return formatted time.
 			return sprintf( '%dm %.1fs', $minutes, $remaining_seconds );
 		} else {
 			$hours   = floor( $seconds / 3600 );
 			$minutes = floor( ( $seconds % 3600 ) / 60 );
 
-			// Return formatted time.
 			return sprintf( '%dh %dm', $hours, $minutes );
 		}
 	}
@@ -630,70 +567,55 @@ class AltText
 	 */
 	public static function get_attachment_editor_data(): ?array
 	{
-		// Get current screen.
 		$screen = get_current_screen();
 
-		// Only proceed on attachment edit screen.
 		if ( ! $screen || 'attachment' !== $screen->id ) {
 			return null;
 		}
 
-		// Get post ID from URL.
 		$post_id = isset( $_GET['post'] ) ? absint( $_GET['post'] ) : 0;
 
-		// Return if no valid post ID.
 		if ( ! $post_id ) {
 			return null;
 		}
 
-		// Validate nonce.
 		$valid_request = ! isset( $_GET['tp_nonce'] ) ? false : wp_verify_nonce( $_GET['tp_nonce'], 'generate_alt_text_' . $post_id );
 
-		// Return if nonce is not valid.
 		if ( ! $valid_request ) {
 			return null;
 		}
 
-		// Get post object.
 		$post = get_post( $post_id );
 
-		// Return if not a valid WP_Post object.
 		if ( ! $post instanceof WP_Post ) {
 			return null;
 		}
 
-		// Return if not an image attachment.
 		if ( 'attachment' !== $post->post_type || false === strpos( $post->post_mime_type, 'image' ) ) {
 			return null;
 		}
 
-		// Get the existing alt text.
 		$is_regeneration = isset( $_GET['tp_regenerate_alt_text'] );
 		$is_generation   = isset( $_GET['tp_generate_alt_text'] );
 		$alt_text        = get_post_meta( $post->ID, '_wp_attachment_image_alt', true );
 		$is_empty_alt    = empty( $alt_text );
 
-		// If query args has tp_generate_alt_text, then generate the alt text and save it.
 		if ( $is_generation && $is_empty_alt ) {
 			$result       = generate_alt_text_for_attachment( $post->ID, true );
 			$alt_text     = $result['alt_text'] ?? '';
 			$is_empty_alt = false;
 		}
 
-		// If query args has tp_regenerate_alt_text, then regenerate the alt text.
 		if ( $is_regeneration ) {
 			$result = generate_alt_text_for_attachment( $post->ID, false );
 
-			// On success, update the alt text.
 			if ( ! empty( $result['success'] ) ) {
 				$alt_text = $result['alt_text'] ?? '';
 			}
 		}
 
-		// Determine the mode for the component.
 		$mode = $is_regeneration ? 'regenerate' : 'default';
 
-		// Return the attachment editor data.
 		return [
 			'post'     => $post,
 			'alt_text' => $alt_text,
@@ -772,20 +694,15 @@ class AltText
 	 */
 	public static function media_row_actions( array $actions = [], ?WP_Post $post = null ): array
 	{
-		// Return early if post is null.
 		if ( ! $post ) {
 			return $actions;
 		}
 
-		// Return early if the post is not an image.
 		if ( 'attachment' !== $post->post_type || false === strpos( $post->post_mime_type, 'image' ) ) {
 			return $actions;
 		}
 
-		// Check if the image has alt text or not.
 		$alt_text = get_post_meta( $post->ID, '_wp_attachment_image_alt', true );
-
-		// Check if the image has alt text or not.
 		$base_url = admin_url( 'post.php?post=' . $post->ID . '&action=edit&' . ( empty( $alt_text ) ? 'tp_generate_alt_text=true' : 'tp_regenerate_alt_text=true' ) );
 		$nonce    = wp_create_nonce( 'generate_alt_text_' . $post->ID );
 		$url      = add_query_arg( 'tp_nonce', $nonce, $base_url );
@@ -797,32 +714,26 @@ class AltText
 			empty( $alt_text ) ? __( 'Generate Alt Text', 'travelopia-wp-ai' ) : __( 'Regenerate Alt Text', 'travelopia-wp-ai' ),
 		);
 
-		// Return the updated actions.
 		return $actions;
 	}
 
 	/**
 	 * Get the CTA link.
 	 *
-	 * @param WP_Post $post            Post object.
-	 * @param boolean $is_regeneration URL is for alt text regeneration CTA.
+	 * @param ?WP_Post $post            Post object.
+	 * @param boolean  $is_regeneration URL is for alt text regeneration CTA.
 	 *
 	 * @return string
 	 */
 	public static function get_alt_text_action_url( ?WP_Post $post = null, bool $is_regeneration = false ): string
 	{
-		// Return empty string if post is null.
 		if ( ! $post ) {
 			return '';
 		}
 
-		// Build base URL.
 		$base_url = admin_url( 'post.php?post=' . $post->ID . '&action=edit&' . ( $is_regeneration ? 'tp_regenerate_alt_text=true' : 'tp_generate_alt_text=true' ) );
+		$nonce    = wp_create_nonce( 'generate_alt_text_' . $post->ID );
 
-		// Add nonce parameter.
-		$nonce = wp_create_nonce( 'generate_alt_text_' . $post->ID );
-
-		// Return the URL with nonce.
 		return add_query_arg( 'tp_nonce', $nonce, $base_url );
 	}
 
@@ -832,8 +743,8 @@ class AltText
 	 * This function hooks into the REST API after an attachment is updated
 	 * to trigger our custom action and maintain compatibility with existing hooks.
 	 *
-	 * @param WP_Post         $attachment The updated attachment object.
-	 * @param WP_REST_Request $request    The request object.
+	 * @param ?WP_Post         $attachment The updated attachment object.
+	 * @param ?WP_REST_Request $request    The request object.
 	 *
 	 * @return void
 	 */

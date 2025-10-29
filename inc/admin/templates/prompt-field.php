@@ -24,7 +24,7 @@ if ( ! is_array( $settings ) ) {
 
 // Get current values.
 $prompt  = $settings['ai_alt_text_prompt'] ?? $default_settings['ai_alt_text_prompt'];
-$enabled = $settings['ai_alt_text_enabled'] ?? false;
+$enabled = $settings['alt_text_generation'] ?? false;
 ?>
 
 <textarea

@@ -23,14 +23,14 @@ if ( ! is_array( $settings ) ) {
 }
 
 // Get current value.
-$enabled = $settings['ai_alt_text_enabled'] ?? false;
+$enabled = $settings['alt_text_generation'] ?? false;
 ?>
 
 <label for="ai-alt-text-enabled">
 	<input
 		type="checkbox"
 		id="ai-alt-text-enabled"
-		name="travelopia_wp_ai_settings[ai_alt_text_enabled]"
+		name="travelopia_wp_ai_settings[alt_text_generation]"
 		value="1"
 		<?php checked( $enabled ); ?>
 	/>

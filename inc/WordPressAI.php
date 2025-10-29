@@ -21,15 +21,16 @@ class WordPressAI
 	 * Bootstrap plugin.
 	 *
 	 * @return void
+	 *
+	 * @throws Exception
 	 */
 	public static function bootstrap(): void
 	{
-		// Actions.
+		// Hooks.
 		add_action( 'add_attachment', [ __CLASS__, 'maybe_generate_alt_text_on_upload' ], 20 );
 
 		// Register WP CLI commands.
 		if ( defined( 'WP_CLI' ) && true === WP_CLI && class_exists( 'WP_CLI' ) ) {
-			// Register commands.
 			WP_CLI::add_command( 'travelopia-wp-ai alt-text', WpCli\AltText::class );
 		}
 	}
@@ -43,12 +44,10 @@ class WordPressAI
 	 */
 	public static function maybe_generate_alt_text_on_upload( int $attachment_id = 0 ): void
 	{
-		// Validate attachment is an image and plugin is enabled.
-		if ( ! wp_attachment_is_image( $attachment_id ) || ! self::get_setting( 'ai_alt_text_enabled', false ) ) {
+		if ( ! wp_attachment_is_image( $attachment_id ) || ! self::get_setting( 'alt_text_generation', false ) ) {
 			return;
 		}
 
-		// Generate alt text for the uploaded image.
 		self::generate_alt_text_for_attachment( $attachment_id );
 	}
 
@@ -62,15 +61,12 @@ class WordPressAI
 	 */
 	public static function get_setting( string $key = '', mixed $default_value = null ): mixed
 	{
-		// Fetch settings with default fallback.
 		$settings = get_option( 'travelopia_wp_ai_settings', Admin::get_default_settings() );
 
-		// Ensure settings is an array.
 		if ( ! is_array( $settings ) ) {
 			$settings = Admin::get_default_settings();
 		}
 
-		// Return.
 		return $settings[ $key ] ?? $default_value;
 	}
 
@@ -94,7 +90,7 @@ class WordPressAI
 		}
 
 		// Check if AI alt text generation is enabled.
-		if ( ! self::get_setting( 'ai_alt_text_enabled', false ) ) {
+		if ( ! self::get_setting( 'alt_text_generation', false ) ) {
 			return [
 				'success'  => false,
 				'alt_text' => '',
@@ -277,29 +273,6 @@ class WordPressAI
 					$e->getMessage(),
 				),
 			];
-		}
-	}
-
-	/**
-	 * Plugin activation hook handler.
-	 *
-	 * This function is called when the plugin is activated.
-	 * It can be used to set up initial options, create database tables,
-	 * or perform any other setup tasks required for the plugin.
-	 *
-	 * @return void
-	 */
-	public static function activate_plugin(): void
-	{
-		// Initialize default settings if they don't exist.
-		$default_settings = [
-			'ai_alt_text_enabled' => false,
-			'ai_alt_text_prompt'  => AltText::get_default_ai_alt_text_prompt(),
-		];
-
-		// Only set defaults if no settings exist yet.
-		if ( false === get_option( 'travelopia_wp_ai_settings' ) ) {
-			add_option( 'travelopia_wp_ai_settings', $default_settings );
 		}
 	}
 }

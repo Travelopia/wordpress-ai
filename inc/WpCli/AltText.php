@@ -576,17 +576,13 @@ class AltText
 	 */
 	private function cli_output( string $message = '', string $type = 'log' ): void
 	{
-		// Handle different message types.
 		switch ( $type ) {
-			// Output success message.
 			case 'success':
 				WP_CLI::success( $message );
 				break;
-			// Output warning message.
 			case 'warning':
 				WP_CLI::warning( $message );
 				break;
-			// Output regular log message.
 			default:
 				WP_CLI::log( $message );
 				break;

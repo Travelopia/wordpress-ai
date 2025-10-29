@@ -138,16 +138,16 @@ class AltText
 		// Determine operation description.
 		if ( ! empty( $args['ids'] ) ) {
 			if ( $args['missing'] ) {
-				$operation = __( 'process specified image IDs that are missing alt text', 'travelopia-wp-ai' );
+				$operation = __( 'process specified image IDs that are missing alt text', 'travelopia-wordpress-ai' );
 			} else {
-				$operation = __( 'process all specified image IDs', 'travelopia-wp-ai' );
+				$operation = __( 'process all specified image IDs', 'travelopia-wordpress-ai' );
 			}
 		} elseif ( $args['all'] && $args['missing'] ) {
-			$operation = __( 'process ALL images missing alt text on the site', 'travelopia-wp-ai' );
+			$operation = __( 'process ALL images missing alt text on the site', 'travelopia-wordpress-ai' );
 		} elseif ( $args['all'] ) {
-			$operation = __( 'process ALL images on the site', 'travelopia-wp-ai' );
+			$operation = __( 'process ALL images on the site', 'travelopia-wordpress-ai' );
 		} else {
-			$operation = __( 'process ALL images missing alt text on the site', 'travelopia-wp-ai' );
+			$operation = __( 'process ALL images missing alt text on the site', 'travelopia-wordpress-ai' );
 		}
 
 		// Get count of images that will be processed.
@@ -157,18 +157,18 @@ class AltText
 		// Display warning and request confirmation.
 		WP_CLI::log(
 			WP_CLI::colorize(
-				'%R' . __( 'WARNING:', 'travelopia-wp-ai' ) . '%n ' . sprintf(
+				'%R' . __( 'WARNING:', 'travelopia-wordpress-ai' ) . '%n ' . sprintf(
 				/* translators: 1: operation description, 2: number of images */
-					__( 'You are about to %1$s (%2$d images).', 'travelopia-wp-ai' ),
+					__( 'You are about to %1$s (%2$d images).', 'travelopia-wordpress-ai' ),
 					$operation,
 					$image_count,
 				),
 			),
 		);
-		WP_CLI::log( WP_CLI::colorize( '%Y' . __( 'This operation may take a significant amount of time and resources.', 'travelopia-wp-ai' ) . '%n' ) );
+		WP_CLI::log( WP_CLI::colorize( '%Y' . __( 'This operation may take a significant amount of time and resources.', 'travelopia-wordpress-ai' ) . '%n' ) );
 
 		// Request confirmation.
-		WP_CLI::confirm( __( 'Do you want to continue?', 'travelopia-wp-ai' ) );
+		WP_CLI::confirm( __( 'Do you want to continue?', 'travelopia-wordpress-ai' ) );
 	}
 
 	/**
@@ -195,26 +195,26 @@ class AltText
 		);
 
 		// Welcome message.
-		WP_CLI::log( WP_CLI::colorize( '%Y' . __( 'Generating alt text for images using AI...', 'travelopia-wp-ai' ) . '%n' ) );
-		WP_CLI::log( WP_CLI::colorize( '%B' . __( 'Using prompt:', 'travelopia-wp-ai' ) . '%n ' . $config['prompt'] ) );
+		WP_CLI::log( WP_CLI::colorize( '%Y' . __( 'Generating alt text for images using AI...', 'travelopia-wordpress-ai' ) . '%n' ) );
+		WP_CLI::log( WP_CLI::colorize( '%B' . __( 'Using prompt:', 'travelopia-wordpress-ai' ) . '%n ' . $config['prompt'] ) );
 
 		// Display mode information.
 		if ( ! empty( $args['ids'] ) ) {
 			if ( $args['missing'] ) {
-				WP_CLI::log( WP_CLI::colorize( '%B' . __( 'Mode:', 'travelopia-wp-ai' ) . '%n ' . __( 'Processing specified image IDs that are missing alt text', 'travelopia-wp-ai' ) ) );
+				WP_CLI::log( WP_CLI::colorize( '%B' . __( 'Mode:', 'travelopia-wordpress-ai' ) . '%n ' . __( 'Processing specified image IDs that are missing alt text', 'travelopia-wordpress-ai' ) ) );
 			} else {
-				WP_CLI::log( WP_CLI::colorize( '%B' . __( 'Mode:', 'travelopia-wp-ai' ) . '%n ' . __( 'Processing all specified image IDs', 'travelopia-wp-ai' ) ) );
+				WP_CLI::log( WP_CLI::colorize( '%B' . __( 'Mode:', 'travelopia-wordpress-ai' ) . '%n ' . __( 'Processing all specified image IDs', 'travelopia-wordpress-ai' ) ) );
 			}
 		} elseif ( $args['all'] && $args['missing'] ) {
-			WP_CLI::log( WP_CLI::colorize( '%B' . __( 'Mode:', 'travelopia-wp-ai' ) . '%n ' . __( 'Processing all images missing alt text on the site', 'travelopia-wp-ai' ) ) );
+			WP_CLI::log( WP_CLI::colorize( '%B' . __( 'Mode:', 'travelopia-wordpress-ai' ) . '%n ' . __( 'Processing all images missing alt text on the site', 'travelopia-wordpress-ai' ) ) );
 		} elseif ( $args['all'] ) {
-			WP_CLI::log( WP_CLI::colorize( '%B' . __( 'Mode:', 'travelopia-wp-ai' ) . '%n ' . __( 'Processing all images on the site', 'travelopia-wp-ai' ) ) );
+			WP_CLI::log( WP_CLI::colorize( '%B' . __( 'Mode:', 'travelopia-wordpress-ai' ) . '%n ' . __( 'Processing all images on the site', 'travelopia-wordpress-ai' ) ) );
 		} else {
-			WP_CLI::log( WP_CLI::colorize( '%B' . __( 'Mode:', 'travelopia-wp-ai' ) . '%n ' . __( 'Processing all images missing alt text on the site', 'travelopia-wp-ai' ) ) );
+			WP_CLI::log( WP_CLI::colorize( '%B' . __( 'Mode:', 'travelopia-wordpress-ai' ) . '%n ' . __( 'Processing all images missing alt text on the site', 'travelopia-wordpress-ai' ) ) );
 		}
 
 		// Display batch size information.
-		WP_CLI::log( WP_CLI::colorize( '%B' . __( 'Batch size:', 'travelopia-wp-ai' ) . '%n ' . $args['batch-size'] . ' ' . __( 'images per batch', 'travelopia-wp-ai' ) ) );
+		WP_CLI::log( WP_CLI::colorize( '%B' . __( 'Batch size:', 'travelopia-wordpress-ai' ) . '%n ' . $args['batch-size'] . ' ' . __( 'images per batch', 'travelopia-wordpress-ai' ) ) );
 
 		// Get images to process.
 		$image_ids   = AltTextModule::get_cli_images_to_process( $args );
@@ -227,7 +227,7 @@ class AltText
 				WP_CLI::colorize(
 					'%Y' . sprintf(
 						/* translators: 1: number of images, 2: number of batches */
-						__( 'Found %1$d images to process (%2$d batches)', 'travelopia-wp-ai' ),
+						__( 'Found %1$d images to process (%2$d batches)', 'travelopia-wordpress-ai' ),
 						$image_count,
 						$estimated_batches,
 					) . '%n',
@@ -236,8 +236,8 @@ class AltText
 		}
 
 		// Display processing start message.
-		WP_CLI::log( WP_CLI::colorize( '%G' . __( 'Processing images...', 'travelopia-wp-ai' ) . '%n' ) );
-		WP_CLI::log( __( 'Starting processing...', 'travelopia-wp-ai' ) );
+		WP_CLI::log( WP_CLI::colorize( '%G' . __( 'Processing images...', 'travelopia-wordpress-ai' ) . '%n' ) );
+		WP_CLI::log( __( 'Starting processing...', 'travelopia-wordpress-ai' ) );
 	}
 
 	/**
@@ -261,17 +261,17 @@ class AltText
 		// Check if no images were processed.
 		if ( 0 === $result['processed'] ) {
 			// Display warning for no processed images.
-			WP_CLI::warning( __( 'No images were processed. Please check your criteria and try again.', 'travelopia-wp-ai' ) );
+			WP_CLI::warning( __( 'No images were processed. Please check your criteria and try again.', 'travelopia-wordpress-ai' ) );
 
 			// Return.
 			return;
 		}
 
 		// Display summary with timing information.
-		WP_CLI::log( __( 'Alt text generation completed!', 'travelopia-wp-ai' ) );
-		WP_CLI::log( WP_CLI::colorize( '%G' . __( 'Success:', 'travelopia-wp-ai' ) . ' %n' . $result['success_count'] ) );
-		WP_CLI::log( WP_CLI::colorize( '%R' . __( 'Failed:', 'travelopia-wp-ai' ) . ' %n' . $result['failed_count'] ) );
-		WP_CLI::log( WP_CLI::colorize( '%B' . __( 'Total processed:', 'travelopia-wp-ai' ) . ' %n' . $result['processed'] ) );
+		WP_CLI::log( __( 'Alt text generation completed!', 'travelopia-wordpress-ai' ) );
+		WP_CLI::log( WP_CLI::colorize( '%G' . __( 'Success:', 'travelopia-wordpress-ai' ) . ' %n' . $result['success_count'] ) );
+		WP_CLI::log( WP_CLI::colorize( '%R' . __( 'Failed:', 'travelopia-wordpress-ai' ) . ' %n' . $result['failed_count'] ) );
+		WP_CLI::log( WP_CLI::colorize( '%B' . __( 'Total processed:', 'travelopia-wordpress-ai' ) . ' %n' . $result['processed'] ) );
 
 		// Display timing information if available.
 		if ( isset( $result['total_time'] ) && isset( $result['average_time'] ) ) {
@@ -282,18 +282,18 @@ class AltText
 			$average_time_formatted = AltTextModule::format_processing_time( $average_time );
 
 			// Display timing information.
-			WP_CLI::log( WP_CLI::colorize( '%C' . __( 'Total time:', 'travelopia-wp-ai' ) . ' %n' . $total_time_formatted ) );
-			WP_CLI::log( WP_CLI::colorize( '%C' . __( 'Average time per image:', 'travelopia-wp-ai' ) . ' %n' . $average_time_formatted ) );
+			WP_CLI::log( WP_CLI::colorize( '%C' . __( 'Total time:', 'travelopia-wordpress-ai' ) . ' %n' . $total_time_formatted ) );
+			WP_CLI::log( WP_CLI::colorize( '%C' . __( 'Average time per image:', 'travelopia-wordpress-ai' ) . ' %n' . $average_time_formatted ) );
 		}
 
 		// Final status - only show success if we actually processed images successfully.
 		if ( 0 < $result['processed'] && 0 === $result['failed_count'] ) {
-			WP_CLI::success( __( 'All images processed successfully!', 'travelopia-wp-ai' ) );
+			WP_CLI::success( __( 'All images processed successfully!', 'travelopia-wordpress-ai' ) );
 		} elseif ( 0 < $result['processed'] && 0 < $result['failed_count'] ) {
 			WP_CLI::warning(
 				sprintf(
 					/* translators: %d: number of failures */
-					__( 'Processing completed with %d failures. Check the log above for details.', 'travelopia-wp-ai' ),
+					__( 'Processing completed with %d failures. Check the log above for details.', 'travelopia-wordpress-ai' ),
 					absint( $result['failed_count'] ),
 				),
 			);
@@ -463,18 +463,18 @@ class AltText
 	 * Process individual image result.
 	 *
 	 * @param int                  $image_id        Image ID.
-	 * @param array<string, mixed> $image_result    Image processing result.
+	 * @param string|\WP_Error     $image_result    Image processing result.
 	 * @param float                $processing_time Processing time.
 	 * @param array<string, mixed> $processing_data Processing data.
 	 *
 	 * @return void
 	 */
-	private function process_image_result( int $image_id = 0, array $image_result = [], float $processing_time = 0.0, array &$processing_data = [] ): void
+	private function process_image_result( int $image_id = 0, $image_result = '', float $processing_time = 0.0, array &$processing_data = [] ): void
 	{
 		// Build result entry for this image.
 		$result_entry = [
 			'id'              => $image_id,
-			'success'         => (bool) $image_result['success'],
+			'success'         => ! is_wp_error( $image_result ),
 			'processing_time' => round( $processing_time, 3 ),
 			'alt_text'        => null,
 			'error'           => null,
@@ -483,8 +483,8 @@ class AltText
 		];
 
 		// Handle success case.
-		if ( isset( $image_result['success'] ) && $image_result['success'] ) {
-			$alt_text                 = isset( $image_result['alt_text'] ) && is_string( $image_result['alt_text'] ) ? $image_result['alt_text'] : '';
+		if ( ! is_wp_error( $image_result ) ) {
+			$alt_text                 = is_string( $image_result ) ? $image_result : '';
 			$result_entry['alt_text'] = $alt_text;
 
 			// Ensure images array exists and is array.
@@ -500,7 +500,7 @@ class AltText
 			$this->cli_output( $message, 'success' );
 		} else {
 			// Handle error case.
-			$error_message         = isset( $image_result['error'] ) && is_string( $image_result['error'] ) ? $image_result['error'] : 'Unknown error';
+			$error_message         = $image_result->get_error_message();
 			$result_entry['error'] = $error_message;
 
 			// Ensure images array exists and is array.

@@ -95,8 +95,8 @@ class Settings
 	public static function setup_settings(): void
 	{
 		add_options_page(
-			__( 'Travelopia WordPress AI Settings', 'travelopia-wp-ai' ),
-			__( 'WordPress AI', 'travelopia-wp-ai' ),
+			__( 'Travelopia WordPress AI Settings', 'travelopia-wordpress-ai' ),
+			__( 'WordPress AI', 'travelopia-wordpress-ai' ),
 			'manage_options',
 			'travelopia-wp-ai-settings',
 			[ __CLASS__, 'render_settings_page' ],
@@ -121,14 +121,14 @@ class Settings
 
 		add_settings_section(
 			'travelopia_wp_ai_main_section',
-			__( 'AI Alt Text Generation Settings', 'travelopia-wp-ai' ),
+			__( 'AI Alt Text Generation Settings', 'travelopia-wordpress-ai' ),
 			[ __CLASS__, 'render_section_description' ],
 			'travelopia-wp-ai-settings',
 		);
 
 		add_settings_field(
 			'alt_text_generation',
-			__( 'Enable AI Alt Text Generation', 'travelopia-wp-ai' ),
+			__( 'Enable AI Alt Text Generation', 'travelopia-wordpress-ai' ),
 			[ __CLASS__, 'render_enable_field' ],
 			'travelopia-wp-ai-settings',
 			'travelopia_wp_ai_main_section',
@@ -136,7 +136,7 @@ class Settings
 
 		add_settings_field(
 			'alt_text_prompt',
-			__( 'AI Alt Text Prompt', 'travelopia-wp-ai' ),
+			__( 'AI Alt Text Prompt', 'travelopia-wordpress-ai' ),
 			[ __CLASS__, 'render_prompt_field' ],
 			'travelopia-wp-ai-settings',
 			'travelopia_wp_ai_main_section',
@@ -160,7 +160,7 @@ class Settings
 	 */
 	public static function render_section_description(): void
 	{
-		esc_html_e( 'Configure the AI-powered alt text generation settings for your WordPress site.', 'travelopia-wp-ai' );
+		esc_html_e( 'Configure the AI-powered alt text generation settings for your WordPress site.', 'travelopia-wordpress-ai' );
 	}
 
 	/**
@@ -197,7 +197,7 @@ class Settings
 			sprintf(
 				'<a href="%s">%s</a>',
 				esc_url( admin_url( 'options-general.php?page=travelopia-wp-ai-settings' ) ),
-				esc_html__( 'Settings', 'travelopia-wp-ai' ),
+				esc_html__( 'Settings', 'travelopia-wordpress-ai' ),
 			),
 		);
 

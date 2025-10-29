@@ -481,7 +481,7 @@ class Test_Media extends WP_UnitTestCase
 
 		// Add action to track if it fires.
 		add_action(
-			'trav_ai_alt_text_modified',
+			'travelopia_wordpress_ai_alt_text_modified',
 			function () use ( &$action_fired ) {
 				$action_fired = true;
 			},
@@ -519,7 +519,7 @@ class Test_Media extends WP_UnitTestCase
 
 		// Add action to capture parameters.
 		add_action(
-			'trav_ai_alt_text_modified',
+			'travelopia_wordpress_ai_alt_text_modified',
 			function ( $attachment_id, $alt_text ) use ( &$action_fired, &$action_attachment_id, &$action_alt_text ) {
 				$action_fired         = true;
 				$action_attachment_id = $attachment_id;

@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // Check user capabilities.
 if ( ! current_user_can( 'manage_options' ) ) {
-	wp_die( esc_html__( 'You do not have sufficient permissions to access this page.', 'travelopia-wp-ai' ) );
+	wp_die( esc_html__( 'You do not have sufficient permissions to access this page.', 'travelopia-wordpress-ai' ) );
 }
 
 ?>
@@ -26,7 +26,7 @@ if ( ! current_user_can( 'manage_options' ) ) {
 		<?php
 		settings_fields( 'travelopia_wp_ai_settings_group' );
 		do_settings_sections( 'travelopia-wp-ai-settings' );
-		submit_button( esc_html__( 'Save Settings', 'travelopia-wp-ai' ) );
+		submit_button( esc_html__( 'Save Settings', 'travelopia-wordpress-ai' ) );
 		?>
 	</form>
 </div>

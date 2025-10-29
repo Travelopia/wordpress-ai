@@ -73,104 +73,30 @@ class AltText
 	 * @param int     $attachment_id Attachment ID.
 	 * @param boolean $update        Whether to update the alt text.
 	 *
-	 * @return array{success: bool, alt_text?: string, error?: string}
+	 * @return string|WP_Error Generated alt text on success, WP_Error on failure.
 	 */
-	public static function generate_alt_text_for_attachment( int $attachment_id = 0, bool $update = true ): array
+	public static function generate_alt_text_for_attachment( int $attachment_id = 0, bool $update = true ): WP_Error|string
 	{
-		// Early validation checks.
-		if ( ! function_exists( 'wp_attachment_is_image' ) || ! wp_attachment_is_image( $attachment_id ) ) {
-			return [
-				'success'  => false,
-				'alt_text' => '',
-				'error'    => __( 'Invalid attachment ID or not an image', 'travelopia-wp-ai' ),
-			];
-		}
-
-		// Check if AI alt text generation is enabled.
-		if ( ! Settings::get_setting( 'alt_text_generation', false ) ) {
-			return [
-				'success'  => false,
-				'alt_text' => '',
-				'error'    => __( 'AI alt text generation is not enabled', 'travelopia-wp-ai' ),
-			];
-		}
-
-		// Get the AI prompt from settings.
-		$ai_prompt = Settings::get_setting( 'alt_text_prompt', '' );
-
-		// Validate prompt is configured.
-		if ( empty( $ai_prompt ) || ! is_string( $ai_prompt ) ) {
-			return [
-				'success'  => false,
-				'alt_text' => '',
-				'error'    => __( 'AI prompt is not configured', 'travelopia-wp-ai' ),
-			];
-		}
-
-		// Ensure AI client is available.
-		if ( ! class_exists( '\\WordPress\\AiClient\\AiClient' ) ) {
-			return [
-				'alt_text' => '',
-				'success'  => false,
-				'error'    => __( 'AI Client not available', 'travelopia-wp-ai' ),
-			];
-		}
-
-		// Default options for the generation.
-		$default_options = [
-			'model'              => 'gpt-4o-mini',
-			'temperature'        => 0.1,
-			'prompt'             => $ai_prompt,
-			'include_context'    => true,
-			'system_instruction' => 'You are an accessibility tool.',
-		];
-
-		/**
-		 * Filter the generation options.
-		 *
-		 * @param array $default_options The generation options.
-		 * @param int   $attachment_id   The attachment ID.
-		 */
-		$options = apply_filters( 'trav_ai_generation_options', $default_options, $attachment_id );
-
-		// Ensure options is an array.
-		if ( ! is_array( $options ) ) {
-			$options = $default_options;
-		}
-
-		// Build final prompt.
-		$prompt = $options['prompt'];
-
-		/**
-		 * Filter the prompt.
-		 *
-		 * @param string $prompt        The prompt.
-		 * @param int    $attachment_id The attachment ID.
-		 */
-		$prompt = apply_filters( 'trav_alt_text_prompt', $prompt, $attachment_id );
-
-		// Validate prompt is a string after filtering.
-		if ( ! is_string( $prompt ) ) {
-			return [
-				'success'  => false,
-				'alt_text' => '',
-				'error'    => __( 'Invalid prompt type after filtering', 'travelopia-wp-ai' ),
-			];
-		}
-
 		// Initialize context.
 		$context = '';
 
+		/**
+		 * Should we include additional context about the image?
+		 *
+		 * @param bool $include_context Whether to include context.
+		 */
+		$include_context = (bool) apply_filters( 'travelopia_wordpress_ai_alt_text_include_context', true );
+
 		// Build context from metadata if requested.
-		if ( true === $options['include_context'] ) {
+		if ( true === $include_context ) {
 			$context_parts = [];
 			$title         = get_the_title( $attachment_id );
 
 			// Add title to context.
-			if ( $title ) {
+			if ( ! empty( $title ) ) {
 				$context_parts[] = sprintf(
 					/* translators: %s: title */
-					__( 'title: %s', 'travelopia-wp-ai' ),
+					__( 'title: %s', 'travelopia-wordpress-ai' ),
 					$title,
 				);
 			}
@@ -179,12 +105,30 @@ class AltText
 			$context = implode( '; ', $context_parts );
 		}
 
+		/**
+		 * Filter the ALT text generation options.
+		 *
+		 * @param array $default_options The generation options.
+		 * @param int   $attachment_id   The attachment ID.
+		 */
+		$options = (array) apply_filters(
+			'travelopia_wordpress_ai_alt_text_generation_options',
+			[
+				'model'              => 'gpt-4o-mini',
+				'temperature'        => 0.1,
+				'prompt'             => Settings::get_setting( 'alt_text_prompt', '' ),
+				'context'            => $context,
+				'system_instruction' => 'You are an accessibility tool.',
+			],
+			$attachment_id,
+		);
+
 		// Add context to prompt if requested.
-		if ( $context ) {
-			$prompt .= sprintf(
+		if ( ! empty( $options['context'] ) ) {
+			$options['prompt'] .= sprintf(
 				/* translators: %s: context */
-				__( ' Additional context: %s', 'travelopia-wp-ai' ),
-				$context,
+				__( ' Additional context: %s', 'travelopia-wordpress-ai' ),
+				$options['context'],
 			);
 		}
 
@@ -192,42 +136,37 @@ class AltText
 		try {
 			// Check API key availability.
 			if ( ! defined( 'OPENAI_API_KEY' ) && ! getenv( 'OPENAI_API_KEY' ) ) {
-				return [
-					'success'  => false,
-					'alt_text' => '',
-					'error'    => __( 'OpenAI API key not configured', 'travelopia-wp-ai' ),
-				];
+				return self::create_alt_text_error(
+					'api_key_not_configured',
+					__( 'OpenAI API key not configured', 'travelopia-wordpress-ai' ),
+					[ 'attachment_id' => $attachment_id ],
+				);
 			}
 
 			// Get the API key.
 			$api_key = defined( 'OPENAI_API_KEY' ) ? constant( 'OPENAI_API_KEY' ) : getenv( 'OPENAI_API_KEY' );
 
-			// Validate API key is not empty.
 			if ( empty( $api_key ) ) {
-				return [
-					'success'  => false,
-					'alt_text' => '',
-					'error'    => __( 'OpenAI API key is empty', 'travelopia-wp-ai' ),
-				];
+				return self::create_alt_text_error(
+					'api_key_empty',
+					__( 'OpenAI API key is empty', 'travelopia-wordpress-ai' ),
+					[ 'attachment_id' => $attachment_id ],
+				);
 			}
 
 			// Get actual image URL for the attachment.
 			$image_url = wp_get_attachment_url( $attachment_id );
 
-			// Filter the image URL if needed.
-			$image_url = apply_filters( 'trav_ai_image_url', $image_url, $attachment_id );
-
-			// Validate image URL exists.
-			if ( ! $image_url || ! is_string( $image_url ) ) {
-				return [
-					'success'  => false,
-					'alt_text' => '',
-					'error'    => __( 'Could not get image URL or is not a string.', 'travelopia-wp-ai' ),
-				];
+			if ( ! is_string( $image_url ) ) {
+				return self::create_alt_text_error(
+					'invalid_image_url',
+					__( 'Could not get image URL or is not a string.', 'travelopia-wordpress-ai' ),
+					[ 'attachment_id' => $attachment_id ],
+				);
 			}
 
 			// Generate AI response.
-			$generated = AiClient::prompt( $prompt )
+			$generated = AiClient::prompt( $options['prompt'] )
 				->usingModel( OpenAiProvider::model( strval( $options['model'] ) ) )
 				->usingTemperature( floatval( $options['temperature'] ) )
 				->withFile( $image_url )
@@ -239,11 +178,11 @@ class AltText
 
 			// Validate generated text is not empty.
 			if ( empty( $generated ) ) {
-				return [
-					'success'  => false,
-					'alt_text' => '',
-					'error'    => __( 'AI generated empty response', 'travelopia-wp-ai' ),
-				];
+				return self::create_alt_text_error(
+					'empty_response',
+					__( 'AI generated empty response', 'travelopia-wordpress-ai' ),
+					[ 'attachment_id' => $attachment_id ],
+				);
 			}
 
 			// Save generated alt text to database.
@@ -252,24 +191,24 @@ class AltText
 			}
 
 			// Fire action hook after successful generation.
-			do_action( 'trav_ai_alt_text_generated', $attachment_id, $generated );
+			do_action( 'travelopia_wordpress_ai_alt_text_generated', $attachment_id, $generated );
 
-			// Return success with generated alt text.
-			return [
-				'success'  => true,
-				'alt_text' => $generated,
-			];
+			// Return generated alt text.
+			return $generated;
 		} catch ( Exception $e ) {
 			// Return error details.
-			return [
-				'success'  => false,
-				'alt_text' => '',
-				'error'    => sprintf(
+			return self::create_alt_text_error(
+				'generation_failed',
+				sprintf(
 					/* translators: %s: error message */
-					__( 'AI generation failed: %s', 'travelopia-wp-ai' ),
+					__( 'AI generation failed: %s', 'travelopia-wordpress-ai' ),
 					$e->getMessage(),
 				),
-			];
+				[
+					'attachment_id' => $attachment_id,
+					'exception'     => $e->getMessage(),
+				],
+			);
 		}
 	}
 
@@ -280,7 +219,7 @@ class AltText
 	 */
 	public static function get_default_alt_text_prompt(): string
 	{
-		return __( 'Describe this image in a concise, informative way for alt text. Focus on the main subject and important details that would help someone understand what is in the image.', 'travelopia-wp-ai' );
+		return __( 'Describe this image in a concise, informative way for alt text. Focus on the main subject and important details that would help someone understand what is in the image.', 'travelopia-wordpress-ai' );
 	}
 
 	/**
@@ -316,7 +255,7 @@ class AltText
 	public static function create_alt_text_error( string $error_code = '', string $error_message = '', array $error_data = [] ): WP_Error
 	{
 		$error = new WP_Error( $error_code, $error_message, $error_data );
-		do_action( 'trav_ai_alt_text_error', $error_code, $error_message, $error_data );
+		do_action( 'travelopia_wordpress_ai_alt_text_error', $error_code, $error_message, $error_data );
 		return $error;
 	}
 
@@ -425,39 +364,39 @@ class AltText
 		// Bail if AI is not enabled.
 		if ( ! $ai_enabled ) {
 			do_action(
-				'trav_ai_alt_text_error',
+				'travelopia_wordpress_ai_alt_text_error',
 				'ai_not_enabled',
 				sprintf(
 					/* translators: %s: settings page URL */
-					__( 'AI alt text generation is not enabled. Please enable it in Settings > WordPress AI.', 'travelopia-wp-ai' ),
+					__( 'AI alt text generation is not enabled. Please enable it in Settings > WordPress AI.', 'travelopia-wordpress-ai' ),
 					admin_url( 'options-general.php?page=travelopia-wp-ai-settings' ),
 				),
 			);
 
 			return [
 				'valid'      => false,
-				'error'      => __( 'AI alt text generation is not enabled. Please enable it in Settings > WordPress AI.', 'travelopia-wp-ai' ),
+				'error'      => __( 'AI alt text generation is not enabled. Please enable it in Settings > WordPress AI.', 'travelopia-wordpress-ai' ),
 				'error_code' => 'ai_not_enabled',
 			];
 		}
 
 		// Get the AI prompt.
-		$ai_prompt = Settings::get_setting( 'alt_text_prompt', '' );
+		$prompt = Settings::get_setting( 'alt_text_prompt', '' );
 
-		if ( empty( $ai_prompt ) ) {
+		if ( empty( $prompt ) ) {
 			do_action(
-				'trav_ai_alt_text_error',
+				'travelopia_wordpress_ai_alt_text_error',
 				'ai_prompt_not_configured',
 				sprintf(
 					/* translators: %s: settings page URL */
-					__( 'AI prompt is not configured. Please set it in Settings > WordPress AI.', 'travelopia-wp-ai' ),
+					__( 'AI prompt is not configured. Please set it in Settings > WordPress AI.', 'travelopia-wordpress-ai' ),
 					admin_url( 'options-general.php?page=travelopia-wp-ai-settings' ),
 				),
 			);
 
 			return [
 				'valid'      => false,
-				'error'      => __( 'AI prompt is not configured. Please set it in Settings > WordPress AI.', 'travelopia-wp-ai' ),
+				'error'      => __( 'AI prompt is not configured. Please set it in Settings > WordPress AI.', 'travelopia-wordpress-ai' ),
 				'error_code' => 'ai_prompt_not_configured',
 			];
 		}
@@ -467,18 +406,18 @@ class AltText
 
 		if ( false === $api_key || '' === $api_key ) {
 			do_action(
-				'trav_ai_alt_text_error',
+				'travelopia_wordpress_ai_alt_text_error',
 				'api_key_not_configured',
 				sprintf(
 					/* translators: %s: settings page URL */
-					__( 'OpenAI API key not configured. Please set OPENAI_API_KEY in wp-config.php or environment.', 'travelopia-wp-ai' ),
+					__( 'OpenAI API key not configured. Please set OPENAI_API_KEY in wp-config.php or environment.', 'travelopia-wordpress-ai' ),
 					admin_url( 'options-general.php?page=travelopia-wp-ai-settings' ),
 				),
 			);
 
 			return [
 				'valid'      => false,
-				'error'      => __( 'OpenAI API key not configured. Please set OPENAI_API_KEY in wp-config.php or environment.', 'travelopia-wp-ai' ),
+				'error'      => __( 'OpenAI API key not configured. Please set OPENAI_API_KEY in wp-config.php or environment.', 'travelopia-wordpress-ai' ),
 				'error_code' => 'api_key_not_configured',
 			];
 		}
@@ -513,7 +452,7 @@ class AltText
 
 		return [
 			'id'           => $image_id,
-			'title'        => $image_post instanceof WP_Post ? ( $image_post->post_title ?: __( '(no title)', 'travelopia-wp-ai' ) ) : __( '(invalid post)', 'travelopia-wp-ai' ),
+			'title'        => $image_post instanceof WP_Post ? ( $image_post->post_title ?: __( '(no title)', 'travelopia-wordpress-ai' ) ) : __( '(invalid post)', 'travelopia-wordpress-ai' ),
 			'has_alt_text' => ! empty( $alt_text ),
 			'alt_text'     => strval( $alt_text ?: '' ),
 		];
@@ -562,7 +501,7 @@ class AltText
 				'needs_confirmation' => false,
 				'batch-size'         => $batch_size,
 				'valid'              => false,
-				'error'              => __( 'Cannot use --ids and --all together. Use --ids for specific images or --all for all images.', 'travelopia-wp-ai' ),
+				'error'              => __( 'Cannot use --ids and --all together. Use --ids for specific images or --all for all images.', 'travelopia-wordpress-ai' ),
 			];
 		}
 
@@ -575,7 +514,7 @@ class AltText
 				'needs_confirmation' => false,
 				'batch-size'         => $batch_size,
 				'valid'              => false,
-				'error'              => __( 'You must provide --ids=<1,2,3>, --missing, or --all to specify which images to process.', 'travelopia-wp-ai' ),
+				'error'              => __( 'You must provide --ids=<1,2,3>, --missing, or --all to specify which images to process.', 'travelopia-wordpress-ai' ),
 			];
 		}
 
@@ -704,29 +643,21 @@ class AltText
 			// Build result entry.
 			$entry = [
 				'id'              => absint( $image_id ),
-				'success'         => (bool) $image_result['success'],
+				'success'         => ! is_wp_error( $image_result ),
 				'processing_time' => round( $processing_time, 3 ),
 			];
 
-			// Add alt text if it exists.
-			if ( isset( $image_result['alt_text'] ) ) {
-				$entry['alt_text'] = strval( $image_result['alt_text'] );
-			}
-
-			// Add error if it exists.
-			if ( isset( $image_result['error'] ) ) {
-				$entry['error'] = strval( $image_result['error'] );
+			// Add alt text or error based on result type.
+			if ( is_wp_error( $image_result ) ) {
+				$entry['error'] = $image_result->get_error_message();
+				++$failed_count;
+			} else {
+				$entry['alt_text'] = strval( $image_result );
+				++$success_count;
 			}
 
 			// Store result with image ID as key.
 			$images[ $image_id ] = $entry;
-
-			// Update counters.
-			if ( $image_result['success'] ) {
-				++$success_count;
-			} else {
-				++$failed_count;
-			}
 
 			// Memory management for large batches.
 			if ( ( $success_count + $failed_count ) % 100 === 0 ) {
@@ -832,19 +763,20 @@ class AltText
 		$is_regeneration = isset( $_GET['tp_regenerate_alt_text'] );
 		$is_generation   = isset( $_GET['tp_generate_alt_text'] );
 		$alt_text        = get_post_meta( $post->ID, '_wp_attachment_image_alt', true );
-		$is_empty_alt    = empty( $alt_text );
 
-		if ( $is_generation && $is_empty_alt ) {
-			$result       = self::generate_alt_text_for_attachment( $post->ID, true );
-			$alt_text     = $result['alt_text'] ?? '';
-			$is_empty_alt = false;
+		if ( $is_generation && empty( $alt_text ) ) {
+			$result = self::generate_alt_text_for_attachment( $post->ID, true );
+
+			if ( ! is_wp_error( $result ) ) {
+				$alt_text = $result;
+			}
 		}
 
 		if ( $is_regeneration ) {
 			$result = self::generate_alt_text_for_attachment( $post->ID, false );
 
-			if ( ! empty( $result['success'] ) ) {
-				$alt_text = $result['alt_text'] ?? '';
+			if ( ! is_wp_error( $result ) ) {
+				$alt_text = $result;
 			}
 		}
 
@@ -907,12 +839,12 @@ class AltText
 					'reject'     => admin_url( 'post.php?post=' . $post->ID . '&action=edit' ),
 				],
 				'labels' => [
-					'generateAltText'   => __( 'Generate Alt Text', 'travelopia-wp-ai' ),
-					'regenerateAltText' => __( 'Regenerate Alt Text', 'travelopia-wp-ai' ),
-					'accept'            => __( 'Accept', 'travelopia-wp-ai' ),
-					'reject'            => __( 'Reject', 'travelopia-wp-ai' ),
-					'regenerate'        => __( 'Regenerate', 'travelopia-wp-ai' ),
-					'saving'            => __( 'Saving...', 'travelopia-wp-ai' ),
+					'generateAltText'   => __( 'Generate Alt Text', 'travelopia-wordpress-ai' ),
+					'regenerateAltText' => __( 'Regenerate Alt Text', 'travelopia-wordpress-ai' ),
+					'accept'            => __( 'Accept', 'travelopia-wordpress-ai' ),
+					'reject'            => __( 'Reject', 'travelopia-wordpress-ai' ),
+					'regenerate'        => __( 'Regenerate', 'travelopia-wordpress-ai' ),
+					'saving'            => __( 'Saving...', 'travelopia-wordpress-ai' ),
 				],
 			],
 		);
@@ -945,7 +877,7 @@ class AltText
 		$actions['generate_alt_text'] = sprintf(
 			'<a href="%s">%s</a>',
 			esc_url( $url ),
-			empty( $alt_text ) ? __( 'Generate Alt Text', 'travelopia-wp-ai' ) : __( 'Regenerate Alt Text', 'travelopia-wp-ai' ),
+			empty( $alt_text ) ? __( 'Generate Alt Text', 'travelopia-wordpress-ai' ) : __( 'Regenerate Alt Text', 'travelopia-wordpress-ai' ),
 		);
 
 		return $actions;
@@ -998,6 +930,6 @@ class AltText
 		$alt_text = $request->get_param( 'alt_text' );
 
 		// Fire action hook after successful alt text modification via REST API.
-		do_action( 'trav_ai_alt_text_modified', $attachment->ID, $alt_text );
+		do_action( 'travelopia_wordpress_ai_alt_text_modified', $attachment->ID, $alt_text );
 	}
 }

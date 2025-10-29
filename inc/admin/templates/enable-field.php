@@ -34,8 +34,8 @@ $enabled = $settings['alt_text_generation'] ?? false;
 		value="1"
 		<?php checked( $enabled ); ?>
 	/>
-	<?php esc_html_e( 'Enable AI-powered alt text generation', 'travelopia-wp-ai' ); ?>
+	<?php esc_html_e( 'Enable AI-powered alt text generation', 'travelopia-wordpress-ai' ); ?>
 </label>
 <p class="description">
-	<?php esc_html_e( 'When enabled, AI will be used to generate alt text for images.', 'travelopia-wp-ai' ); ?>
+	<?php esc_html_e( 'When enabled, AI will be used to generate alt text for images.', 'travelopia-wordpress-ai' ); ?>
 </p>

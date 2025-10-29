@@ -32,10 +32,10 @@ $enabled = $settings['alt_text_generation'] ?? false;
 	name="travelopia_wp_ai_settings[alt_text_prompt]"
 	rows="4"
 	cols="50"
-	placeholder="<?php esc_attr_e( 'Enter your AI prompt here...', 'travelopia-wp-ai' ); ?>"
+	placeholder="<?php esc_attr_e( 'Enter your AI prompt here...', 'travelopia-wordpress-ai' ); ?>"
 	<?php disabled( ! $enabled ); ?>
 	class="travelopia-wp-ai-prompt-field"
 ><?php echo esc_textarea( $prompt ); ?></textarea>
 <p class="description">
-	<?php esc_html_e( 'This prompt will be sent to the AI service to generate alt text for images.', 'travelopia-wp-ai' ); ?>
+	<?php esc_html_e( 'This prompt will be sent to the AI service to generate alt text for images.', 'travelopia-wordpress-ai' ); ?>
 </p>

@@ -5,25 +5,16 @@
  * @package travelopia-wordpress-ai
  */
 
-namespace Travelopia\WordPress_AI\WP_CLI;
+namespace Travelopia\WordPress_AI\WpCli;
 
+use Travelopia\WordPress_AI\AltText as AltTextModule;
+use Travelopia\WordPress_AI\WordPressAI;
 use WP_CLI;
 
-use function Travelopia\WordPress_AI\Alt_Text\create_alt_text_error;
-use function Travelopia\WordPress_AI\Alt_Text\format_processing_time;
-use function Travelopia\WordPress_AI\Alt_Text\get_ai_configuration;
-use function Travelopia\WordPress_AI\Alt_Text\get_cli_images_to_process;
-use function Travelopia\WordPress_AI\Alt_Text\get_image_details;
-use function Travelopia\WordPress_AI\Alt_Text\get_images_count;
-use function Travelopia\WordPress_AI\Alt_Text\parse_cli_arguments;
-use function Travelopia\WordPress_AI\generate_alt_text_for_attachment;
-
-use const Travelopia\WordPress_AI\Alt_Text\DEFAULT_BATCH_SIZE;
-
 /**
- * Class Alt_Text.
+ * Class AltText.
  */
-class Alt_Text
+class AltText
 {
 	/**
 	 * Generate alt text for images using AI.
@@ -107,13 +98,13 @@ class Alt_Text
 		}
 
 		// Parse and validate command arguments using centralized function.
-		$parsed_args = parse_cli_arguments( $args_assoc );
+		$parsed_args = AltTextModule::parse_cli_arguments( $args_assoc );
 
 		// Bail if validation failed.
 		if ( ! $parsed_args['valid'] ) {
 			// Create WP_Error for validation failure.
 			$error_message = isset( $parsed_args['error'] ) ? strval( $parsed_args['error'] ) : 'Unknown validation error';
-			$error         = create_alt_text_error(
+			$error         = AltTextModule::create_alt_text_error(
 				'invalid_arguments',
 				$error_message,
 				[ 'parsed_args' => $parsed_args ],
@@ -162,7 +153,7 @@ class Alt_Text
 
 		// Get count of images that will be processed.
 		$missing_only = isset( $args['missing'] ) ? (bool) $args['missing'] : false;
-		$image_count  = get_images_count( $missing_only );
+		$image_count  = AltTextModule::get_images_count( $missing_only );
 
 		// Display warning and request confirmation.
 		WP_CLI::log(
@@ -191,7 +182,7 @@ class Alt_Text
 	private function display_command_info( array $args = [] ): void
 	{
 		// Get AI configuration.
-		$config = get_ai_configuration();
+		$config = AltTextModule::get_ai_configuration();
 
 		// Parse args.
 		$args = wp_parse_args(
@@ -200,7 +191,7 @@ class Alt_Text
 				'ids'        => [],
 				'missing'    => false,
 				'all'        => false,
-				'batch-size' => DEFAULT_BATCH_SIZE,
+				'batch-size' => AltTextModule::DEFAULT_BATCH_SIZE,
 			],
 		);
 
@@ -227,7 +218,7 @@ class Alt_Text
 		WP_CLI::log( WP_CLI::colorize( '%B' . __( 'Batch size:', 'travelopia-wp-ai' ) . '%n ' . $args['batch-size'] . ' ' . __( 'images per batch', 'travelopia-wp-ai' ) ) );
 
 		// Get images to process.
-		$image_ids   = get_cli_images_to_process( $args );
+		$image_ids   = AltTextModule::get_cli_images_to_process( $args );
 		$image_count = count( $image_ids );
 
 		// Display found images count.
@@ -288,8 +279,8 @@ class Alt_Text
 			// Format timing information.
 			$total_time             = is_numeric( $result['total_time'] ) ? floatval( $result['total_time'] ) : 0.0;
 			$average_time           = is_numeric( $result['average_time'] ) ? floatval( $result['average_time'] ) : 0.0;
-			$total_time_formatted   = format_processing_time( $total_time );
-			$average_time_formatted = format_processing_time( $average_time );
+			$total_time_formatted   = AltTextModule::format_processing_time( $total_time );
+			$average_time_formatted = AltTextModule::format_processing_time( $average_time );
 
 			// Display timing information.
 			WP_CLI::log( WP_CLI::colorize( '%C' . __( 'Total time:', 'travelopia-wp-ai' ) . ' %n' . $total_time_formatted ) );
@@ -320,7 +311,7 @@ class Alt_Text
 	private function process_images_with_streaming( array $args = [] ): array
 	{
 		// Get images to process.
-		$image_ids = get_cli_images_to_process( $args );
+		$image_ids = AltTextModule::get_cli_images_to_process( $args );
 
 		// Return empty result if no images found.
 		if ( empty( $image_ids ) ) {
@@ -379,7 +370,7 @@ class Alt_Text
 	private function initialize_processing_data( array $args = [], array $image_ids = [] ): array
 	{
 		// Get batch size with validation.
-		$batch_size = isset( $args['batch-size'] ) ? max( 1, absint( $args['batch-size'] ) ) : DEFAULT_BATCH_SIZE;
+		$batch_size = isset( $args['batch-size'] ) ? max( 1, absint( $args['batch-size'] ) ) : AltTextModule::DEFAULT_BATCH_SIZE;
 
 		// Return processing data structure.
 		return [
@@ -455,13 +446,13 @@ class Alt_Text
 			$image_start_time = microtime( true );
 
 			// Display processing start for this image.
-			$image_details      = get_image_details( $image_id );
+			$image_details      = AltTextModule::get_image_details( $image_id );
 			$image_title        = isset( $image_details['title'] ) ? strval( $image_details['title'] ) : 'Unknown';
 			$processing_message = sprintf( 'Processing image ID %d: %s', $image_id, $image_title );
 			$this->cli_output( $processing_message );
 
 			// Generate alt text for this image.
-			$image_result    = generate_alt_text_for_attachment( $image_id );
+			$image_result    = WordPressAI::generate_alt_text_for_attachment( $image_id );
 			$processing_time = microtime( true ) - $image_start_time;
 
 			// Process result and update counters.

@@ -1,7 +1,9 @@
 /**
  * WordPress dependencies.
+ *
+ * This file is deprecated in favor of the more comprehensive declarations
+ * in alt-text-components/declarations.d.ts.
+ *
+ * Keeping this file for backward compatibility during the transition.
  */
-declare const travelopiaWpAi: {
-	ajax: { url: string };
-	nonces: { modifyAltText: string };
-} | undefined;
+import './alt-text-generator/declarations';

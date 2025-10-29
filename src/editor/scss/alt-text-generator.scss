@@ -1,0 +1,27 @@
+/**
+ * Alt Text Components Styles
+ */
+
+.alt-text {
+
+	&-wrapper {
+		display: flex;
+		gap: 10px;
+		align-items: stretch;
+
+		textarea {
+			flex: 1;
+		}
+
+		alt-text-container {
+			display: flex;
+			gap: 10px;
+			align-items: stretch;
+
+			.button {
+				display: flex;
+				align-items: center;
+			}
+		}
+	}
+}

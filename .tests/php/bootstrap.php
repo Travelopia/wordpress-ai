@@ -28,6 +28,7 @@ function _manually_load_plugin(): void {
 	// Load plugin namespace files.
 	require __DIR__ . '/../../inc/namespace.php';
 	require __DIR__ . '/../../inc/admin/namespace.php';
+	require __DIR__ . '/../../inc/alt-text/namespace.php';
 }
 
 // Load the plugin before WordPress initializes.

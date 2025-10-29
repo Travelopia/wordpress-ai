@@ -17,19 +17,18 @@
     "static-analysis:php": "composer static-analysis"
   },
   "devDependencies": {
-    "@wordpress/stylelint-config": "^21.2.0",
+    "@wordpress/stylelint-config": "^23.26.0",
     "css-loader": "^7.1.2",
-    "eslint": "^8.57.0",
     "mini-css-extract-plugin": "^2.9.4",
-    "sass": "^1.92.1",
-    "sass-loader": "^16.0.5",
-    "stylelint": "^14.16.1",
-    "terser-webpack-plugin": "^5.3.6",
+    "sass": "^1.93.2",
+    "sass-loader": "^16.0.6",
+    "stylelint": "^16.25.0",
+    "terser-webpack-plugin": "^5.3.14",
     "ts-loader": "^9.5.4",
-    "typescript": "^5.6.2",
-    "webpack": "^5.101.3",
-    "webpack-cli": "^5.1.4",
-    "@travelopia/eslint-plugin-wordpress-coding-standards": "^1.0.0"
+    "typescript": "^5.9.3",
+    "webpack": "^5.102.1",
+    "webpack-cli": "^6.0.1",
+    "@travelopia/eslint-plugin-wordpress-coding-standards": "^2.0.0"
   },
   "author": "Travelopia Team",
   "license": "MIT"

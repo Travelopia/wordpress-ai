@@ -7,9 +7,9 @@
 
 namespace Travelopia\WordPress_AI\Alt_Text;
 
-use WP_Query;
-use WP_Post;
 use WP_Error;
+use WP_Post;
+use WP_Query;
 use WP_REST_Request;
 
 use function Travelopia\WordPress_AI\generate_alt_text_for_attachment;
@@ -25,7 +25,8 @@ const DEFAULT_BATCH_SIZE = 50;
  *
  * @return void
  */
-function bootstrap(): void {
+function bootstrap(): void
+{
 	// If AI alt text generation is not enabled.
 	if ( ! get_setting( 'ai_alt_text_enabled', false ) ) {
 		// Bail.
@@ -45,7 +46,8 @@ function bootstrap(): void {
  *
  * @return string Translated default prompt.
  */
-function get_default_ai_alt_text_prompt(): string {
+function get_default_ai_alt_text_prompt(): string
+{
 	// Return the prompt.
 	return __( 'Describe this image in a concise, informative way for alt text. Focus on the main subject and important details that would help someone understand what is in the image.', 'travelopia-wp-ai' );
 }
@@ -55,7 +57,8 @@ function get_default_ai_alt_text_prompt(): string {
  *
  * @return array<int|string, mixed> Meta query array.
  */
-function get_missing_alt_text_meta_query(): array {
+function get_missing_alt_text_meta_query(): array
+{
 	// Return meta query for missing alt text filter.
 	return [
 		'relation' => 'OR',
@@ -80,7 +83,8 @@ function get_missing_alt_text_meta_query(): array {
  *
  * @return WP_Error
  */
-function create_alt_text_error( string $error_code = '', string $error_message = '', array $error_data = [] ): WP_Error {
+function create_alt_text_error( string $error_code = '', string $error_message = '', array $error_data = [] ): WP_Error
+{
 	// Create WP_Error instance.
 	$error = new WP_Error( $error_code, $error_message, $error_data );
 
@@ -100,7 +104,8 @@ function create_alt_text_error( string $error_code = '', string $error_message =
  *
  * @return array<string, mixed>
  */
-function handle_alt_text_error( string $error_code = '', string $error_message = '', array $error_data = [] ): array {
+function handle_alt_text_error( string $error_code = '', string $error_message = '', array $error_data = [] ): array
+{
 	// Create error and fire action hook.
 	$error = create_alt_text_error( $error_code, $error_message, $error_data );
 
@@ -120,7 +125,8 @@ function handle_alt_text_error( string $error_code = '', string $error_message =
  *
  * @return array<int> Image IDs to process.
  */
-function get_images_to_process( array $image_ids = [], bool $missing_only = false ): array {
+function get_images_to_process( array $image_ids = [], bool $missing_only = false ): array
+{
 	// Build query arguments.
 	$query_args = [
 		'post_type'              => 'attachment',
@@ -155,7 +161,8 @@ function get_images_to_process( array $image_ids = [], bool $missing_only = fals
  *
  * @return array<int> Array of image IDs.
  */
-function get_all_images( bool $missing_only = false, int $page = 1, int $per_page = DEFAULT_BATCH_SIZE ): array {
+function get_all_images( bool $missing_only = false, int $page = 1, int $per_page = DEFAULT_BATCH_SIZE ): array
+{
 	// Build query arguments for all images.
 	$query_args = [
 		'post_type'              => 'attachment',
@@ -188,7 +195,8 @@ function get_all_images( bool $missing_only = false, int $page = 1, int $per_pag
  *
  * @return int Total count of images.
  */
-function get_images_count( bool $missing_only = false ): int {
+function get_images_count( bool $missing_only = false ): int
+{
 	// Build query arguments for counting.
 	$query_args = [
 		'post_type'              => 'attachment',
@@ -218,7 +226,8 @@ function get_images_count( bool $missing_only = false ): int {
  *
  * @return array<string, mixed>
  */
-function validate_ai_configuration(): array {
+function validate_ai_configuration(): array
+{
 	// Check if AI alt text generation is enabled.
 	$ai_enabled = get_setting( 'ai_alt_text_enabled', false );
 
@@ -231,8 +240,8 @@ function validate_ai_configuration(): array {
 			sprintf(
 				/* translators: %s: settings page URL */
 				__( 'AI alt text generation is not enabled. Please enable it in Settings > Travelopia WP AI.', 'travelopia-wp-ai' ),
-				admin_url( 'options-general.php?page=travelopia-wp-ai-settings' )
-			)
+				admin_url( 'options-general.php?page=travelopia-wp-ai-settings' ),
+			),
 		);
 
 		// Return error if AI is not enabled.
@@ -255,8 +264,8 @@ function validate_ai_configuration(): array {
 			sprintf(
 				/* translators: %s: settings page URL */
 				__( 'AI prompt is not configured. Please set it in Settings > Travelopia WP AI.', 'travelopia-wp-ai' ),
-				admin_url( 'options-general.php?page=travelopia-wp-ai-settings' )
-			)
+				admin_url( 'options-general.php?page=travelopia-wp-ai-settings' ),
+			),
 		);
 
 		// Return error if AI prompt is not configured.
@@ -279,8 +288,8 @@ function validate_ai_configuration(): array {
 			sprintf(
 				/* translators: %s: settings page URL */
 				__( 'OpenAI API key not configured. Please set OPENAI_API_KEY in wp-config.php or environment.', 'travelopia-wp-ai' ),
-				admin_url( 'options-general.php?page=travelopia-wp-ai-settings' )
-			)
+				admin_url( 'options-general.php?page=travelopia-wp-ai-settings' ),
+			),
 		);
 
 		// Return error result.
@@ -300,7 +309,8 @@ function validate_ai_configuration(): array {
  *
  * @return array<string, mixed>
  */
-function get_ai_configuration(): array {
+function get_ai_configuration(): array
+{
 	// Get AI configuration settings.
 	return [
 		'enabled' => (bool) get_setting( 'ai_alt_text_enabled', false ),
@@ -315,7 +325,8 @@ function get_ai_configuration(): array {
  *
  * @return array<string, mixed>
  */
-function get_image_details( int $image_id = 0 ): array {
+function get_image_details( int $image_id = 0 ): array
+{
 	// Get image post and alt text data.
 	$image_post = get_post( $image_id );
 	$alt_text   = get_post_meta( $image_id, '_wp_attachment_image_alt', true );
@@ -336,7 +347,8 @@ function get_image_details( int $image_id = 0 ): array {
  *
  * @return array<string, mixed>
  */
-function parse_cli_arguments( array $args_assoc = [] ): array {
+function parse_cli_arguments( array $args_assoc = [] ): array
+{
 	// Parse and validate command arguments.
 	$options = wp_parse_args(
 		$args_assoc,
@@ -345,7 +357,7 @@ function parse_cli_arguments( array $args_assoc = [] ): array {
 			'missing'    => false,
 			'all'        => false,
 			'batch-size' => DEFAULT_BATCH_SIZE,
-		]
+		],
 	);
 
 	// Parse IDs if provided.
@@ -409,7 +421,8 @@ function parse_cli_arguments( array $args_assoc = [] ): array {
  *
  * @return array<int> Image IDs.
  */
-function get_cli_images_to_process( array $options = [] ): array {
+function get_cli_images_to_process( array $options = [] ): array
+{
 	// Handle specific IDs.
 	if ( ! empty( $options['ids'] ) ) {
 		// Filter specific IDs for missing alt text if requested.
@@ -437,7 +450,8 @@ function get_cli_images_to_process( array $options = [] ): array {
  *
  * @return array<string, mixed> Results.
  */
-function process_cli_images( array $image_ids = [], array $options = [] ): array {
+function process_cli_images( array $image_ids = [], array $options = [] ): array
+{
 	// Initialize options with defaults.
 	$options = wp_parse_args(
 		$options,
@@ -446,7 +460,7 @@ function process_cli_images( array $image_ids = [], array $options = [] ): array
 			'all'        => false,
 			'missing'    => false,
 			'batch-size' => DEFAULT_BATCH_SIZE,
-		]
+		],
 	);
 
 	// Validate AI is enabled and configured.
@@ -463,7 +477,7 @@ function process_cli_images( array $image_ids = [], array $options = [] ): array
 				'id'      => 0,
 				'success' => false,
 				'error'   => $validation_result['error'] ?? 'Unknown validation error',
-			]
+			],
 		);
 
 		// Add required timing fields for return type compatibility.
@@ -544,7 +558,7 @@ function process_cli_images( array $image_ids = [], array $options = [] ): array
 	// Calculate total time and average time.
 	$total_time   = microtime( true ) - $start_time;
 	$processed    = $success_count + $failed_count;
-	$average_time = $processed > 0 ? $total_time / max( 1, $processed ) : 0.0;
+	$average_time = 0 < $processed ? $total_time / max( 1, $processed ) : 0.0;
 
 	// Return results.
 	return [
@@ -565,7 +579,8 @@ function process_cli_images( array $image_ids = [], array $options = [] ): array
  *
  * @return array<string, mixed> Error result.
  */
-function create_error_result( string $error_message = '' ): array {
+function create_error_result( string $error_message = '' ): array
+{
 	// Return error result structure.
 	return [
 		'success'       => false,
@@ -584,11 +599,12 @@ function create_error_result( string $error_message = '' ): array {
  *
  * @return string Formatted time string.
  */
-function format_processing_time( float $seconds = 0.0 ): string {
+function format_processing_time( float $seconds = 0.0 ): string
+{
 	// Format time based on duration.
-	if ( $seconds < 60 ) {
+	if ( 60 > $seconds ) {
 		return sprintf( '%.2fs', $seconds );
-	} elseif ( $seconds < 3600 ) {
+	} elseif ( 3600 > $seconds ) {
 		$minutes           = floor( $seconds / 60 );
 		$remaining_seconds = $seconds % 60;
 
@@ -608,7 +624,8 @@ function format_processing_time( float $seconds = 0.0 ): string {
  *
  * @return array<string, mixed>|null Array with post, alt_text, and mode, or null if invalid.
  */
-function get_attachment_editor_data(): ?array {
+function get_attachment_editor_data(): ?array
+{
 	// Get current screen.
 	$screen = get_current_screen();
 
@@ -685,7 +702,8 @@ function get_attachment_editor_data(): ?array {
  *
  * @return void
  */
-function admin_enqueue_scripts(): void {
+function admin_enqueue_scripts(): void
+{
 	// Get attachment data.
 	$data = get_attachment_editor_data();
 
@@ -711,11 +729,11 @@ function admin_enqueue_scripts(): void {
 		'travelopia-wp-ai-editor',
 		'travelopiaWpAi',
 		[
-			'api'        => [
+			'api' => [
 				'root'  => rest_url(),
 				'nonce' => wp_create_nonce( 'wp_rest' ),
 			],
-			'nonces'     => [
+			'nonces' => [
 				'rest' => wp_create_nonce( 'wp_rest' ),
 			],
 			'attachment' => [
@@ -723,12 +741,12 @@ function admin_enqueue_scripts(): void {
 				'altText' => $data['alt_text'],
 				'mode'    => $data['mode'],
 			],
-			'urls'       => [
+			'urls' => [
 				'generate'   => get_alt_text_action_url( $post, false ),
 				'regenerate' => get_alt_text_action_url( $post, true ),
 				'reject'     => admin_url( 'post.php?post=' . $post->ID . '&action=edit' ),
 			],
-			'labels'     => [
+			'labels' => [
 				'generateAltText'   => __( 'Generate Alt Text', 'travelopia-wp-ai' ),
 				'regenerateAltText' => __( 'Regenerate Alt Text', 'travelopia-wp-ai' ),
 				'accept'            => __( 'Accept', 'travelopia-wp-ai' ),
@@ -736,7 +754,7 @@ function admin_enqueue_scripts(): void {
 				'regenerate'        => __( 'Regenerate', 'travelopia-wp-ai' ),
 				'saving'            => __( 'Saving...', 'travelopia-wp-ai' ),
 			],
-		]
+		],
 	);
 }
 
@@ -748,14 +766,15 @@ function admin_enqueue_scripts(): void {
  *
  * @return mixed[]
  */
-function media_row_actions( array $actions = [], ?WP_Post $post = null ): array {
+function media_row_actions( array $actions = [], ?WP_Post $post = null ): array
+{
 	// Return early if post is null.
 	if ( ! $post ) {
 		return $actions;
 	}
 
 	// Return early if the post is not an image.
-	if ( 'attachment' !== $post->post_type || strpos( $post->post_mime_type, 'image' ) === false ) {
+	if ( 'attachment' !== $post->post_type || false === strpos( $post->post_mime_type, 'image' ) ) {
 		return $actions;
 	}
 
@@ -771,7 +790,7 @@ function media_row_actions( array $actions = [], ?WP_Post $post = null ): array 
 	$actions['generate_alt_text'] = sprintf(
 		'<a href="%s">%s</a>',
 		esc_url( $url ),
-		empty( $alt_text ) ? __( 'Generate Alt Text', 'travelopia-wp-ai' ) : __( 'Regenerate Alt Text', 'travelopia-wp-ai' )
+		empty( $alt_text ) ? __( 'Generate Alt Text', 'travelopia-wp-ai' ) : __( 'Regenerate Alt Text', 'travelopia-wp-ai' ),
 	);
 
 	// Return the updated actions.
@@ -786,7 +805,8 @@ function media_row_actions( array $actions = [], ?WP_Post $post = null ): array 
  *
  * @return string
  */
-function get_alt_text_action_url( ?WP_Post $post = null, bool $is_regeneration = false ): string {
+function get_alt_text_action_url( ?WP_Post $post = null, bool $is_regeneration = false ): string
+{
 	// Return empty string if post is null.
 	if ( ! $post ) {
 		return '';
@@ -813,7 +833,8 @@ function get_alt_text_action_url( ?WP_Post $post = null, bool $is_regeneration =
  *
  * @return void
  */
-function handle_rest_alt_text_update( ?WP_Post $attachment = null, ?WP_REST_Request $request = null ): void {
+function handle_rest_alt_text_update( ?WP_Post $attachment = null, ?WP_REST_Request $request = null ): void
+{
 	// Return early if attachment or request is null.
 	if ( ! $attachment || ! $request ) {
 		return;

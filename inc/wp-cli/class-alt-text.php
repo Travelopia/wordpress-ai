@@ -9,13 +9,13 @@ namespace Travelopia\WordPress_AI\WP_CLI;
 
 use WP_CLI;
 
-use function Travelopia\WordPress_AI\Alt_Text\get_ai_configuration;
-use function Travelopia\WordPress_AI\Alt_Text\get_image_details;
-use function Travelopia\WordPress_AI\Alt_Text\get_cli_images_to_process;
-use function Travelopia\WordPress_AI\Alt_Text\parse_cli_arguments;
-use function Travelopia\WordPress_AI\Alt_Text\format_processing_time;
 use function Travelopia\WordPress_AI\Alt_Text\create_alt_text_error;
+use function Travelopia\WordPress_AI\Alt_Text\format_processing_time;
+use function Travelopia\WordPress_AI\Alt_Text\get_ai_configuration;
+use function Travelopia\WordPress_AI\Alt_Text\get_cli_images_to_process;
+use function Travelopia\WordPress_AI\Alt_Text\get_image_details;
 use function Travelopia\WordPress_AI\Alt_Text\get_images_count;
+use function Travelopia\WordPress_AI\Alt_Text\parse_cli_arguments;
 use function Travelopia\WordPress_AI\generate_alt_text_for_attachment;
 
 use const Travelopia\WordPress_AI\Alt_Text\DEFAULT_BATCH_SIZE;
@@ -23,8 +23,8 @@ use const Travelopia\WordPress_AI\Alt_Text\DEFAULT_BATCH_SIZE;
 /**
  * Class Alt_Text.
  */
-class Alt_Text {
-
+class Alt_Text
+{
 	/**
 	 * Generate alt text for images using AI.
 	 *
@@ -99,7 +99,8 @@ class Alt_Text {
 	 *
 	 * @return void
 	 */
-	public function generate( array $args = [], array $args_assoc = [] ): void {
+	public function generate( array $args = [], array $args_assoc = [] ): void
+	{
 		// Ensure WP_CLI is available.
 		if ( ! class_exists( 'WP_CLI' ) ) {
 			return;
@@ -115,7 +116,7 @@ class Alt_Text {
 			$error         = create_alt_text_error(
 				'invalid_arguments',
 				$error_message,
-				[ 'parsed_args' => $parsed_args ]
+				[ 'parsed_args' => $parsed_args ],
 			);
 			WP_CLI::error( $error->get_error_message() );
 		}
@@ -142,7 +143,8 @@ class Alt_Text {
 	 *
 	 * @return void
 	 */
-	private function request_confirmation( array $args = [] ): void {
+	private function request_confirmation( array $args = [] ): void
+	{
 		// Determine operation description.
 		if ( ! empty( $args['ids'] ) ) {
 			if ( $args['missing'] ) {
@@ -169,9 +171,9 @@ class Alt_Text {
 				/* translators: 1: operation description, 2: number of images */
 					__( 'You are about to %1$s (%2$d images).', 'travelopia-wp-ai' ),
 					$operation,
-					$image_count
-				)
-			)
+					$image_count,
+				),
+			),
 		);
 		WP_CLI::log( WP_CLI::colorize( '%Y' . __( 'This operation may take a significant amount of time and resources.', 'travelopia-wp-ai' ) . '%n' ) );
 
@@ -186,7 +188,8 @@ class Alt_Text {
 	 *
 	 * @return void
 	 */
-	private function display_command_info( array $args = [] ): void {
+	private function display_command_info( array $args = [] ): void
+	{
 		// Get AI configuration.
 		$config = get_ai_configuration();
 
@@ -198,7 +201,7 @@ class Alt_Text {
 				'missing'    => false,
 				'all'        => false,
 				'batch-size' => DEFAULT_BATCH_SIZE,
-			]
+			],
 		);
 
 		// Welcome message.
@@ -228,7 +231,7 @@ class Alt_Text {
 		$image_count = count( $image_ids );
 
 		// Display found images count.
-		if ( $image_count > 0 ) {
+		if ( 0 < $image_count ) {
 			$estimated_batches = ceil( $image_count / $args['batch-size'] );
 			WP_CLI::log(
 				WP_CLI::colorize(
@@ -236,9 +239,9 @@ class Alt_Text {
 						/* translators: 1: number of images, 2: number of batches */
 						__( 'Found %1$d images to process (%2$d batches)', 'travelopia-wp-ai' ),
 						$image_count,
-						$estimated_batches
-					) . '%n'
-				)
+						$estimated_batches,
+					) . '%n',
+				),
 			);
 		}
 
@@ -254,7 +257,8 @@ class Alt_Text {
 	 *
 	 * @return void
 	 */
-	private function display_results( array $result = [] ): void {
+	private function display_results( array $result = [] ): void
+	{
 		// Check if the operation failed completely (no images processed).
 		if ( ! $result['success'] && isset( $result['error'] ) ) {
 			// Display error message.
@@ -293,15 +297,15 @@ class Alt_Text {
 		}
 
 		// Final status - only show success if we actually processed images successfully.
-		if ( $result['processed'] > 0 && 0 === $result['failed_count'] ) {
+		if ( 0 < $result['processed'] && 0 === $result['failed_count'] ) {
 			WP_CLI::success( __( 'All images processed successfully!', 'travelopia-wp-ai' ) );
-		} elseif ( $result['processed'] > 0 && $result['failed_count'] > 0 ) {
+		} elseif ( 0 < $result['processed'] && 0 < $result['failed_count'] ) {
 			WP_CLI::warning(
 				sprintf(
 					/* translators: %d: number of failures */
 					__( 'Processing completed with %d failures. Check the log above for details.', 'travelopia-wp-ai' ),
-					absint( $result['failed_count'] )
-				)
+					absint( $result['failed_count'] ),
+				),
 			);
 		}
 	}
@@ -313,7 +317,8 @@ class Alt_Text {
 	 *
 	 * @return array<string, mixed> Results.
 	 */
-	private function process_images_with_streaming( array $args = [] ): array {
+	private function process_images_with_streaming( array $args = [] ): array
+	{
 		// Get images to process.
 		$image_ids = get_cli_images_to_process( $args );
 
@@ -349,7 +354,8 @@ class Alt_Text {
 	 *
 	 * @return array<string, mixed>
 	 */
-	private function get_empty_result(): array {
+	private function get_empty_result(): array
+	{
 		// Return empty result structure.
 		return [
 			'success'       => false,
@@ -370,7 +376,8 @@ class Alt_Text {
 	 *
 	 * @return array{success_count: int, failed_count: int, images: array<int, array<string, mixed>>, start_time: float, batch_size: int, batches: array<int, array<int>>, total_batches: int, current_batch: int, total_images: int}
 	 */
-	private function initialize_processing_data( array $args = [], array $image_ids = [] ): array {
+	private function initialize_processing_data( array $args = [], array $image_ids = [] ): array
+	{
 		// Get batch size with validation.
 		$batch_size = isset( $args['batch-size'] ) ? max( 1, absint( $args['batch-size'] ) ) : DEFAULT_BATCH_SIZE;
 
@@ -395,12 +402,13 @@ class Alt_Text {
 	 *
 	 * @return void
 	 */
-	private function display_batch_progress( array &$processing_data = [] ): void {
+	private function display_batch_progress( array &$processing_data = [] ): void
+	{
 		// Get batch progress information.
 		$current_batch    = isset( $processing_data['current_batch'] ) && is_numeric( $processing_data['current_batch'] ) ? absint( $processing_data['current_batch'] ) : 0;
 		$batches          = $processing_data['batches'];
 		$total_batches    = is_array( $batches ) ? count( $batches ) : 0;
-		$progress_percent = $total_batches > 0 ? round( ( ( $current_batch - 1 ) / $total_batches ) * 100, 1 ) : 0.0;
+		$progress_percent = 0 < $total_batches ? round( ( ( $current_batch - 1 ) / $total_batches ) * 100, 1 ) : 0.0;
 		$batch_size       = isset( $processing_data['batch_size'] ) && is_numeric( $processing_data['batch_size'] ) ? absint( $processing_data['batch_size'] ) : 0;
 		$processed_images = ( $current_batch - 1 ) * $batch_size;
 
@@ -408,7 +416,7 @@ class Alt_Text {
 		$eta_formatted = '';
 
 		// Calculate ETA only after first batch is processed.
-		if ( $current_batch > 1 ) {
+		if ( 1 < $current_batch ) {
 			$elapsed_time       = microtime( true ) - $processing_data['start_time'];
 			$average_batch_time = $elapsed_time / ( $current_batch - 1 );
 			$remaining_batches  = $total_batches - $current_batch + 1;
@@ -425,7 +433,7 @@ class Alt_Text {
 			strval( $progress_percent ),
 			$processed_images + 1,
 			$total_images,
-			strval( $eta_formatted )
+			strval( $eta_formatted ),
 		);
 		$this->cli_output( $batch_message );
 	}
@@ -438,7 +446,8 @@ class Alt_Text {
 	 *
 	 * @return void
 	 */
-	private function process_batch( array $batch = [], array &$processing_data = [] ): void {
+	private function process_batch( array $batch = [], array &$processing_data = [] ): void
+	{
 		// Process each image in the batch.
 		foreach ( $batch as $image_id ) {
 			// Ensure image_id is an integer.
@@ -470,7 +479,8 @@ class Alt_Text {
 	 *
 	 * @return void
 	 */
-	private function process_image_result( int $image_id = 0, array $image_result = [], float $processing_time = 0.0, array &$processing_data = [] ): void {
+	private function process_image_result( int $image_id = 0, array $image_result = [], float $processing_time = 0.0, array &$processing_data = [] ): void
+	{
 		// Build result entry for this image.
 		$result_entry = [
 			'id'              => $image_id,
@@ -491,6 +501,7 @@ class Alt_Text {
 			if ( ! isset( $processing_data['images'] ) || ! is_array( $processing_data['images'] ) ) {
 				$processing_data['images'] = [];
 			}
+
 			$processing_data['images'][ $image_id ] = $result_entry;
 			++$processing_data['success_count'];
 
@@ -506,6 +517,7 @@ class Alt_Text {
 			if ( ! isset( $processing_data['images'] ) || ! is_array( $processing_data['images'] ) ) {
 				$processing_data['images'] = [];
 			}
+
 			$processing_data['images'][ $image_id ] = $result_entry;
 			++$processing_data['failed_count'];
 
@@ -522,7 +534,8 @@ class Alt_Text {
 	 *
 	 * @return void
 	 */
-	private function cleanup_after_batch( int $current_batch = 0 ): void {
+	private function cleanup_after_batch( int $current_batch = 0 ): void
+	{
 		// Clean up memory after each batch.
 		wp_cache_flush();
 
@@ -541,13 +554,14 @@ class Alt_Text {
 	 *
 	 * @return array<string, mixed>
 	 */
-	private function calculate_final_results( array $processing_data = [] ): array {
+	private function calculate_final_results( array $processing_data = [] ): array
+	{
 		// Calculate timing and statistics.
 		$total_time      = microtime( true ) - $processing_data['start_time'];
 		$success_count   = isset( $processing_data['success_count'] ) && is_numeric( $processing_data['success_count'] ) ? absint( $processing_data['success_count'] ) : 0;
 		$failed_count    = isset( $processing_data['failed_count'] ) && is_numeric( $processing_data['failed_count'] ) ? absint( $processing_data['failed_count'] ) : 0;
 		$processed_count = $success_count + $failed_count;
-		$average_time    = $processed_count > 0 ? $total_time / $processed_count : 0.0;
+		$average_time    = 0 < $processed_count ? $total_time / $processed_count : 0.0;
 
 		// Return final results array.
 		return [
@@ -569,19 +583,18 @@ class Alt_Text {
 	 *
 	 * @return void
 	 */
-	private function cli_output( string $message = '', string $type = 'log' ): void {
+	private function cli_output( string $message = '', string $type = 'log' ): void
+	{
 		// Handle different message types.
 		switch ( $type ) {
 			// Output success message.
 			case 'success':
 				WP_CLI::success( $message );
 				break;
-
 			// Output warning message.
 			case 'warning':
 				WP_CLI::warning( $message );
 				break;
-
 			// Output regular log message.
 			default:
 				WP_CLI::log( $message );

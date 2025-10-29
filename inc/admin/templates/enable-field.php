@@ -1,6 +1,6 @@
 <?php
 /**
- * Enable Field Template
+ * Enable Field Template.
  *
  * @package travelopia-wordpress-ai
  */

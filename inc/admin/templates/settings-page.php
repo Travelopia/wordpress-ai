@@ -1,6 +1,6 @@
 <?php
 /**
- * Travelopia WordPress AI Settings Page Template
+ * Travelopia WordPress AI Settings Page Template.
  *
  * @package travelopia-wordpress-ai
  */
@@ -14,6 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 if ( ! current_user_can( 'manage_options' ) ) {
 	wp_die( esc_html__( 'You do not have sufficient permissions to access this page.', 'travelopia-wp-ai' ) );
 }
+
 ?>
 
 <div class="wrap">

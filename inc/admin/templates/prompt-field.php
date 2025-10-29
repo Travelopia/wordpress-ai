@@ -1,6 +1,6 @@
 <?php
 /**
- * Prompt Field Template
+ * Prompt Field Template.
  *
  * @package travelopia-wordpress-ai
  */

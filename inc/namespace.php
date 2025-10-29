@@ -7,13 +7,12 @@
 
 namespace Travelopia\WordPress_AI;
 
+use Exception;
 use WordPress\AiClient\AiClient;
 use WordPress\AiClient\ProviderImplementations\OpenAi\OpenAiProvider;
-use Exception;
 use WP_CLI;
 
 use function Travelopia\WordPress_AI\Admin\get_default_settings;
-
 use function Travelopia\WordPress_AI\Alt_Text\get_default_ai_alt_text_prompt;
 
 /**
@@ -21,7 +20,8 @@ use function Travelopia\WordPress_AI\Alt_Text\get_default_ai_alt_text_prompt;
  *
  * @return void
  */
-function bootstrap(): void {
+function bootstrap(): void
+{
 	// Actions.
 	add_action( 'add_attachment', __NAMESPACE__ . '\\maybe_generate_alt_text_on_upload', 20 );
 
@@ -41,7 +41,8 @@ function bootstrap(): void {
  *
  * @return void
  */
-function maybe_generate_alt_text_on_upload( int $attachment_id = 0 ): void {
+function maybe_generate_alt_text_on_upload( int $attachment_id = 0 ): void
+{
 	// Validate attachment is an image and plugin is enabled.
 	if ( ! wp_attachment_is_image( $attachment_id ) || ! get_setting( 'ai_alt_text_enabled', false ) ) {
 		return;
@@ -59,7 +60,8 @@ function maybe_generate_alt_text_on_upload( int $attachment_id = 0 ): void {
  *
  * @return mixed Setting value or default.
  */
-function get_setting( string $key = '', mixed $default_value = null ): mixed {
+function get_setting( string $key = '', mixed $default_value = null ): mixed
+{
 	// Fetch settings with default fallback.
 	$settings = get_option( 'travelopia_wp_ai_settings', get_default_settings() );
 
@@ -80,7 +82,8 @@ function get_setting( string $key = '', mixed $default_value = null ): mixed {
  *
  * @return array{success: bool, alt_text?: string, error?: string}
  */
-function generate_alt_text_for_attachment( int $attachment_id = 0, bool $update = true ): array {
+function generate_alt_text_for_attachment( int $attachment_id = 0, bool $update = true ): array
+{
 	// Early validation checks.
 	if ( ! function_exists( 'wp_attachment_is_image' ) || ! wp_attachment_is_image( $attachment_id ) ) {
 		return [
@@ -133,7 +136,7 @@ function generate_alt_text_for_attachment( int $attachment_id = 0, bool $update 
 	 * Filter the generation options.
 	 *
 	 * @param array $default_options The generation options.
-	 * @param int   $attachment_id The attachment ID.
+	 * @param int   $attachment_id   The attachment ID.
 	 */
 	$options = apply_filters( 'trav_ai_generation_options', $default_options, $attachment_id );
 
@@ -148,8 +151,8 @@ function generate_alt_text_for_attachment( int $attachment_id = 0, bool $update 
 	/**
 	 * Filter the prompt.
 	 *
-	 * @param string $prompt The prompt.
-	 * @param int $attachment_id The attachment ID.
+	 * @param string $prompt        The prompt.
+	 * @param int    $attachment_id The attachment ID.
 	 */
 	$prompt = apply_filters( 'trav_ai_alt_text_prompt', $prompt, $attachment_id );
 
@@ -175,7 +178,7 @@ function generate_alt_text_for_attachment( int $attachment_id = 0, bool $update 
 			$context_parts[] = sprintf(
 				/* translators: %s: title */
 				__( 'title: %s', 'travelopia-wp-ai' ),
-				$title
+				$title,
 			);
 		}
 
@@ -188,7 +191,7 @@ function generate_alt_text_for_attachment( int $attachment_id = 0, bool $update 
 		$prompt .= sprintf(
 			/* translators: %s: context */
 			__( ' Additional context: %s', 'travelopia-wp-ai' ),
-			$context
+			$context,
 		);
 	}
 
@@ -271,7 +274,7 @@ function generate_alt_text_for_attachment( int $attachment_id = 0, bool $update 
 			'error'    => sprintf(
 				/* translators: %s: error message */
 				__( 'AI generation failed: %s', 'travelopia-wp-ai' ),
-				$e->getMessage()
+				$e->getMessage(),
 			),
 		];
 	}
@@ -286,7 +289,8 @@ function generate_alt_text_for_attachment( int $attachment_id = 0, bool $update 
  *
  * @return void
  */
-function activate_plugin(): void {
+function activate_plugin(): void
+{
 	// Initialize default settings if they don't exist.
 	$default_settings = [
 		'ai_alt_text_enabled' => false,

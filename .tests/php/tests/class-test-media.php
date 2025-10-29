@@ -2,24 +2,24 @@
 /**
  * Media functions test suite.
  *
- * Tests the Travelopia_WordPress_AI plugin's integration with WordPress media library,
+ * Tests the Travelopia\WordPress_AI plugin's integration with WordPress media library,
  * focusing on AI-powered alt text generation workflow and security.
  *
- * @package travelopia-wp-ai
+ * @package travelopia-wordpress-ai
  */
 
-namespace Travelopia_WordPress_AI\Tests;
+namespace Travelopia\WordPress_AI\Tests;
 
 use WP_Post;
 use WP_UnitTestCase;
 use WP_REST_Request;
 
-use function Travelopia_WordPress_AI\Alt_Text\admin_enqueue_scripts;
-use function Travelopia_WordPress_AI\Alt_Text\bootstrap;
-use function Travelopia_WordPress_AI\Alt_Text\get_alt_text_action_url;
-use function Travelopia_WordPress_AI\Alt_Text\get_attachment_editor_data;
-use function Travelopia_WordPress_AI\Alt_Text\handle_rest_alt_text_update;
-use function Travelopia_WordPress_AI\Alt_Text\media_row_actions;
+use function Travelopia\WordPress_AI\Alt_Text\admin_enqueue_scripts;
+use function Travelopia\WordPress_AI\Alt_Text\bootstrap;
+use function Travelopia\WordPress_AI\Alt_Text\get_alt_text_action_url;
+use function Travelopia\WordPress_AI\Alt_Text\get_attachment_editor_data;
+use function Travelopia\WordPress_AI\Alt_Text\handle_rest_alt_text_update;
+use function Travelopia\WordPress_AI\Alt_Text\media_row_actions;
 
 /**
  * Class Test_Media.
@@ -89,7 +89,7 @@ class Test_Media extends WP_UnitTestCase {
 	 * WHY: Prevents unnecessary processing and script loading on non-attachment screens.
 	 * BREAKS IF: Function tries to access attachment data on wrong screens, causing errors.
 	 *
-	 * @covers Travelopia_WordPress_AI\get_attachment_editor_data()
+	 * @covers Travelopia\WordPress_AI\get_attachment_editor_data()
 	 *
 	 * @return void
 	 */
@@ -107,7 +107,7 @@ class Test_Media extends WP_UnitTestCase {
 	 * WHY: Prevents errors when user navigates to attachment screen without specific post.
 	 * BREAKS IF: Function tries to process null/0 post ID, causing fatal errors.
 	 *
-	 * @covers Travelopia_WordPress_AI\get_attachment_editor_data()
+	 * @covers Travelopia\WordPress_AI\get_attachment_editor_data()
 	 *
 	 * @return void
 	 */
@@ -131,7 +131,7 @@ class Test_Media extends WP_UnitTestCase {
 	 * WHY: Alt text generation only works for images, not PDFs, videos, etc.
 	 * BREAKS IF: Plugin tries to generate alt text for non-images, wasting API calls.
 	 *
-	 * @covers Travelopia_WordPress_AI\get_attachment_editor_data()
+	 * @covers Travelopia\WordPress_AI\get_attachment_editor_data()
 	 *
 	 * @return void
 	 */
@@ -167,7 +167,7 @@ class Test_Media extends WP_UnitTestCase {
 	 * WHY: The editor UI depends on this data structure to display alt text and controls.
 	 * BREAKS IF: Missing keys cause JavaScript errors, UI doesn't render properly.
 	 *
-	 * @covers Travelopia_WordPress_AI\get_attachment_editor_data()
+	 * @covers Travelopia\WordPress_AI\get_attachment_editor_data()
 	 *
 	 * @return void
 	 */
@@ -208,7 +208,7 @@ class Test_Media extends WP_UnitTestCase {
 	 * WHY: Different UI is shown for regeneration (confirmation, different messaging).
 	 * BREAKS IF: Mode detection fails, wrong UI shown, confusing user experience.
 	 *
-	 * @covers Travelopia_WordPress_AI\get_attachment_editor_data()
+	 * @covers Travelopia\WordPress_AI\get_attachment_editor_data()
 	 *
 	 * @return void
 	 */
@@ -237,7 +237,7 @@ class Test_Media extends WP_UnitTestCase {
 	 * WHY: Loading unnecessary JavaScript/CSS slows down other admin pages.
 	 * BREAKS IF: Scripts load everywhere, causing performance issues and conflicts.
 	 *
-	 * @covers Travelopia_WordPress_AI\admin_enqueue_scripts()
+	 * @covers Travelopia\WordPress_AI\admin_enqueue_scripts()
 	 *
 	 * @return void
 	 */
@@ -256,7 +256,7 @@ class Test_Media extends WP_UnitTestCase {
 	 * WHY: JavaScript and CSS are required for the alt text editor UI to function.
 	 * BREAKS IF: Assets don't load, UI is broken, users can't generate alt text.
 	 *
-	 * @covers Travelopia_WordPress_AI\admin_enqueue_scripts()
+	 * @covers Travelopia\WordPress_AI\admin_enqueue_scripts()
 	 *
 	 * @return void
 	 */
@@ -289,7 +289,7 @@ class Test_Media extends WP_UnitTestCase {
 	 * WHY: Only images need alt text, adding links to PDFs/videos confuses users.
 	 * BREAKS IF: Users see "Generate Alt Text" on non-images, leading to errors.
 	 *
-	 * @covers Travelopia_WordPress_AI\media_row_actions()
+	 * @covers Travelopia\WordPress_AI\media_row_actions()
 	 *
 	 * @return void
 	 */
@@ -324,7 +324,7 @@ class Test_Media extends WP_UnitTestCase {
 	 * WHY: Primary entry point for users to generate alt text from media library.
 	 * BREAKS IF: Users can't discover the feature, accessibility goals not met.
 	 *
-	 * @covers Travelopia_WordPress_AI\media_row_actions()
+	 * @covers Travelopia\WordPress_AI\media_row_actions()
 	 *
 	 * @return void
 	 */
@@ -348,7 +348,7 @@ class Test_Media extends WP_UnitTestCase {
 	 * WHY: Users need ability to improve existing alt text with updated AI models.
 	 * BREAKS IF: No way to regenerate, users stuck with poor quality alt text.
 	 *
-	 * @covers Travelopia_WordPress_AI\media_row_actions()
+	 * @covers Travelopia\WordPress_AI\media_row_actions()
 	 *
 	 * @return void
 	 */
@@ -375,7 +375,7 @@ class Test_Media extends WP_UnitTestCase {
 	 * WHY: URL must have correct parameters for backend to process request properly.
 	 * BREAKS IF: Wrong URL parameters, backend can't identify generation vs regeneration.
 	 *
-	 * @covers Travelopia_WordPress_AI\get_alt_text_action_url()
+	 * @covers Travelopia\WordPress_AI\get_alt_text_action_url()
 	 *
 	 * @return void
 	 */
@@ -399,7 +399,7 @@ class Test_Media extends WP_UnitTestCase {
 	 * WHY: Regeneration has different logic (overwrites existing, needs confirmation).
 	 * BREAKS IF: Wrong parameters, existing alt text accidentally overwritten.
 	 *
-	 * @covers Travelopia_WordPress_AI\get_alt_text_action_url()
+	 * @covers Travelopia\WordPress_AI\get_alt_text_action_url()
 	 *
 	 * @return void
 	 */
@@ -423,7 +423,7 @@ class Test_Media extends WP_UnitTestCase {
 	 * WHY: Prevents malicious sites from generating alt text via CSRF attacks.
 	 * BREAKS IF: Missing/invalid nonce allows unauthorized alt text generation, security risk.
 	 *
-	 * @covers Travelopia_WordPress_AI\get_alt_text_action_url()
+	 * @covers Travelopia\WordPress_AI\get_alt_text_action_url()
 	 *
 	 * @return void
 	 */
@@ -451,7 +451,7 @@ class Test_Media extends WP_UnitTestCase {
 	 * WHY: Avoids firing tracking action for unrelated attachment updates.
 	 * BREAKS IF: Action fires on every REST update, causing unnecessary processing.
 	 *
-	 * @covers Travelopia_WordPress_AI\handle_rest_alt_text_update()
+	 * @covers Travelopia\WordPress_AI\handle_rest_alt_text_update()
 	 *
 	 * @return void
 	 */
@@ -483,7 +483,7 @@ class Test_Media extends WP_UnitTestCase {
 	 * WHY: Allows tracking/logging when alt text is modified programmatically.
 	 * BREAKS IF: No tracking of alt text changes, audit trail is lost.
 	 *
-	 * @covers Travelopia_WordPress_AI\handle_rest_alt_text_update()
+	 * @covers Travelopia\WordPress_AI\handle_rest_alt_text_update()
 	 *
 	 * @return void
 	 */
@@ -526,7 +526,7 @@ class Test_Media extends WP_UnitTestCase {
 	 * WHY: Plugin features only work if hooks are properly registered on initialization.
 	 * BREAKS IF: Hooks not registered, entire plugin is non-functional.
 	 *
-	 * @covers Travelopia_WordPress_AI\bootstrap()
+	 * @covers Travelopia\WordPress_AI\bootstrap()
 	 *
 	 * @return void
 	 */
@@ -551,12 +551,12 @@ class Test_Media extends WP_UnitTestCase {
 		// Verify hooks are registered.
 		// CRITICAL: All hooks must be registered at correct priorities.
 		// Standard priority 10 for admin scripts.
-		$this->assertEquals( 10, has_action( 'admin_enqueue_scripts', 'Travelopia_WordPress_AI\Alt_Text\admin_enqueue_scripts' ) );
+		$this->assertEquals( 10, has_action( 'admin_enqueue_scripts', 'Travelopia\WordPress_AI\Alt_Text\admin_enqueue_scripts' ) );
 
 		// Standard priority 10 for REST API integration.
-		$this->assertEquals( 10, has_action( 'rest_after_insert_attachment', 'Travelopia_WordPress_AI\Alt_Text\handle_rest_alt_text_update' ) );
+		$this->assertEquals( 10, has_action( 'rest_after_insert_attachment', 'Travelopia\WordPress_AI\Alt_Text\handle_rest_alt_text_update' ) );
 
 		// Standard priority 10 for media row actions filter.
-		$this->assertEquals( 10, has_filter( 'media_row_actions', 'Travelopia_WordPress_AI\Alt_Text\media_row_actions' ) );
+		$this->assertEquals( 10, has_filter( 'media_row_actions', 'Travelopia\WordPress_AI\Alt_Text\media_row_actions' ) );
 	}
 }

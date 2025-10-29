@@ -2,7 +2,7 @@
 /**
  * Travelopia WordPress AI Settings Page Template
  *
- * @package travelopia-wp-ai
+ * @package travelopia-wordpress-ai
  */
 
 // Prevent direct access.

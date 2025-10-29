@@ -6,10 +6,10 @@
  * Author URI: https://www.travelopia.com
  * Version: 0.1.0
  *
- * @package travelopia-wp-ai
+ * @package travelopia-wordpress-ai
  */
 
-namespace Travelopia_WordPress_AI;
+namespace Travelopia\WordPress_AI;
 
 // Prevent direct access.
 if ( ! defined( 'ABSPATH' ) ) {

@@ -2,7 +2,7 @@
 /**
  * Prompt Field Template
  *
- * @package travelopia-wp-ai
+ * @package travelopia-wordpress-ai
  */
 
 // Prevent direct access.
@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Get necessary functions.
-use function Travelopia_WordPress_AI\Admin\get_default_settings;
+use function Travelopia\WordPress_AI\Admin\get_default_settings;
 
 // Get default settings and current settings.
 $default_settings = get_default_settings();

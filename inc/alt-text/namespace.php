@@ -2,18 +2,18 @@
 /**
  * Alt Text namespace functions.
  *
- * @package travelopia-wp-ai
+ * @package travelopia-wordpress-ai
  */
 
-namespace Travelopia_WordPress_AI\Alt_Text;
+namespace Travelopia\WordPress_AI\Alt_Text;
 
 use WP_Query;
 use WP_Post;
 use WP_Error;
 use WP_REST_Request;
 
-use function Travelopia_WordPress_AI\generate_alt_text_for_attachment;
-use function Travelopia_WordPress_AI\get_setting;
+use function Travelopia\WordPress_AI\generate_alt_text_for_attachment;
+use function Travelopia\WordPress_AI\get_setting;
 
 /**
  * Alt Text Constants.

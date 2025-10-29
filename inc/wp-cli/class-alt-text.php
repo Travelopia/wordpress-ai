@@ -2,23 +2,23 @@
 /**
  * Generate Alt Text CLI Command.
  *
- * @package travelopia-wp-ai
+ * @package travelopia-wordpress-ai
  */
 
-namespace Travelopia_WordPress_AI\WP_CLI;
+namespace Travelopia\WordPress_AI\WP_CLI;
 
 use WP_CLI;
 
-use function Travelopia_WordPress_AI\Alt_Text\get_ai_configuration;
-use function Travelopia_WordPress_AI\Alt_Text\get_image_details;
-use function Travelopia_WordPress_AI\Alt_Text\get_cli_images_to_process;
-use function Travelopia_WordPress_AI\Alt_Text\parse_cli_arguments;
-use function Travelopia_WordPress_AI\Alt_Text\format_processing_time;
-use function Travelopia_WordPress_AI\Alt_Text\create_alt_text_error;
-use function Travelopia_WordPress_AI\Alt_Text\get_images_count;
-use function Travelopia_WordPress_AI\generate_alt_text_for_attachment;
+use function Travelopia\WordPress_AI\Alt_Text\get_ai_configuration;
+use function Travelopia\WordPress_AI\Alt_Text\get_image_details;
+use function Travelopia\WordPress_AI\Alt_Text\get_cli_images_to_process;
+use function Travelopia\WordPress_AI\Alt_Text\parse_cli_arguments;
+use function Travelopia\WordPress_AI\Alt_Text\format_processing_time;
+use function Travelopia\WordPress_AI\Alt_Text\create_alt_text_error;
+use function Travelopia\WordPress_AI\Alt_Text\get_images_count;
+use function Travelopia\WordPress_AI\generate_alt_text_for_attachment;
 
-use const Travelopia_WordPress_AI\Alt_Text\DEFAULT_BATCH_SIZE;
+use const Travelopia\WordPress_AI\Alt_Text\DEFAULT_BATCH_SIZE;
 
 /**
  * Class Alt_Text.

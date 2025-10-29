@@ -2,12 +2,12 @@
 /**
  * Admin namespace functions.
  *
- * @package travelopia-wp-ai
+ * @package travelopia-wordpress-ai
  */
 
-namespace Travelopia_WordPress_AI\Admin;
+namespace Travelopia\WordPress_AI\Admin;
 
-use function Travelopia_WordPress_AI\Alt_Text\get_default_ai_alt_text_prompt;
+use function Travelopia\WordPress_AI\Alt_Text\get_default_ai_alt_text_prompt;
 
 /**
  * Bootstrap admin functionality.

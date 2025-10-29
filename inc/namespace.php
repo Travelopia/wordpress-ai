@@ -2,19 +2,19 @@
 /**
  * Namespace functions.
  *
- * @package travelopia-wp-ai
+ * @package travelopia-wordpress-ai
  */
 
-namespace Travelopia_WordPress_AI;
+namespace Travelopia\WordPress_AI;
 
 use WordPress\AiClient\AiClient;
 use WordPress\AiClient\ProviderImplementations\OpenAi\OpenAiProvider;
 use Exception;
 use WP_CLI;
 
-use function Travelopia_WordPress_AI\Admin\get_default_settings;
+use function Travelopia\WordPress_AI\Admin\get_default_settings;
 
-use function Travelopia_WordPress_AI\Alt_Text\get_default_ai_alt_text_prompt;
+use function Travelopia\WordPress_AI\Alt_Text\get_default_ai_alt_text_prompt;
 
 /**
  * Bootstrap plugin.

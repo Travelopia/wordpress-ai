@@ -5,7 +5,7 @@
  * Configures the test database, WordPress constants, and directory structure
  * required for running PHPUnit tests for the WordPress AI plugin.
  *
- * @package travelopia-wp-ai
+ * @package travelopia-wordpress-ai
  *
  * @phpcs:disable PSR1.Files.SideEffects
  */

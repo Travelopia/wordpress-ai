@@ -10,7 +10,6 @@ namespace Travelopia\WordPress_AI;
 use Exception;
 use WordPress\AiClient\AiClient;
 use WordPress\AiClient\ProviderImplementations\OpenAi\OpenAiProvider;
-use WP_CLI;
 
 /**
  * WordPress AI class.
@@ -28,11 +27,6 @@ class WordPressAI
 	{
 		// Hooks.
 		add_action( 'add_attachment', [ __CLASS__, 'maybe_generate_alt_text_on_upload' ], 20 );
-
-		// Register WP CLI commands.
-		if ( defined( 'WP_CLI' ) && true === WP_CLI && class_exists( 'WP_CLI' ) ) {
-			WP_CLI::add_command( 'travelopia-wp-ai alt-text', WpCli\AltText::class );
-		}
 	}
 
 	/**

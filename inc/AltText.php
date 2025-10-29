@@ -7,6 +7,8 @@
 
 namespace Travelopia\WordPress_AI;
 
+use Exception;
+use WP_CLI;
 use WP_Error;
 use WP_Post;
 use WP_Query;
@@ -25,6 +27,8 @@ class AltText
 	 * Bootstrap the alt text module.
 	 *
 	 * @return void
+	 *
+	 * @throws Exception
 	 */
 	public static function bootstrap(): void
 	{
@@ -37,6 +41,11 @@ class AltText
 		add_action( 'admin_enqueue_scripts', [ __CLASS__, 'admin_enqueue_scripts' ] );
 		add_action( 'rest_after_insert_attachment', [ __CLASS__, 'handle_rest_alt_text_update' ], 10, 2 );
 		add_filter( 'media_row_actions', [ __CLASS__, 'media_row_actions' ], 10, 2 );
+
+		// Register WP CLI commands.
+		if ( defined( 'WP_CLI' ) && true === WP_CLI && class_exists( 'WP_CLI' ) ) {
+			WP_CLI::add_command( 'travelopia-wp-ai alt-text', WpCli\AltText::class );
+		}
 	}
 
 	/**

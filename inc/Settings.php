@@ -21,6 +21,7 @@ class Settings
 	{
 		add_action( 'admin_menu', [ __CLASS__, 'setup_settings' ] );
 		add_action( 'admin_init', [ __CLASS__, 'initialize_settings' ] );
+		add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_admin_styles' ] );
 		add_filter(
 			'plugin_action_links_' . plugin_basename( dirname( __DIR__ ) . '/plugin.php' ),
 			[ __CLASS__, 'add_settings_link' ],
@@ -201,5 +202,36 @@ class Settings
 		);
 
 		return $links;
+	}
+
+	/**
+	 * Enqueue admin styles for WordPress AI settings page.
+	 *
+	 * @param string $hook_suffix The current admin page hook suffix.
+	 *
+	 * @return void
+	 */
+	public static function enqueue_admin_styles( string $hook_suffix = '' ): void
+	{
+		if ( 'settings_page_travelopia-wp-ai-settings' !== $hook_suffix ) {
+			return;
+		}
+
+		$plugin_dir_url = plugin_dir_url( dirname( __DIR__ ) );
+
+		wp_enqueue_style(
+			'travelopia-wp-ai-admin',
+			$plugin_dir_url . 'dist/admin.css',
+			[],
+			'1.0.0',
+		);
+
+		wp_enqueue_script(
+			'travelopia-wp-ai-admin',
+			$plugin_dir_url . 'dist/admin.js',
+			[],
+			'1.0.0',
+			true,
+		);
 	}
 }

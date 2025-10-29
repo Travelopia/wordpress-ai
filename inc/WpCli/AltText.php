@@ -8,7 +8,6 @@
 namespace Travelopia\WordPress_AI\WpCli;
 
 use Travelopia\WordPress_AI\AltText as AltTextModule;
-use Travelopia\WordPress_AI\WordPressAI;
 use WP_CLI;
 
 /**
@@ -452,7 +451,7 @@ class AltText
 			$this->cli_output( $processing_message );
 
 			// Generate alt text for this image.
-			$image_result    = WordPressAI::generate_alt_text_for_attachment( $image_id );
+			$image_result    = AltTextModule::generate_alt_text_for_attachment( $image_id );
 			$processing_time = microtime( true ) - $image_start_time;
 
 			// Process result and update counters.

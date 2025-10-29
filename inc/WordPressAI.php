@@ -38,30 +38,11 @@ class WordPressAI
 	 */
 	public static function maybe_generate_alt_text_on_upload( int $attachment_id = 0 ): void
 	{
-		if ( ! wp_attachment_is_image( $attachment_id ) || ! self::get_setting( 'alt_text_generation', false ) ) {
+		if ( ! wp_attachment_is_image( $attachment_id ) || ! Settings::get_setting( 'alt_text_generation', false ) ) {
 			return;
 		}
 
 		self::generate_alt_text_for_attachment( $attachment_id );
-	}
-
-	/**
-	 * Get AI setting value.
-	 *
-	 * @param string $key           Setting key.
-	 * @param mixed  $default_value Default value if setting not found.
-	 *
-	 * @return mixed Setting value or default.
-	 */
-	public static function get_setting( string $key = '', mixed $default_value = null ): mixed
-	{
-		$settings = get_option( 'travelopia_wp_ai_settings', Admin::get_default_settings() );
-
-		if ( ! is_array( $settings ) ) {
-			$settings = Admin::get_default_settings();
-		}
-
-		return $settings[ $key ] ?? $default_value;
 	}
 
 	/**
@@ -84,7 +65,7 @@ class WordPressAI
 		}
 
 		// Check if AI alt text generation is enabled.
-		if ( ! self::get_setting( 'alt_text_generation', false ) ) {
+		if ( ! Settings::get_setting( 'alt_text_generation', false ) ) {
 			return [
 				'success'  => false,
 				'alt_text' => '',
@@ -93,7 +74,7 @@ class WordPressAI
 		}
 
 		// Get the AI prompt from settings.
-		$ai_prompt = self::get_setting( 'ai_alt_text_prompt', '' );
+		$ai_prompt = Settings::get_setting( 'alt_text_prompt', '' );
 
 		// Validate prompt is configured.
 		if ( empty( $ai_prompt ) || ! is_string( $ai_prompt ) ) {
@@ -144,7 +125,7 @@ class WordPressAI
 		 * @param string $prompt        The prompt.
 		 * @param int    $attachment_id The attachment ID.
 		 */
-		$prompt = apply_filters( 'trav_ai_alt_text_prompt', $prompt, $attachment_id );
+		$prompt = apply_filters( 'trav_alt_text_prompt', $prompt, $attachment_id );
 
 		// Validate prompt is a string after filtering.
 		if ( ! is_string( $prompt ) ) {

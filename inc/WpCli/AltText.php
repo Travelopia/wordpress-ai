@@ -69,7 +69,7 @@ class AltText
 	 *
 	 * ## REQUIREMENTS
 	 *
-	 * - AI alt text generation must be enabled in Settings > Travelopia WP AI
+	 * - AI alt text generation must be enabled in Settings > WordPress AI
 	 * - AI prompt must be configured in the plugin settings
 	 * - Images must be valid attachment posts of type 'image'
 	 *

@@ -11,8 +11,8 @@
 namespace Travelopia\WordPress_AI\Tests;
 
 use WP_Post;
-use WP_UnitTestCase;
 use WP_REST_Request;
+use WP_UnitTestCase;
 
 use function Travelopia\WordPress_AI\Alt_Text\admin_enqueue_scripts;
 use function Travelopia\WordPress_AI\Alt_Text\bootstrap;
@@ -27,8 +27,8 @@ use function Travelopia\WordPress_AI\Alt_Text\media_row_actions;
  * Validates that the alt text generation feature properly integrates with
  * WordPress media screens, REST API, and maintains security throughout.
  */
-class Test_Media extends WP_UnitTestCase {
-
+class Test_Media extends WP_UnitTestCase
+{
 	/**
 	 * Test attachment post ID.
 	 *
@@ -51,14 +51,16 @@ class Test_Media extends WP_UnitTestCase {
 	 *
 	 * @return void
 	 */
-	public function set_up(): void {
+	public function set_up(): void
+	{
 		// Call parent set up.
 		parent::set_up();
 
 		// Create a test image attachment using WordPress's bundled test image.
+
 		// This ensures we have a real image with proper MIME type for testing.
 		$this->attachment_id = $this->factory()->attachment->create_upload_object(
-			__DIR__ . '/../../../vendor/wp-phpunit/wp-phpunit/data/images/test-image.jpg'
+			__DIR__ . '/../../../vendor/wp-phpunit/wp-phpunit/data/images/test-image.jpg',
 		);
 
 		// Store the attachment post object for tests to use.
@@ -73,7 +75,8 @@ class Test_Media extends WP_UnitTestCase {
 	 *
 	 * @return void
 	 */
-	public function tear_down(): void {
+	public function tear_down(): void
+	{
 		// Delete the test attachment completely (force delete, skip trash).
 		if ( $this->attachment_id ) {
 			wp_delete_attachment( $this->attachment_id, true );
@@ -93,7 +96,8 @@ class Test_Media extends WP_UnitTestCase {
 	 *
 	 * @return void
 	 */
-	public function test_get_attachment_editor_data_returns_null_when_not_on_attachment_screen(): void {
+	public function test_get_attachment_editor_data_returns_null_when_not_on_attachment_screen(): void
+	{
 		// Without setting current screen, this simulates being on any non-attachment page.
 		$result = get_attachment_editor_data();
 
@@ -111,7 +115,8 @@ class Test_Media extends WP_UnitTestCase {
 	 *
 	 * @return void
 	 */
-	public function test_get_attachment_editor_data_returns_null_when_no_post_id(): void {
+	public function test_get_attachment_editor_data_returns_null_when_no_post_id(): void
+	{
 		// Simulate being on attachment screen but without post ID in URL.
 		set_current_screen( 'attachment' );
 
@@ -135,14 +140,15 @@ class Test_Media extends WP_UnitTestCase {
 	 *
 	 * @return void
 	 */
-	public function test_get_attachment_editor_data_returns_null_for_non_image(): void {
+	public function test_get_attachment_editor_data_returns_null_for_non_image(): void
+	{
 		// Create a PDF to test MIME type filtering.
 		$pdf_id = $this->factory()->attachment->create_object(
 			[
 				'file'           => 'test.pdf',
 				'post_mime_type' => 'application/pdf',
 				'post_type'      => 'attachment',
-			]
+			],
 		);
 
 		// Simulate editing a PDF attachment.
@@ -171,7 +177,8 @@ class Test_Media extends WP_UnitTestCase {
 	 *
 	 * @return void
 	 */
-	public function test_get_attachment_editor_data_returns_valid_data(): void {
+	public function test_get_attachment_editor_data_returns_valid_data(): void
+	{
 		// Setup: Add alt text to simulate existing data.
 		update_post_meta( $this->attachment_id, '_wp_attachment_image_alt', 'Test alt text' );
 
@@ -212,7 +219,8 @@ class Test_Media extends WP_UnitTestCase {
 	 *
 	 * @return void
 	 */
-	public function test_get_attachment_editor_data_returns_regenerate_mode(): void {
+	public function test_get_attachment_editor_data_returns_regenerate_mode(): void
+	{
 		// Simulate clicking "Regenerate Alt Text" link (with nonce for security).
 		set_current_screen( 'attachment' );
 		$_GET['post']                   = $this->attachment_id;
@@ -241,7 +249,8 @@ class Test_Media extends WP_UnitTestCase {
 	 *
 	 * @return void
 	 */
-	public function test_admin_enqueue_scripts_does_nothing_when_not_on_attachment_screen(): void {
+	public function test_admin_enqueue_scripts_does_nothing_when_not_on_attachment_screen(): void
+	{
 		// Call the function without being on attachment screen.
 		admin_enqueue_scripts();
 
@@ -260,7 +269,8 @@ class Test_Media extends WP_UnitTestCase {
 	 *
 	 * @return void
 	 */
-	public function test_admin_enqueue_scripts_enqueues_on_attachment_screen(): void {
+	public function test_admin_enqueue_scripts_enqueues_on_attachment_screen(): void
+	{
 		// Setup: Create conditions where function should load assets.
 		update_post_meta( $this->attachment_id, '_wp_attachment_image_alt', 'Test alt text' );
 
@@ -293,14 +303,15 @@ class Test_Media extends WP_UnitTestCase {
 	 *
 	 * @return void
 	 */
-	public function test_media_row_actions_returns_unchanged_for_non_image(): void {
+	public function test_media_row_actions_returns_unchanged_for_non_image(): void
+	{
 		// Create a PDF attachment.
 		$pdf_id = $this->factory()->attachment->create_object(
 			[
 				'file'           => 'test.pdf',
 				'post_mime_type' => 'application/pdf',
 				'post_type'      => 'attachment',
-			]
+			],
 		);
 
 		// Get the PDF post object and prepare actions array.
@@ -328,7 +339,8 @@ class Test_Media extends WP_UnitTestCase {
 	 *
 	 * @return void
 	 */
-	public function test_media_row_actions_adds_generate_action_for_empty_alt(): void {
+	public function test_media_row_actions_adds_generate_action_for_empty_alt(): void
+	{
 		// Setup: Existing actions array.
 		$actions = [ 'edit' => '<a>Edit</a>' ];
 
@@ -352,7 +364,8 @@ class Test_Media extends WP_UnitTestCase {
 	 *
 	 * @return void
 	 */
-	public function test_media_row_actions_adds_regenerate_action_for_existing_alt(): void {
+	public function test_media_row_actions_adds_regenerate_action_for_existing_alt(): void
+	{
 		// Setup: Add existing alt text.
 		update_post_meta( $this->attachment_id, '_wp_attachment_image_alt', 'Existing alt text' );
 
@@ -379,7 +392,8 @@ class Test_Media extends WP_UnitTestCase {
 	 *
 	 * @return void
 	 */
-	public function test_get_alt_text_action_url_returns_generate_url(): void {
+	public function test_get_alt_text_action_url_returns_generate_url(): void
+	{
 		// Call function with regeneration flag set to false.
 		$url = get_alt_text_action_url( $this->attachment, false );
 
@@ -403,7 +417,8 @@ class Test_Media extends WP_UnitTestCase {
 	 *
 	 * @return void
 	 */
-	public function test_get_alt_text_action_url_returns_regenerate_url(): void {
+	public function test_get_alt_text_action_url_returns_regenerate_url(): void
+	{
 		// Call function with regeneration flag set to true.
 		$url = get_alt_text_action_url( $this->attachment, true );
 
@@ -427,7 +442,8 @@ class Test_Media extends WP_UnitTestCase {
 	 *
 	 * @return void
 	 */
-	public function test_get_alt_text_action_url_includes_valid_nonce(): void {
+	public function test_get_alt_text_action_url_includes_valid_nonce(): void
+	{
 		// Call function to generate URL.
 		$url = get_alt_text_action_url( $this->attachment, false );
 
@@ -455,7 +471,8 @@ class Test_Media extends WP_UnitTestCase {
 	 *
 	 * @return void
 	 */
-	public function test_handle_rest_alt_text_update_does_nothing_without_alt_text_param(): void {
+	public function test_handle_rest_alt_text_update_does_nothing_without_alt_text_param(): void
+	{
 		// Create REST request without alt_text parameter.
 		$request = new WP_REST_Request( 'POST', '/wp/v2/media/' . $this->attachment_id );
 
@@ -467,7 +484,7 @@ class Test_Media extends WP_UnitTestCase {
 			'trav_ai_alt_text_modified',
 			function () use ( &$action_fired ) {
 				$action_fired = true;
-			}
+			},
 		);
 
 		// Call the function to handle REST update.
@@ -487,7 +504,8 @@ class Test_Media extends WP_UnitTestCase {
 	 *
 	 * @return void
 	 */
-	public function test_handle_rest_alt_text_update_fires_action_with_alt_text_param(): void {
+	public function test_handle_rest_alt_text_update_fires_action_with_alt_text_param(): void
+	{
 		// Create REST request with alt_text parameter.
 		$request = new WP_REST_Request( 'POST', '/wp/v2/media/' . $this->attachment_id );
 
@@ -508,7 +526,7 @@ class Test_Media extends WP_UnitTestCase {
 				$action_alt_text      = $alt_text;
 			},
 			10,
-			2
+			2,
 		);
 
 		// Call the function to handle REST update with alt text.
@@ -530,7 +548,8 @@ class Test_Media extends WP_UnitTestCase {
 	 *
 	 * @return void
 	 */
-	public function test_bootstrap_registers_hooks(): void {
+	public function test_bootstrap_registers_hooks(): void
+	{
 		// Clear all hooks to test registration from scratch.
 		remove_all_actions( 'admin_enqueue_scripts' );
 		remove_all_actions( 'rest_after_insert_attachment' );
@@ -541,15 +560,17 @@ class Test_Media extends WP_UnitTestCase {
 			'travelopia_wp_ai_settings',
 			[
 				'ai_alt_text_enabled' => true,
-				'ai_alt_text_prompt'  => 'Test prompt',
-			]
+				'alt_text_prompt'     => 'Test prompt',
+			],
 		);
 
 		// Call bootstrap to register hooks.
 		bootstrap();
 
 		// Verify hooks are registered.
+
 		// CRITICAL: All hooks must be registered at correct priorities.
+
 		// Standard priority 10 for admin scripts.
 		$this->assertEquals( 10, has_action( 'admin_enqueue_scripts', 'Travelopia\WordPress_AI\Alt_Text\admin_enqueue_scripts' ) );
 

@@ -33,7 +33,7 @@ class AltText
 	public static function bootstrap(): void
 	{
 		// Check if this module is enabled.
-		if ( true !== WordPressAI::get_setting( 'alt_text_generation', false ) ) {
+		if ( true !== Settings::get_setting( 'alt_text_generation', false ) ) {
 			return;
 		}
 
@@ -53,7 +53,7 @@ class AltText
 	 *
 	 * @return string Translated default prompt.
 	 */
-	public static function get_default_ai_alt_text_prompt(): string
+	public static function get_default_alt_text_prompt(): string
 	{
 		return __( 'Describe this image in a concise, informative way for alt text. Focus on the main subject and important details that would help someone understand what is in the image.', 'travelopia-wp-ai' );
 	}
@@ -195,7 +195,7 @@ class AltText
 	public static function validate_ai_configuration(): array
 	{
 		// Check if AI alt text generation is enabled.
-		$ai_enabled = WordPressAI::get_setting( 'alt_text_generation', false );
+		$ai_enabled = Settings::get_setting( 'alt_text_generation', false );
 
 		// Bail if AI is not enabled.
 		if ( ! $ai_enabled ) {
@@ -204,20 +204,20 @@ class AltText
 				'ai_not_enabled',
 				sprintf(
 					/* translators: %s: settings page URL */
-					__( 'AI alt text generation is not enabled. Please enable it in Settings > Travelopia WP AI.', 'travelopia-wp-ai' ),
+					__( 'AI alt text generation is not enabled. Please enable it in Settings > WordPress AI.', 'travelopia-wp-ai' ),
 					admin_url( 'options-general.php?page=travelopia-wp-ai-settings' ),
 				),
 			);
 
 			return [
 				'valid'      => false,
-				'error'      => __( 'AI alt text generation is not enabled. Please enable it in Settings > Travelopia WP AI.', 'travelopia-wp-ai' ),
+				'error'      => __( 'AI alt text generation is not enabled. Please enable it in Settings > WordPress AI.', 'travelopia-wp-ai' ),
 				'error_code' => 'ai_not_enabled',
 			];
 		}
 
 		// Get the AI prompt.
-		$ai_prompt = WordPressAI::get_setting( 'ai_alt_text_prompt', '' );
+		$ai_prompt = Settings::get_setting( 'alt_text_prompt', '' );
 
 		if ( empty( $ai_prompt ) ) {
 			do_action(
@@ -225,14 +225,14 @@ class AltText
 				'ai_prompt_not_configured',
 				sprintf(
 					/* translators: %s: settings page URL */
-					__( 'AI prompt is not configured. Please set it in Settings > Travelopia WP AI.', 'travelopia-wp-ai' ),
+					__( 'AI prompt is not configured. Please set it in Settings > WordPress AI.', 'travelopia-wp-ai' ),
 					admin_url( 'options-general.php?page=travelopia-wp-ai-settings' ),
 				),
 			);
 
 			return [
 				'valid'      => false,
-				'error'      => __( 'AI prompt is not configured. Please set it in Settings > Travelopia WP AI.', 'travelopia-wp-ai' ),
+				'error'      => __( 'AI prompt is not configured. Please set it in Settings > WordPress AI.', 'travelopia-wp-ai' ),
 				'error_code' => 'ai_prompt_not_configured',
 			];
 		}
@@ -269,8 +269,8 @@ class AltText
 	public static function get_ai_configuration(): array
 	{
 		return [
-			'enabled' => (bool) WordPressAI::get_setting( 'alt_text_generation', false ),
-			'prompt'  => strval( WordPressAI::get_setting( 'ai_alt_text_prompt', '' ) ),
+			'enabled' => (bool) Settings::get_setting( 'alt_text_generation', false ),
+			'prompt'  => strval( Settings::get_setting( 'alt_text_prompt', '' ) ),
 		];
 	}
 

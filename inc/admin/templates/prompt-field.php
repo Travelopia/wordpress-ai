@@ -23,13 +23,13 @@ if ( ! is_array( $settings ) ) {
 }
 
 // Get current values.
-$prompt  = $settings['ai_alt_text_prompt'] ?? $default_settings['ai_alt_text_prompt'];
+$prompt  = $settings['alt_text_prompt'] ?? $default_settings['alt_text_prompt'];
 $enabled = $settings['alt_text_generation'] ?? false;
 ?>
 
 <textarea
 	id="ai-alt-text-prompt"
-	name="travelopia_wp_ai_settings[ai_alt_text_prompt]"
+	name="travelopia_wp_ai_settings[alt_text_prompt]"
 	rows="4"
 	cols="50"
 	placeholder="<?php esc_attr_e( 'Enter your AI prompt here...', 'travelopia-wp-ai' ); ?>"

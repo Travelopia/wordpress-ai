@@ -9,6 +9,7 @@ namespace Travelopia\WordPress_AI\AltText;
 
 use Exception;
 use Travelopia\WordPress_AI\AltText;
+use WP_Error;
 use WP_Post;
 
 class Admin
@@ -118,6 +119,8 @@ class Admin
 	 * Handle the generate/regenerate alt text admin action.
 	 *
 	 * @return void
+	 *
+	 * @throws Exception
 	 */
 	public static function handle_generate_alt_text_action(): void
 	{
@@ -158,7 +161,7 @@ class Admin
 			$result = AltText::generate( $post_id, update: true );
 
 			// Check if generation was successful.
-			if ( is_wp_error( $result ) ) {
+			if ( $result instanceof WP_Error ) {
 				throw new Exception( 'generation_failed' );
 			}
 

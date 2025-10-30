@@ -64,7 +64,7 @@ class EnableAltTextGenerationField
 	public static function render(): void
 	{
 		$settings = Settings::get();
-		$enabled  = $settings[self::FIELD_NAME] ?? false;
+		$enabled  = $settings[ self::FIELD_NAME ] ?? false;
 		?>
 
 		<label for="ai-alt-text-enabled">

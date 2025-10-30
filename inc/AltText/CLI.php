@@ -76,7 +76,11 @@ class CLI
 		$start_time    = microtime( true );
 
 		$progress = make_progress_bar(
-			sprintf( __( 'Processing %d images', 'travelopia-wordpress-ai' ), count( $image_ids ) ),
+			sprintf(
+				/* translators: %d: number of images */
+				__( 'Processing %d images', 'travelopia-wordpress-ai' ),
+				count( $image_ids ),
+			),
 			count( $image_ids ),
 		);
 
@@ -100,7 +104,20 @@ class CLI
 
 		// Display summary.
 		$total_time = round( microtime( true ) - $start_time, 2 );
-		WP_CLI::log( sprintf( __( 'Completed in %ss', 'travelopia-wordpress-ai' ), $total_time ) );
-		WP_CLI::success( sprintf( __( '%d succeeded, %d failed', 'travelopia-wordpress-ai' ), $success_count, $failed_count ) );
+		WP_CLI::log(
+			sprintf(
+				/* translators: %s: time in seconds */
+				__( 'Completed in %ss', 'travelopia-wordpress-ai' ),
+				$total_time,
+			),
+		);
+		WP_CLI::success(
+			sprintf(
+				/* translators: 1: number of successful generations, 2: number of failed generations */
+				__( '%1$d succeeded, %2$d failed', 'travelopia-wordpress-ai' ),
+				$success_count,
+				$failed_count,
+			),
+		);
 	}
 }

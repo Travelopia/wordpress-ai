@@ -70,8 +70,8 @@ class AltTextPromptField
 	public static function render(): void
 	{
 		$settings = Settings::get();
-		$prompt   = (string) ( $settings[self::FIELD_NAME] ?? '' );
-		$enabled  = $settings[EnableAltTextGenerationField::FIELD_NAME] ?? false;
+		$prompt   = (string) ( $settings[ self::FIELD_NAME ] ?? '' );
+		$enabled  = $settings[ EnableAltTextGenerationField::FIELD_NAME ] ?? false;
 		?>
 
 		<textarea

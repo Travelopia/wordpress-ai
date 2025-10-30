@@ -57,7 +57,6 @@ class Test_Media extends WP_UnitTestCase
 		parent::set_up();
 
 		// Create a test image attachment using WordPress's bundled test image.
-
 		// This ensures we have a real image with proper MIME type for testing.
 		$this->attachment_id = $this->factory()->attachment->create_upload_object(
 			__DIR__ . '/../../../vendor/wp-phpunit/wp-phpunit/data/images/test-image.jpg',
@@ -568,9 +567,7 @@ class Test_Media extends WP_UnitTestCase
 		bootstrap();
 
 		// Verify hooks are registered.
-
 		// CRITICAL: All hooks must be registered at correct priorities.
-
 		// Standard priority 10 for admin scripts.
 		$this->assertEquals( 10, has_action( 'admin_enqueue_scripts', 'Travelopia\WordPress_AI\Alt_Text\admin_enqueue_scripts' ) );
 

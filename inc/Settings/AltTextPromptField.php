@@ -19,6 +19,16 @@ class AltTextPromptField
 	public const FIELD_NAME = 'alt_text_prompt';
 
 	/**
+	 * Get default value for this field.
+	 *
+	 * @return string Default value.
+	 */
+	public static function get_default(): string
+	{
+		return __( 'Describe this image in a concise, informative way for alt text. Focus on the main subject and important details that would help someone understand what is in the image.', 'travelopia-wordpress-ai' );
+	}
+
+	/**
 	 * Register this settings field.
 	 *
 	 * @return void
@@ -32,6 +42,25 @@ class AltTextPromptField
 			Settings::PAGE_SLUG,
 			Settings::SECTION_ID,
 		);
+	}
+
+	/**
+	 * Sanitize field value.
+	 *
+	 * @param mixed $value The field value from input.
+	 *
+	 * @return string Sanitized value.
+	 */
+	public static function sanitize( mixed $value ): string
+	{
+		$sanitized = sanitize_textarea_field( strval( $value ?? '' ) );
+
+		// If empty, return default value.
+		if ( empty( trim( $sanitized ) ) ) {
+			return self::get_default();
+		}
+
+		return $sanitized;
 	}
 
 	/**

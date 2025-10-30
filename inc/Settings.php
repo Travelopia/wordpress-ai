@@ -45,6 +45,16 @@ class Settings
 	public const SECTION_ID = 'travelopia_wp_ai_main_section';
 
 	/**
+	 * Settings fields.
+	 *
+	 * @var array<class-string>
+	 */
+	private const FIELDS = [
+		EnableAltTextGenerationField::class,
+		AltTextPromptField::class,
+	];
+
+	/**
 	 * Bootstrap settings functionality.
 	 *
 	 * @return void
@@ -67,10 +77,13 @@ class Settings
 	 */
 	public static function get_default_settings(): array
 	{
-		return [
-			EnableAltTextGenerationField::FIELD_NAME => false,
-			AltTextPromptField::FIELD_NAME           => __( 'Describe this image in a concise, informative way for alt text. Focus on the main subject and important details that would help someone understand what is in the image.', 'travelopia-wordpress-ai' ),
-		];
+		$defaults = [];
+
+		foreach ( self::FIELDS as $field_class ) {
+			$defaults[ $field_class::FIELD_NAME ] = $field_class::get_default();
+		}
+
+		return $defaults;
 	}
 
 	/**
@@ -122,18 +135,15 @@ class Settings
 	 */
 	public static function sanitize_settings( ?array $input = null ): array
 	{
-		$sanitized = [];
-
 		if ( null === $input ) {
 			return self::get_default_settings();
 		}
 
-		$sanitized[EnableAltTextGenerationField::FIELD_NAME] = ! empty( $input[EnableAltTextGenerationField::FIELD_NAME] );
-		$sanitized[AltTextPromptField::FIELD_NAME]           = sanitize_textarea_field( strval( $input[AltTextPromptField::FIELD_NAME] ?? '' ) );
+		$sanitized = [];
 
-		if ( empty( trim( $sanitized[AltTextPromptField::FIELD_NAME] ) ) ) {
-			$defaults                                  = self::get_default_settings();
-			$sanitized[AltTextPromptField::FIELD_NAME] = $defaults[AltTextPromptField::FIELD_NAME];
+		foreach ( self::FIELDS as $field_class ) {
+			$field_name               = $field_class::FIELD_NAME;
+			$sanitized[ $field_name ] = $field_class::sanitize( $input[ $field_name ] ?? null );
 		}
 
 		return $sanitized;
@@ -172,8 +182,10 @@ class Settings
 		);
 
 		Page::register();
-		EnableAltTextGenerationField::register();
-		AltTextPromptField::register();
+
+		foreach ( self::FIELDS as $field_class ) {
+			$field_class::register();
+		}
 	}
 
 	/**

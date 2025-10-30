@@ -19,6 +19,16 @@ class EnableAltTextGenerationField
 	public const FIELD_NAME = 'alt_text_generation';
 
 	/**
+	 * Get default value for this field.
+	 *
+	 * @return bool Default value.
+	 */
+	public static function get_default(): bool
+	{
+		return false;
+	}
+
+	/**
 	 * Register this settings field.
 	 *
 	 * @return void
@@ -32,6 +42,18 @@ class EnableAltTextGenerationField
 			Settings::PAGE_SLUG,
 			Settings::SECTION_ID,
 		);
+	}
+
+	/**
+	 * Sanitize field value.
+	 *
+	 * @param mixed $value The field value from input.
+	 *
+	 * @return bool Sanitized value.
+	 */
+	public static function sanitize( mixed $value ): bool
+	{
+		return ! empty( $value );
 	}
 
 	/**

@@ -7,13 +7,19 @@
 
 namespace Travelopia\WordPress_AI\AltText;
 
+use Exception;
 use Travelopia\WordPress_AI\AltText;
 use WP_Post;
-use WP_REST_Request;
-use WP_Screen;
 
 class Admin
 {
+	/**
+	 * Admin action name for generating/regenerating alt text.
+	 *
+	 * @var string
+	 */
+	private const ACTION_GENERATE_ALT_TEXT = 'tp_generate_alt_text';
+
 	/**
 	 * Bootstrap the admin functionality.
 	 *
@@ -21,130 +27,64 @@ class Admin
 	 */
 	public static function bootstrap(): void
 	{
-		add_action( 'admin_enqueue_scripts', [ __CLASS__, 'admin_enqueue_scripts' ] );
-		add_action( 'rest_after_insert_attachment', [ __CLASS__, 'handle_rest_alt_text_update' ], 10, 2 );
 		add_filter( 'media_row_actions', [ __CLASS__, 'media_row_actions' ], 10, 2 );
+		add_action( 'admin_action_' . self::ACTION_GENERATE_ALT_TEXT, [ __CLASS__, 'handle_generate_alt_text_action' ] );
+		add_action( 'admin_notices', [ __CLASS__, 'display_admin_notices' ] );
 	}
 
 	/**
-	 * Get attachment data for alt text editor.
-	 *
-	 * @return array<string, mixed>|null Array with post, alt_text, and mode, or null if invalid.
-	 */
-	public static function get_attachment_editor_data(): ?array
-	{
-		$screen = get_current_screen();
-
-		if ( ! $screen instanceof WP_Screen || 'attachment' !== $screen->id ) {
-			return null;
-		}
-
-		$post_id = isset( $_GET['post'] ) ? absint( $_GET['post'] ) : 0;
-
-		if ( empty( $post_id ) ) {
-			return null;
-		}
-
-		$valid_request = ! isset( $_GET['tp_nonce'] ) ? false : wp_verify_nonce( $_GET['tp_nonce'], 'generate_alt_text_' . $post_id );
-
-		if ( ! $valid_request ) {
-			return null;
-		}
-
-		$post = get_post( $post_id );
-
-		if ( ! $post instanceof WP_Post || 'attachment' !== $post->post_type || ! str_contains( $post->post_mime_type, 'image' ) ) {
-			return null;
-		}
-
-		$is_regeneration = isset( $_GET['tp_regenerate_alt_text'] );
-		$is_generation   = isset( $_GET['tp_generate_alt_text'] );
-		$alt_text        = get_post_meta( $post->ID, '_wp_attachment_image_alt', true );
-
-		if ( $is_generation && empty( $alt_text ) ) {
-			$result = AltText::generate( $post->ID, update: true );
-
-			if ( ! is_wp_error( $result ) ) {
-				$alt_text = $result;
-			}
-		}
-
-		if ( $is_regeneration ) {
-			$result = AltText::generate( $post->ID, update: false );
-
-			if ( ! is_wp_error( $result ) ) {
-				$alt_text = $result;
-			}
-		}
-
-		$mode = $is_regeneration ? 'regenerate' : 'default';
-
-		return [
-			'post'     => $post,
-			'alt_text' => $alt_text,
-			'mode'     => $mode,
-		];
-	}
-
-	/**
-	 * Enqueue editor assets.
+	 * Display admin notices for alt text generation errors and successes.
 	 *
 	 * @return void
 	 */
-	public static function admin_enqueue_scripts(): void
+	public static function display_admin_notices(): void
 	{
-		// Get attachment data.
-		$data = self::get_attachment_editor_data();
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- This is just displaying a notice, not processing data.
+		if ( isset( $_GET['tp_error'] ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- This is just displaying a notice, not processing data.
+			$error_code = sanitize_key( wp_unslash( $_GET['tp_error'] ) );
 
-		// Return if no valid data.
-		if ( ! $data ) {
-			return;
+			$error_messages = [
+				'invalid_post_id'       => __( 'Invalid post ID.', 'travelopia-wordpress-ai' ),
+				'security_check_failed' => __( 'Security check failed.', 'travelopia-wordpress-ai' ),
+				'invalid_attachment'    => __( 'Invalid attachment.', 'travelopia-wordpress-ai' ),
+				'permission_denied'     => __( 'You do not have permission to edit this attachment.', 'travelopia-wordpress-ai' ),
+				'generation_failed'     => __( 'Failed to generate alt text. Please try again.', 'travelopia-wordpress-ai' ),
+			];
+
+			if ( isset( $error_messages[ $error_code ] ) ) {
+				wp_admin_notice(
+					$error_messages[ $error_code ],
+					[
+						'type'           => 'error',
+						'dismissible'    => true,
+						'paragraph_wrap' => true,
+					],
+				);
+			}
 		}
 
-		// Extract post from data and ensure it's a WP_Post object.
-		$post = $data['post'] ?? null;
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- This is just displaying a notice, not processing data.
+		if ( isset( $_GET['tp_success'] ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- This is just displaying a notice, not processing data.
+			$success_code = sanitize_key( wp_unslash( $_GET['tp_success'] ) );
 
-		// Return if post is not a valid WP_Post instance.
-		if ( ! $post instanceof WP_Post ) {
-			return;
+			$success_messages = [
+				'generated'   => __( 'Alt text generated successfully.', 'travelopia-wordpress-ai' ),
+				'regenerated' => __( 'Alt text regenerated successfully.', 'travelopia-wordpress-ai' ),
+			];
+
+			if ( isset( $success_messages[ $success_code ] ) ) {
+				wp_admin_notice(
+					$success_messages[ $success_code ],
+					[
+						'type'           => 'success',
+						'dismissible'    => true,
+						'paragraph_wrap' => true,
+					],
+				);
+			}
 		}
-
-		// Enqueue editor scripts.
-		wp_enqueue_script( 'travelopia-wp-ai-editor', plugins_url( 'dist/editor.js', plugin_dir_path( __DIR__ ) ), [], '1.0.0', true );
-		wp_enqueue_style( 'travelopia-wp-ai-editor', plugins_url( 'dist/editor.css', plugin_dir_path( __DIR__ ) ), [], '1.0.0' );
-
-		// Localize script with all necessary data.
-		wp_localize_script(
-			'travelopia-wp-ai-editor',
-			'travelopiaWpAi',
-			[
-				'api' => [
-					'root'  => rest_url(),
-					'nonce' => wp_create_nonce( 'wp_rest' ),
-				],
-				'nonces' => [
-					'rest' => wp_create_nonce( 'wp_rest' ),
-				],
-				'attachment' => [
-					'id'      => $post->ID,
-					'altText' => $data['alt_text'],
-					'mode'    => $data['mode'],
-				],
-				'urls' => [
-					'generate'   => self::get_alt_text_action_url( $post, false ),
-					'regenerate' => self::get_alt_text_action_url( $post, true ),
-					'reject'     => admin_url( 'post.php?post=' . $post->ID . '&action=edit' ),
-				],
-				'labels' => [
-					'generateAltText'   => __( 'Generate Alt Text', 'travelopia-wordpress-ai' ),
-					'regenerateAltText' => __( 'Regenerate Alt Text', 'travelopia-wordpress-ai' ),
-					'accept'            => __( 'Accept', 'travelopia-wordpress-ai' ),
-					'reject'            => __( 'Reject', 'travelopia-wordpress-ai' ),
-					'regenerate'        => __( 'Regenerate', 'travelopia-wordpress-ai' ),
-					'saving'            => __( 'Saving...', 'travelopia-wordpress-ai' ),
-				],
-			],
-		);
 	}
 
 	/**
@@ -161,68 +101,114 @@ class Admin
 			return $actions;
 		}
 
-		$alt_text = get_post_meta( $post->ID, '_wp_attachment_image_alt', true );
-		$base_url = admin_url( 'post.php?post=' . $post->ID . '&action=edit&' . ( empty( $alt_text ) ? 'tp_generate_alt_text=true' : 'tp_regenerate_alt_text=true' ) );
-		$nonce    = wp_create_nonce( 'generate_alt_text_' . $post->ID );
-		$url      = add_query_arg( 'tp_nonce', $nonce, $base_url );
+		$alt_text        = get_post_meta( $post->ID, '_wp_attachment_image_alt', true );
+		$is_regeneration = ! empty( $alt_text );
 
 		// Add the CTA on the actions row of the media item in list view.
 		$actions['generate_alt_text'] = sprintf(
 			'<a href="%s">%s</a>',
-			esc_url( $url ),
-			empty( $alt_text ) ? __( 'Generate Alt Text', 'travelopia-wordpress-ai' ) : __( 'Regenerate Alt Text', 'travelopia-wordpress-ai' ),
+			esc_url( self::get_alt_text_action_url( $post ) ),
+			$is_regeneration ? __( 'Regenerate Alt Text', 'travelopia-wordpress-ai' ) : __( 'Generate Alt Text', 'travelopia-wordpress-ai' ),
 		);
 
 		return $actions;
 	}
 
 	/**
-	 * Get the CTA link.
+	 * Handle the generate/regenerate alt text admin action.
 	 *
-	 * @param ?WP_Post $post            Post object.
-	 * @param boolean  $is_regeneration URL is for alt text regeneration CTA.
+	 * @return void
+	 */
+	public static function handle_generate_alt_text_action(): void
+	{
+		$redirect_url = admin_url( 'upload.php' );
+
+		try {
+			// Get and validate post ID.
+			$post_id = isset( $_GET['post'] ) ? absint( $_GET['post'] ) : 0;
+
+			if ( empty( $post_id ) ) {
+				throw new Exception( 'invalid_post_id' );
+			}
+
+			// Verify nonce.
+			$nonce_action = 'generate_alt_text_' . $post_id;
+
+			if ( ! isset( $_GET['tp_nonce'] ) || ! wp_verify_nonce( $_GET['tp_nonce'], $nonce_action ) ) {
+				throw new Exception( 'security_check_failed' );
+			}
+
+			// Get and validate post.
+			$post = get_post( $post_id );
+
+			if ( ! $post instanceof WP_Post || 'attachment' !== $post->post_type || ! str_contains( $post->post_mime_type, 'image' ) ) {
+				throw new Exception( 'invalid_attachment' );
+			}
+
+			// Check user capabilities.
+			if ( ! current_user_can( 'edit_post', $post_id ) ) {
+				throw new Exception( 'permission_denied' );
+			}
+
+			// Check if alt text already exists to determine if this is a regeneration.
+			$existing_alt_text = get_post_meta( $post_id, '_wp_attachment_image_alt', true );
+			$is_regeneration   = ! empty( $existing_alt_text );
+
+			// Generate the alt text.
+			$result = AltText::generate( $post_id, update: true );
+
+			// Check if generation was successful.
+			if ( is_wp_error( $result ) ) {
+				throw new Exception( 'generation_failed' );
+			}
+
+			// Redirect back to media library with success message.
+			wp_safe_redirect(
+				add_query_arg(
+					[
+						'tp_success'       => $is_regeneration ? 'regenerated' : 'generated',
+						'tp_attachment_id' => $post_id,
+					],
+					$redirect_url,
+				),
+			);
+			exit;
+		} catch ( Exception $e ) {
+			// Redirect with error message.
+			wp_safe_redirect(
+				add_query_arg(
+					[
+						'tp_error' => $e->getMessage(),
+					],
+					$redirect_url,
+				),
+			);
+			exit;
+		}
+	}
+
+	/**
+	 * Get the admin action URL for generating or regenerating alt text.
+	 *
+	 * @param ?WP_Post $post Post object.
 	 *
 	 * @return string
 	 */
-	public static function get_alt_text_action_url( ?WP_Post $post = null, bool $is_regeneration = false ): string
+	public static function get_alt_text_action_url( ?WP_Post $post = null ): string
 	{
 		if ( ! $post ) {
 			return '';
 		}
 
-		$base_url = admin_url( 'post.php?post=' . $post->ID . '&action=edit&' . ( $is_regeneration ? 'tp_regenerate_alt_text=true' : 'tp_generate_alt_text=true' ) );
-		$nonce    = wp_create_nonce( 'generate_alt_text_' . $post->ID );
+		$nonce = wp_create_nonce( 'generate_alt_text_' . $post->ID );
 
-		return add_query_arg( 'tp_nonce', $nonce, $base_url );
-	}
-
-	/**
-	 * Handle REST API alt text update.
-	 *
-	 * This function hooks into the REST API after an attachment is updated
-	 * to trigger our custom action and maintain compatibility with existing hooks.
-	 *
-	 * @param ?WP_Post         $attachment The updated attachment object.
-	 * @param ?WP_REST_Request $request    The request object.
-	 *
-	 * @return void
-	 */
-	public static function handle_rest_alt_text_update( ?WP_Post $attachment = null, ?WP_REST_Request $request = null ): void
-	{
-		// Return early if attachment or request is null.
-		if ( ! $attachment || ! $request ) {
-			return;
-		}
-
-		// Check if this is an alt text update.
-		if ( ! $request->has_param( 'alt_text' ) ) {
-			return;
-		}
-
-		// Get the alt text from the request.
-		$alt_text = $request->get_param( 'alt_text' );
-
-		// Fire action hook after successful alt text modification via REST API.
-		do_action( 'travelopia_wordpress_ai_alt_text_modified', $attachment->ID, $alt_text );
+		return add_query_arg(
+			[
+				'action'   => self::ACTION_GENERATE_ALT_TEXT,
+				'post'     => $post->ID,
+				'tp_nonce' => $nonce,
+			],
+			admin_url( 'admin.php' ),
+		);
 	}
 }

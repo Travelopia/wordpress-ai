@@ -7,6 +7,10 @@
 
 namespace Travelopia\WordPress_AI;
 
+use Travelopia\WordPress_AI\Settings\AltTextPromptField;
+use Travelopia\WordPress_AI\Settings\EnableAltTextGenerationField;
+use Travelopia\WordPress_AI\Settings\Page;
+
 /**
  * Settings class.
  */
@@ -18,6 +22,27 @@ class Settings
 	 * @var string
 	 */
 	public const PAGE_SLUG = 'travelopia-wp-ai-settings';
+
+	/**
+	 * Settings option name.
+	 *
+	 * @var string
+	 */
+	public const OPTION_NAME = 'travelopia_wp_ai_settings';
+
+	/**
+	 * Settings group name.
+	 *
+	 * @var string
+	 */
+	public const SETTINGS_GROUP = 'travelopia_wp_ai_settings_group';
+
+	/**
+	 * Main settings section ID.
+	 *
+	 * @var string
+	 */
+	public const SECTION_ID = 'travelopia_wp_ai_main_section';
 
 	/**
 	 * Bootstrap settings functionality.
@@ -43,8 +68,8 @@ class Settings
 	public static function get_default_settings(): array
 	{
 		return [
-			'alt_text_generation' => false,
-			'alt_text_prompt'     => __( 'Describe this image in a concise, informative way for alt text. Focus on the main subject and important details that would help someone understand what is in the image.', 'travelopia-wordpress-ai' ),
+			EnableAltTextGenerationField::FIELD_NAME => false,
+			AltTextPromptField::FIELD_NAME           => __( 'Describe this image in a concise, informative way for alt text. Focus on the main subject and important details that would help someone understand what is in the image.', 'travelopia-wordpress-ai' ),
 		];
 	}
 
@@ -64,7 +89,7 @@ class Settings
 		}
 
 		$default_settings = self::get_default_settings();
-		$settings         = get_option( 'travelopia_wp_ai_settings', $default_settings );
+		$settings         = get_option( self::OPTION_NAME, $default_settings );
 
 		if ( ! is_array( $settings ) ) {
 			$settings = $default_settings;
@@ -103,12 +128,12 @@ class Settings
 			return self::get_default_settings();
 		}
 
-		$sanitized['alt_text_generation'] = ! empty( $input['alt_text_generation'] );
-		$sanitized['alt_text_prompt']     = sanitize_textarea_field( strval( $input['alt_text_prompt'] ?? '' ) );
+		$sanitized[EnableAltTextGenerationField::FIELD_NAME] = ! empty( $input[EnableAltTextGenerationField::FIELD_NAME] );
+		$sanitized[AltTextPromptField::FIELD_NAME]           = sanitize_textarea_field( strval( $input[AltTextPromptField::FIELD_NAME] ?? '' ) );
 
-		if ( empty( trim( $sanitized['alt_text_prompt'] ) ) ) {
-			$defaults                     = self::get_default_settings();
-			$sanitized['alt_text_prompt'] = $defaults['alt_text_prompt'];
+		if ( empty( trim( $sanitized[AltTextPromptField::FIELD_NAME] ) ) ) {
+			$defaults                                  = self::get_default_settings();
+			$sanitized[AltTextPromptField::FIELD_NAME] = $defaults[AltTextPromptField::FIELD_NAME];
 		}
 
 		return $sanitized;
@@ -126,7 +151,7 @@ class Settings
 			__( 'WordPress AI', 'travelopia-wordpress-ai' ),
 			'manage_options',
 			self::PAGE_SLUG,
-			[ Settings\Page::class, 'render' ],
+			[ Page::class, 'render' ],
 		);
 	}
 
@@ -138,36 +163,17 @@ class Settings
 	public static function initialize_settings(): void
 	{
 		register_setting(
-			'travelopia_wp_ai_settings_group',
-			'travelopia_wp_ai_settings',
+			self::SETTINGS_GROUP,
+			self::OPTION_NAME,
 			[
 				'sanitize_callback' => [ __CLASS__, 'sanitize_settings' ],
 				'default'           => self::get_default_settings(),
 			],
 		);
 
-		add_settings_section(
-			'travelopia_wp_ai_main_section',
-			__( 'AI Alt Text Generation Settings', 'travelopia-wordpress-ai' ),
-			fn () => esc_html_e( 'Configure the AI-powered alt text generation settings for your WordPress site.', 'travelopia-wordpress-ai' ),
-			self::PAGE_SLUG,
-		);
-
-		add_settings_field(
-			'alt_text_generation',
-			__( 'Enable AI Alt Text Generation', 'travelopia-wordpress-ai' ),
-			[ Settings\EnableAltTextGenerationField::class, 'render' ],
-			self::PAGE_SLUG,
-			'travelopia_wp_ai_main_section',
-		);
-
-		add_settings_field(
-			'alt_text_prompt',
-			__( 'AI Alt Text Prompt', 'travelopia-wordpress-ai' ),
-			[ Settings\AltTextPromptField::class, 'render' ],
-			self::PAGE_SLUG,
-			'travelopia_wp_ai_main_section',
-		);
+		Page::register();
+		EnableAltTextGenerationField::register();
+		AltTextPromptField::register();
 	}
 
 	/**

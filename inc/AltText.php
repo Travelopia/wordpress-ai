@@ -10,6 +10,8 @@ namespace Travelopia\WordPress_AI;
 use Exception;
 use Travelopia\WordPress_AI\AltText\Admin;
 use Travelopia\WordPress_AI\Providers\OpenAI;
+use Travelopia\WordPress_AI\Settings\AltTextPromptField;
+use Travelopia\WordPress_AI\Settings\EnableAltTextGenerationField;
 use WP_CLI;
 use WP_Error;
 use WP_Query;
@@ -33,7 +35,7 @@ class AltText
 	public static function bootstrap(): void
 	{
 		// Check if this module is enabled.
-		if ( true !== Settings::get_setting( 'alt_text_generation', false ) ) {
+		if ( true !== Settings::get_setting( EnableAltTextGenerationField::FIELD_NAME, false ) ) {
 			return;
 		}
 
@@ -112,7 +114,7 @@ class AltText
 			'travelopia_wordpress_ai_alt_text_generation_options',
 			[
 				...OpenAI::get_default_options(),
-				'prompt'  => Settings::get_setting( 'alt_text_prompt', '' ),
+				'prompt'  => Settings::get_setting( AltTextPromptField::FIELD_NAME, '' ),
 				'context' => $context,
 			],
 			$attachment_id,

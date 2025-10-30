@@ -557,10 +557,10 @@ class Test_Media extends WP_UnitTestCase
 
 		// Enable AI alt text generation for this test.
 		update_option(
-			'travelopia_wp_ai_settings',
+			Settings::OPTION_NAME,
 			[
-				'ai_alt_text_enabled' => true,
-				'alt_text_prompt'     => 'Test prompt',
+				EnableAltTextGenerationField::FIELD_NAME => true,
+				AltTextPromptField::FIELD_NAME           => 'Test prompt',
 			],
 		);
 

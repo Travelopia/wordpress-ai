@@ -12,6 +12,29 @@ use Travelopia\WordPress_AI\Settings;
 class EnableAltTextGenerationField
 {
 	/**
+	 * Field name.
+	 *
+	 * @var string
+	 */
+	public const FIELD_NAME = 'alt_text_generation';
+
+	/**
+	 * Register this settings field.
+	 *
+	 * @return void
+	 */
+	public static function register(): void
+	{
+		add_settings_field(
+			self::FIELD_NAME,
+			__( 'Enable AI Alt Text Generation', 'travelopia-wordpress-ai' ),
+			[ __CLASS__, 'render' ],
+			Settings::PAGE_SLUG,
+			Settings::SECTION_ID,
+		);
+	}
+
+	/**
 	 * Render this field.
 	 *
 	 * @return void
@@ -19,14 +42,14 @@ class EnableAltTextGenerationField
 	public static function render(): void
 	{
 		$settings = Settings::get();
-		$enabled  = $settings['alt_text_generation'] ?? false;
+		$enabled  = $settings[self::FIELD_NAME] ?? false;
 		?>
 
 		<label for="ai-alt-text-enabled">
 			<input
 				type="checkbox"
 				id="ai-alt-text-enabled"
-				name="travelopia_wp_ai_settings[alt_text_generation]"
+				name="<?php echo esc_attr( Settings::OPTION_NAME ); ?>[<?php echo esc_attr( self::FIELD_NAME ); ?>]"
 				value="1"
 				<?php checked( $enabled ); ?>
 			/>

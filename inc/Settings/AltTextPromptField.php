@@ -12,6 +12,29 @@ use Travelopia\WordPress_AI\Settings;
 class AltTextPromptField
 {
 	/**
+	 * Field name.
+	 *
+	 * @var string
+	 */
+	public const FIELD_NAME = 'alt_text_prompt';
+
+	/**
+	 * Register this settings field.
+	 *
+	 * @return void
+	 */
+	public static function register(): void
+	{
+		add_settings_field(
+			self::FIELD_NAME,
+			__( 'AI Alt Text Prompt', 'travelopia-wordpress-ai' ),
+			[ __CLASS__, 'render' ],
+			Settings::PAGE_SLUG,
+			Settings::SECTION_ID,
+		);
+	}
+
+	/**
 	 * Render this field.
 	 *
 	 * @return void
@@ -19,13 +42,13 @@ class AltTextPromptField
 	public static function render(): void
 	{
 		$settings = Settings::get();
-		$prompt   = $settings['alt_text_prompt'] ?? '';
-		$enabled  = $settings['alt_text_generation'] ?? false;
+		$prompt   = $settings[self::FIELD_NAME] ?? '';
+		$enabled  = $settings[EnableAltTextGenerationField::FIELD_NAME] ?? false;
 		?>
 
 		<textarea
 			id="ai-alt-text-prompt"
-			name="travelopia_wp_ai_settings[alt_text_prompt]"
+			name="<?php echo esc_attr( Settings::OPTION_NAME ); ?>[<?php echo esc_attr( self::FIELD_NAME ); ?>]"
 			rows="4"
 			cols="50"
 			placeholder="<?php esc_attr_e( 'Enter your AI prompt here...', 'travelopia-wordpress-ai' ); ?>"

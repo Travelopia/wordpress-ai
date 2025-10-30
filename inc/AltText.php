@@ -7,9 +7,7 @@
 
 namespace Travelopia\WordPress_AI;
 
-use Exception;
-use WordPress\AiClient\AiClient;
-use WordPress\AiClient\ProviderImplementations\OpenAi\OpenAiProvider;
+use Travelopia\WordPress_AI\Providers\OpenAI;
 use WP_CLI;
 use WP_Error;
 use WP_Post;
@@ -77,6 +75,17 @@ class AltText
 	 */
 	public static function generate_alt_text_for_attachment( int $attachment_id = 0, bool $update = true ): WP_Error|string
 	{
+		// Get actual image URL for the attachment.
+		$image_url = wp_get_attachment_url( $attachment_id );
+
+		if ( ! is_string( $image_url ) ) {
+			return self::create_alt_text_error(
+				'invalid_image_url',
+				__( 'Could not get image URL or is not a string.', 'travelopia-wordpress-ai' ),
+				[ 'attachment_id' => $attachment_id ],
+			);
+		}
+
 		// Initialize context.
 		$context = '';
 
@@ -113,13 +122,13 @@ class AltText
 		 */
 		$options = (array) apply_filters(
 			'travelopia_wordpress_ai_alt_text_generation_options',
-			[
-				'model'              => 'gpt-4o-mini',
-				'temperature'        => 0.1,
-				'prompt'             => Settings::get_setting( 'alt_text_prompt', '' ),
-				'context'            => $context,
-				'system_instruction' => 'You are an accessibility tool.',
-			],
+			array_merge(
+				OpenAI::get_default_options(),
+				[
+					'prompt'  => Settings::get_setting( 'alt_text_prompt', '' ),
+					'context' => $context,
+				],
+			),
 			$attachment_id,
 		);
 
@@ -132,84 +141,22 @@ class AltText
 			);
 		}
 
-		// Start AI generation process.
-		try {
-			// Check API key availability.
-			if ( ! defined( 'OPENAI_API_KEY' ) && ! getenv( 'OPENAI_API_KEY' ) ) {
-				return self::create_alt_text_error(
-					'api_key_not_configured',
-					__( 'OpenAI API key not configured', 'travelopia-wordpress-ai' ),
-					[ 'attachment_id' => $attachment_id ],
-				);
-			}
+		// Generate alt text using OpenAI provider.
+		$alt_text = OpenAI::generate_alt_text( $image_url, $options );
 
-			// Get the API key.
-			$api_key = defined( 'OPENAI_API_KEY' ) ? constant( 'OPENAI_API_KEY' ) : getenv( 'OPENAI_API_KEY' );
-
-			if ( empty( $api_key ) ) {
-				return self::create_alt_text_error(
-					'api_key_empty',
-					__( 'OpenAI API key is empty', 'travelopia-wordpress-ai' ),
-					[ 'attachment_id' => $attachment_id ],
-				);
-			}
-
-			// Get actual image URL for the attachment.
-			$image_url = wp_get_attachment_url( $attachment_id );
-
-			if ( ! is_string( $image_url ) ) {
-				return self::create_alt_text_error(
-					'invalid_image_url',
-					__( 'Could not get image URL or is not a string.', 'travelopia-wordpress-ai' ),
-					[ 'attachment_id' => $attachment_id ],
-				);
-			}
-
-			// Generate AI response.
-			$generated = AiClient::prompt( $options['prompt'] )
-				->usingModel( OpenAiProvider::model( strval( $options['model'] ) ) )
-				->usingTemperature( floatval( $options['temperature'] ) )
-				->withFile( $image_url )
-				->usingSystemInstruction( $options['system_instruction'] )
-				->generateText();
-
-			// Process and validate generated text.
-			$generated = sanitize_text_field( trim( wp_strip_all_tags( strval( $generated ) ) ) );
-
-			// Validate generated text is not empty.
-			if ( empty( $generated ) ) {
-				return self::create_alt_text_error(
-					'empty_response',
-					__( 'AI generated empty response', 'travelopia-wordpress-ai' ),
-					[ 'attachment_id' => $attachment_id ],
-				);
-			}
-
-			// Save generated alt text to database.
-			if ( $update ) {
-				update_post_meta( $attachment_id, '_wp_attachment_image_alt', $generated );
-			}
-
-			// Fire action hook after successful generation.
-			do_action( 'travelopia_wordpress_ai_alt_text_generated', $attachment_id, $generated );
-
-			// Return generated alt text.
-			return $generated;
-		} catch ( Exception $e ) {
-			// Return error details.
-			return self::create_alt_text_error(
-				'generation_failed',
-				sprintf(
-					/* translators: %s: error message */
-					__( 'AI generation failed: %s', 'travelopia-wordpress-ai' ),
-					$e->getMessage(),
-				),
-				[
-					'attachment_id' => $attachment_id,
-					'exception'     => $e->getMessage(),
-				],
-			);
+		if ( $alt_text instanceof WP_Error ) {
+			return $alt_text;
 		}
+
+		// Save generated alt text to database.
+		if ( true === $update ) {
+			update_post_meta( $attachment_id, '_wp_attachment_image_alt', $alt_text );
+		}
+
+		// Fire action hook after successful generation.
+		do_action( 'travelopia_wordpress_ai_alt_text_generated', $attachment_id, $alt_text );
+
+		return $alt_text;
 	}
 
 	/**

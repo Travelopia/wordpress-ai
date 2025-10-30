@@ -44,7 +44,7 @@ class AltText
 
 		// Register WP CLI commands.
 		if ( defined( 'WP_CLI' ) && true === WP_CLI && class_exists( 'WP_CLI' ) ) {
-			WP_CLI::add_command( 'travelopia-wp-ai alt-text', WpCli\AltText::class );
+			WP_CLI::add_command( 'travelopia-wp-ai alt-text', AltText\CLI::class );
 		}
 	}
 

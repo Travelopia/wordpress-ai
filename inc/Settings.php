@@ -13,6 +13,13 @@ namespace Travelopia\WordPress_AI;
 class Settings
 {
 	/**
+	 * Settings page slug.
+	 *
+	 * @var string
+	 */
+	public const PAGE_SLUG = 'travelopia-wp-ai-settings';
+
+	/**
 	 * Bootstrap settings functionality.
 	 *
 	 * @return void
@@ -118,7 +125,7 @@ class Settings
 			__( 'Travelopia WordPress AI Settings', 'travelopia-wordpress-ai' ),
 			__( 'WordPress AI', 'travelopia-wordpress-ai' ),
 			'manage_options',
-			'travelopia-wp-ai-settings',
+			self::PAGE_SLUG,
 			[ Settings\Page::class, 'render' ],
 		);
 	}
@@ -143,14 +150,14 @@ class Settings
 			'travelopia_wp_ai_main_section',
 			__( 'AI Alt Text Generation Settings', 'travelopia-wordpress-ai' ),
 			fn () => esc_html_e( 'Configure the AI-powered alt text generation settings for your WordPress site.', 'travelopia-wordpress-ai' ),
-			'travelopia-wp-ai-settings',
+			self::PAGE_SLUG,
 		);
 
 		add_settings_field(
 			'alt_text_generation',
 			__( 'Enable AI Alt Text Generation', 'travelopia-wordpress-ai' ),
 			[ Settings\EnableAltTextGenerationField::class, 'render' ],
-			'travelopia-wp-ai-settings',
+			self::PAGE_SLUG,
 			'travelopia_wp_ai_main_section',
 		);
 
@@ -158,7 +165,7 @@ class Settings
 			'alt_text_prompt',
 			__( 'AI Alt Text Prompt', 'travelopia-wordpress-ai' ),
 			[ Settings\AltTextPromptField::class, 'render' ],
-			'travelopia-wp-ai-settings',
+			self::PAGE_SLUG,
 			'travelopia_wp_ai_main_section',
 		);
 	}
@@ -176,7 +183,7 @@ class Settings
 			$links,
 			sprintf(
 				'<a href="%s">%s</a>',
-				esc_url( admin_url( 'options-general.php?page=travelopia-wp-ai-settings' ) ),
+				esc_url( admin_url( 'options-general.php?page=' . self::PAGE_SLUG ) ),
 				esc_html__( 'Settings', 'travelopia-wordpress-ai' ),
 			),
 		);
@@ -193,7 +200,7 @@ class Settings
 	 */
 	public static function enqueue_admin_styles( string $hook_suffix = '' ): void
 	{
-		if ( 'settings_page_travelopia-wp-ai-settings' !== $hook_suffix ) {
+		if ( 'settings_page_' . self::PAGE_SLUG !== $hook_suffix ) {
 			return;
 		}
 

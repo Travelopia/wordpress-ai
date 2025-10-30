@@ -19,5 +19,5 @@ if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
 	require_once __DIR__ . '/vendor/autoload.php';
 }
 
-add_action( 'admin_init', [ Settings::class, 'bootstrap' ] );
+add_action( 'plugins_loaded', [ Settings::class, 'bootstrap' ] );
 add_action( 'plugins_loaded', [ AltText::class, 'bootstrap' ] );

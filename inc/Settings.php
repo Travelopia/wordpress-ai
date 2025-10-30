@@ -71,6 +71,21 @@ class Settings
 	}
 
 	/**
+	 * Get the required capability to manage settings.
+	 *
+	 * @return string The capability required.
+	 */
+	public static function get_capability(): string
+	{
+		/**
+		 * Filter the capability required to manage settings.
+		 *
+		 * @param string $capability The capability required. Default 'manage_options'.
+		 */
+		return (string) apply_filters( 'travelopia_wordpress_ai_settings_capability', 'manage_options' );
+	}
+
+	/**
 	 * Get default settings.
 	 *
 	 * @return array<string,mixed> Default settings array.
@@ -159,7 +174,7 @@ class Settings
 		add_options_page(
 			__( 'Travelopia WordPress AI Settings', 'travelopia-wordpress-ai' ),
 			__( 'WordPress AI', 'travelopia-wordpress-ai' ),
-			'manage_options',
+			self::get_capability(),
 			self::PAGE_SLUG,
 			[ Page::class, 'render' ],
 		);

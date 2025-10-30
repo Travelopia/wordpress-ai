@@ -33,11 +33,7 @@ class Page
 	 */
 	public static function render(): void
 	{
-		if (
-			! current_user_can(
-				apply_filters( 'travelopia_wordpress_ai_settings_capability', 'manage_options' ),
-			)
-		) {
+		if ( ! current_user_can( Settings::get_capability() ) ) {
 			wp_die( esc_html__( 'You do not have sufficient permissions to access this page.', 'travelopia-wordpress-ai' ) );
 		}
 

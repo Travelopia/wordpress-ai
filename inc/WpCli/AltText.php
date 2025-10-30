@@ -152,7 +152,7 @@ class AltText
 
 		// Get count of images that will be processed.
 		$missing_only = isset( $args['missing'] ) ? (bool) $args['missing'] : false;
-		$image_count  = AltTextModule::get_images_count( $missing_only );
+		$image_count  = count( AltTextModule::query_images( missing_only: $missing_only ) );
 
 		// Display warning and request confirmation.
 		WP_CLI::log(

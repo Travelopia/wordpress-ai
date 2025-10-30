@@ -207,469 +207,51 @@ class AltText
 	}
 
 	/**
-	 * Get images that need alt text generation.
+	 * Query images for alt text generation.
 	 *
-	 * @param array<int> $image_ids    Array of image IDs to process.
-	 * @param bool       $missing_only Whether to only process images missing alt text.
+	 * @param int[] $image_ids    Specific image IDs to query. Default empty (all images).
+	 * @param bool  $missing_only Only images missing alt text.
+	 * @param int   $page         Page number for pagination.
+	 * @param int   $per_page     Images per page.
 	 *
-	 * @return array<int> Image IDs to process.
+	 * @return int[] Array of image IDs.
 	 */
-	public static function get_images_to_process( array $image_ids = [], bool $missing_only = false ): array
-	{
+	public static function query_images(
+		array $image_ids = [],
+		bool $missing_only = false,
+		int $page = 1,
+		int $per_page = self::DEFAULT_BATCH_SIZE,
+	): array {
+		// Build query arguments.
 		$query_args = [
 			'post_type'              => 'attachment',
 			'post_mime_type'         => 'image',
 			'post_status'            => 'inherit',
-			'posts_per_page'         => -1,
 			'fields'                 => 'ids',
-			'post__in'               => $image_ids,
-			'no_found_rows'          => true,
 			'update_post_meta_cache' => false,
 			'update_post_term_cache' => false,
 		];
 
-		if ( $missing_only ) {
-			$query_args['meta_query'] = self::get_missing_alt_text_meta_query();
-		}
-
-		$images_query = new WP_Query( $query_args );
-
-		return array_map( 'absint', $images_query->posts );
-	}
-
-	/**
-	 * Get all images on the site with pagination.
-	 *
-	 * @param bool $missing_only Whether to only get images missing alt text.
-	 * @param int  $page         Page number.
-	 * @param int  $per_page     Number of images per page.
-	 *
-	 * @return array<int> Array of image IDs.
-	 */
-	public static function get_all_images( bool $missing_only = false, int $page = 1, int $per_page = self::DEFAULT_BATCH_SIZE ): array
-	{
-		$query_args = [
-			'post_type'              => 'attachment',
-			'post_mime_type'         => 'image',
-			'post_status'            => 'inherit',
-			'posts_per_page'         => $per_page,
-			'paged'                  => $page,
-			'fields'                 => 'ids',
-			'no_found_rows'          => false,
-			'update_post_meta_cache' => false,
-			'update_post_term_cache' => false,
-		];
-
-		if ( $missing_only ) {
-			$query_args['meta_query'] = self::get_missing_alt_text_meta_query();
-		}
-
-		$images_query = new WP_Query( $query_args );
-
-		return array_map( 'absint', $images_query->posts );
-	}
-
-	/**
-	 * Get total count of images on the site.
-	 *
-	 * @param bool $missing_only Whether to only count images missing alt text.
-	 *
-	 * @return int Total count of images.
-	 */
-	public static function get_images_count( bool $missing_only = false ): int
-	{
-		$query_args = [
-			'post_type'              => 'attachment',
-			'post_mime_type'         => 'image',
-			'post_status'            => 'inherit',
-			'posts_per_page'         => 1,
-			'fields'                 => 'ids',
-			'no_found_rows'          => false,
-			'update_post_meta_cache' => false,
-			'update_post_term_cache' => false,
-		];
-
-		if ( $missing_only ) {
-			$query_args['meta_query'] = self::get_missing_alt_text_meta_query();
-		}
-
-		$images_query = new WP_Query( $query_args );
-
-		return $images_query->found_posts;
-	}
-
-	/**
-	 * Validate AI configuration.
-	 *
-	 * @return array<string, mixed>
-	 */
-	public static function validate_ai_configuration(): array
-	{
-		// Check if AI alt text generation is enabled.
-		$ai_enabled = Settings::get_setting( 'alt_text_generation', false );
-
-		// Bail if AI is not enabled.
-		if ( ! $ai_enabled ) {
-			do_action(
-				'travelopia_wordpress_ai_alt_text_error',
-				'ai_not_enabled',
-				sprintf(
-					/* translators: %s: settings page URL */
-					__( 'AI alt text generation is not enabled. Please enable it in Settings > WordPress AI.', 'travelopia-wordpress-ai' ),
-					admin_url( 'options-general.php?page=travelopia-wp-ai-settings' ),
-				),
-			);
-
-			return [
-				'valid'      => false,
-				'error'      => __( 'AI alt text generation is not enabled. Please enable it in Settings > WordPress AI.', 'travelopia-wordpress-ai' ),
-				'error_code' => 'ai_not_enabled',
-			];
-		}
-
-		// Get the AI prompt.
-		$prompt = Settings::get_setting( 'alt_text_prompt', '' );
-
-		if ( empty( $prompt ) ) {
-			do_action(
-				'travelopia_wordpress_ai_alt_text_error',
-				'ai_prompt_not_configured',
-				sprintf(
-					/* translators: %s: settings page URL */
-					__( 'AI prompt is not configured. Please set it in Settings > WordPress AI.', 'travelopia-wordpress-ai' ),
-					admin_url( 'options-general.php?page=travelopia-wp-ai-settings' ),
-				),
-			);
-
-			return [
-				'valid'      => false,
-				'error'      => __( 'AI prompt is not configured. Please set it in Settings > WordPress AI.', 'travelopia-wordpress-ai' ),
-				'error_code' => 'ai_prompt_not_configured',
-			];
-		}
-
-		// API key presence validation (constant or env).
-		$api_key = defined( 'OPENAI_API_KEY' ) ? constant( 'OPENAI_API_KEY' ) : getenv( 'OPENAI_API_KEY' );
-
-		if ( false === $api_key || '' === $api_key ) {
-			do_action(
-				'travelopia_wordpress_ai_alt_text_error',
-				'api_key_not_configured',
-				sprintf(
-					/* translators: %s: settings page URL */
-					__( 'OpenAI API key not configured. Please set OPENAI_API_KEY in wp-config.php or environment.', 'travelopia-wordpress-ai' ),
-					admin_url( 'options-general.php?page=travelopia-wp-ai-settings' ),
-				),
-			);
-
-			return [
-				'valid'      => false,
-				'error'      => __( 'OpenAI API key not configured. Please set OPENAI_API_KEY in wp-config.php or environment.', 'travelopia-wordpress-ai' ),
-				'error_code' => 'api_key_not_configured',
-			];
-		}
-
-		return [ 'valid' => true ];
-	}
-
-	/**
-	 * Get AI configuration details.
-	 *
-	 * @return array<string, mixed>
-	 */
-	public static function get_ai_configuration(): array
-	{
-		return [
-			'enabled' => (bool) Settings::get_setting( 'alt_text_generation', false ),
-			'prompt'  => strval( Settings::get_setting( 'alt_text_prompt', '' ) ),
-		];
-	}
-
-	/**
-	 * Get image details for display.
-	 *
-	 * @param int $image_id Image ID.
-	 *
-	 * @return array<string, mixed>
-	 */
-	public static function get_image_details( int $image_id = 0 ): array
-	{
-		$image_post = get_post( $image_id );
-		$alt_text   = get_post_meta( $image_id, '_wp_attachment_image_alt', true );
-
-		return [
-			'id'           => $image_id,
-			'title'        => $image_post instanceof WP_Post ? ( $image_post->post_title ?: __( '(no title)', 'travelopia-wordpress-ai' ) ) : __( '(invalid post)', 'travelopia-wordpress-ai' ),
-			'has_alt_text' => ! empty( $alt_text ),
-			'alt_text'     => strval( $alt_text ?: '' ),
-		];
-	}
-
-	/**
-	 * Parse and validate CLI arguments consistently.
-	 *
-	 * @param array<string, mixed> $args_assoc WP CLI associative arguments.
-	 *
-	 * @return array<string, mixed>
-	 */
-	public static function parse_cli_arguments( array $args_assoc = [] ): array
-	{
-		// Parse and validate command arguments.
-		$options = wp_parse_args(
-			$args_assoc,
-			[
-				'ids'        => [],
-				'missing'    => false,
-				'all'        => false,
-				'batch-size' => self::DEFAULT_BATCH_SIZE,
-			],
-		);
-
-		// Parse IDs if provided.
-		$ids = [];
-
-		// Validate IDs.
-		if ( ! empty( $options['ids'] ) ) {
-			// Convert comma-separated string to array of integers.
-			$ids = array_map( 'absint', array_filter( array_map( 'trim', explode( ',', $options['ids'] ) ) ) );
-		}
-
-		// Parse other arguments.
-		$missing    = (bool) $options['missing'];
-		$all        = (bool) $options['all'];
-		$batch_size = max( 1, absint( $options['batch-size'] ) );
-
-		// Check for conflicting arguments.
-		if ( ! empty( $ids ) && $all ) {
-			return [
-				'ids'                => $ids,
-				'missing'            => $missing,
-				'all'                => $all,
-				'needs_confirmation' => false,
-				'batch-size'         => $batch_size,
-				'valid'              => false,
-				'error'              => __( 'Cannot use --ids and --all together. Use --ids for specific images or --all for all images.', 'travelopia-wordpress-ai' ),
-			];
-		}
-
-		// Validate that some operation is specified.
-		if ( empty( $ids ) && ! $all && ! $missing ) {
-			return [
-				'ids'                => $ids,
-				'missing'            => $missing,
-				'all'                => $all,
-				'needs_confirmation' => false,
-				'batch-size'         => $batch_size,
-				'valid'              => false,
-				'error'              => __( 'You must provide --ids=<1,2,3>, --missing, or --all to specify which images to process.', 'travelopia-wordpress-ai' ),
-			];
-		}
-
-		// Determine if confirmation is needed.
-		$needs_confirmation = $all || ( $missing && empty( $ids ) );
-
-		// Return parsed arguments.
-		return [
-			'ids'                => $ids,
-			'missing'            => $missing,
-			'all'                => $all,
-			'needs_confirmation' => $needs_confirmation,
-			'batch-size'         => $batch_size,
-			'valid'              => true,
-		];
-	}
-
-	/**
-	 * Get images to process based on CLI options.
-	 *
-	 * @param array<string, mixed> $options Options.
-	 *
-	 * @return array<int> Image IDs.
-	 */
-	public static function get_cli_images_to_process( array $options = [] ): array
-	{
-		// Handle specific IDs.
-		if ( ! empty( $options['ids'] ) ) {
-			// Filter specific IDs for missing alt text if requested.
-			$ids     = is_array( $options['ids'] ) ? $options['ids'] : [];
-			$missing = isset( $options['missing'] ) ? (bool) $options['missing'] : false;
-
-			// Return images to process.
-			return self::get_images_to_process( $ids, $missing );
-		}
-
-		// Use get_all_images for bulk operations with pagination.
-		$missing  = isset( $options['missing'] ) ? (bool) $options['missing'] : false;
-		$page     = isset( $options['page'] ) ? max( 1, absint( $options['page'] ) ) : 1;
-		$per_page = isset( $options['per_page'] ) ? max( 1, absint( $options['per_page'] ) ) : self::DEFAULT_BATCH_SIZE;
-
-		// Return images to process.
-		return self::get_all_images( $missing, $page, $per_page );
-	}
-
-	/**
-	 * Process images and generate alt text for CLI with batching and timing.
-	 *
-	 * @param array<int>           $image_ids Image IDs.
-	 * @param array<string, mixed> $options   Options.
-	 *
-	 * @return array<string, mixed> Results.
-	 */
-	public static function process_cli_images( array $image_ids = [], array $options = [] ): array
-	{
-		// Initialize options with defaults.
-		$options = wp_parse_args(
-			$options,
-			[
-				'ids'        => [],
-				'all'        => false,
-				'missing'    => false,
-				'batch-size' => self::DEFAULT_BATCH_SIZE,
-			],
-		);
-
-		// Validate AI is enabled and configured.
-		$validation_result = self::validate_ai_configuration();
-
-		// Bail if validation fails.
-		if ( ! $validation_result['valid'] ) {
-			// Return error result for all images if validation fails.
-			$error_message          = isset( $validation_result['error'] ) ? strval( $validation_result['error'] ) : 'Unknown validation error';
-			$error_result           = self::create_error_result( $error_message );
-			$error_result['images'] = array_fill_keys(
-				$image_ids,
-				[
-					'id'      => 0,
-					'success' => false,
-					'error'   => $validation_result['error'] ?? 'Unknown validation error',
-				],
-			);
-
-			// Add required timing fields for return type compatibility.
-			$error_result['total_time']   = 0.0;
-			$error_result['average_time'] = 0.0;
-
-			// Return error result.
-			return $error_result;
-		}
-
-		// Get images to process.
-		$missing_only      = $options['missing'] ?? false;
-		$images_to_process = self::get_images_to_process( $image_ids, $missing_only );
-
-		// Bail if no images to process.
-		if ( empty( $images_to_process ) ) {
-			// Return empty result if no images to process.
-			return [
-				'success'       => true,
-				'processed'     => 0,
-				'success_count' => 0,
-				'failed_count'  => 0,
-				'images'        => [],
-				'total_time'    => 0.0,
-				'average_time'  => 0.0,
-			];
-		}
-
-		// Process each image individually.
-		$success_count = 0;
-		$failed_count  = 0;
-		$images        = [];
-		$start_time    = microtime( true );
-
-		// Process each image in the list.
-		foreach ( $images_to_process as $image_id ) {
-			$image_start_time = microtime( true );
-
-			// Generate alt text for this image.
-			$image_result = self::generate_alt_text_for_attachment( $image_id );
-
-			// Calculate processing time for this image.
-			$processing_time = microtime( true ) - $image_start_time;
-
-			// Build result entry.
-			$entry = [
-				'id'              => absint( $image_id ),
-				'success'         => ! is_wp_error( $image_result ),
-				'processing_time' => round( $processing_time, 3 ),
-			];
-
-			// Add alt text or error based on result type.
-			if ( is_wp_error( $image_result ) ) {
-				$entry['error'] = $image_result->get_error_message();
-				++$failed_count;
-			} else {
-				$entry['alt_text'] = strval( $image_result );
-				++$success_count;
-			}
-
-			// Store result with image ID as key.
-			$images[ $image_id ] = $entry;
-
-			// Memory management for large batches.
-			if ( ( $success_count + $failed_count ) % 100 === 0 ) {
-				wp_cache_flush();
-			}
-		}
-
-		// Calculate total time and average time.
-		$total_time   = microtime( true ) - $start_time;
-		$processed    = $success_count + $failed_count;
-		$average_time = 0 < $processed ? $total_time / max( 1, $processed ) : 0.0;
-
-		// Return results.
-		return [
-			'success'       => true,
-			'processed'     => $processed,
-			'success_count' => $success_count,
-			'failed_count'  => $failed_count,
-			'images'        => $images,
-			'total_time'    => round( $total_time, 3 ),
-			'average_time'  => round( $average_time, 3 ),
-		];
-	}
-
-	/**
-	 * Create error result for CLI.
-	 *
-	 * @param string $error_message Error message.
-	 *
-	 * @return array<string, mixed> Error result.
-	 */
-	public static function create_error_result( string $error_message = '' ): array
-	{
-		return [
-			'success'       => false,
-			'error'         => $error_message,
-			'processed'     => 0,
-			'success_count' => 0,
-			'failed_count'  => 0,
-			'images'        => [],
-		];
-	}
-
-	/**
-	 * Format processing time in a human-readable format.
-	 *
-	 * @param float $seconds Time in seconds.
-	 *
-	 * @return string Formatted time string.
-	 */
-	public static function format_processing_time( float $seconds = 0.0 ): string
-	{
-		if ( 60 > $seconds ) {
-			return sprintf( '%.2fs', $seconds );
-		} elseif ( 3600 > $seconds ) {
-			$minutes           = floor( $seconds / 60 );
-			$remaining_seconds = $seconds % 60;
-
-			return sprintf( '%dm %.1fs', $minutes, $remaining_seconds );
+		// Handle specific image IDs.
+		if ( ! empty( $image_ids ) ) {
+			$query_args['post__in']       = $image_ids;
+			$query_args['posts_per_page'] = -1;
+			$query_args['no_found_rows']  = true;
 		} else {
-			$hours   = floor( $seconds / 3600 );
-			$minutes = floor( ( $seconds % 3600 ) / 60 );
-
-			return sprintf( '%dh %dm', $hours, $minutes );
+			// Pagination for all images.
+			$query_args['posts_per_page'] = $per_page;
+			$query_args['paged']          = $page;
+			$query_args['no_found_rows']  = false;
 		}
+
+		// Filter for missing alt text.
+		if ( $missing_only ) {
+			$query_args['meta_query'] = self::get_missing_alt_text_meta_query();
+		}
+
+		$images_query = new WP_Query( $query_args );
+
+		return array_map( 'absint', $images_query->posts );
 	}
 
 	/**

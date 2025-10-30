@@ -42,7 +42,7 @@ class Admin
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- This is just displaying a notice, not processing data.
 		if ( isset( $_GET['tp_error'] ) ) {
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- This is just displaying a notice, not processing data.
-			$error_code = sanitize_key( wp_unslash( $_GET['tp_error'] ) );
+			$error_code = sanitize_key( (string) wp_unslash( $_GET['tp_error'] ) );
 
 			$error_messages = [
 				'invalid_post_id'       => __( 'Invalid post ID.', 'travelopia-wordpress-ai' ),
@@ -67,7 +67,7 @@ class Admin
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- This is just displaying a notice, not processing data.
 		if ( isset( $_GET['tp_success'] ) ) {
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- This is just displaying a notice, not processing data.
-			$success_code = sanitize_key( wp_unslash( $_GET['tp_success'] ) );
+			$success_code = sanitize_key( (string) wp_unslash( $_GET['tp_success'] ) );
 
 			$success_messages = [
 				'generated'   => __( 'Alt text generated successfully.', 'travelopia-wordpress-ai' ),

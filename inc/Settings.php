@@ -82,7 +82,8 @@ class Settings
 		 *
 		 * @param string $capability The capability required. Default 'manage_options'.
 		 */
-		return (string) apply_filters( 'travelopia_wordpress_ai_settings_capability', 'manage_options' );
+		$capability = apply_filters( 'travelopia_wordpress_ai_settings_capability', 'manage_options' );
+		return is_string( $capability ) ? $capability : 'manage_options';
 	}
 
 	/**
@@ -110,7 +111,7 @@ class Settings
 	 */
 	public static function get( bool $force = false ): array
 	{
-		$settings = null;
+		static $settings = null;
 
 		if ( false === $force && is_array( $settings ) ) {
 			return $settings;

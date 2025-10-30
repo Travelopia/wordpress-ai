@@ -36,11 +36,18 @@ class OpenAI
 
 		// Generate AI response.
 		try {
-			$alt_text = AiClient::prompt( $options['prompt'] )
-				->usingModel( OpenAiProvider::model( strval( $options['model'] ) ) )
-				->usingTemperature( floatval( $options['temperature'] ) )
+			$prompt_value       = $options['prompt'] ?? '';
+			$prompt             = is_string( $prompt_value ) ? $prompt_value : '';
+			$model              = (string) ( $options['model'] ?? 'gpt-4o-mini' );
+			$temp_value         = $options['temperature'] ?? 0.1;
+			$temperature        = is_numeric( $temp_value ) ? floatval( $temp_value ) : 0.1;
+			$system_instruction = (string) ( $options['system_instruction'] ?? '' );
+
+			$alt_text = AiClient::prompt( $prompt )
+				->usingModel( OpenAiProvider::model( $model ) )
+				->usingTemperature( $temperature )
 				->withFile( $image_url )
-				->usingSystemInstruction( $options['system_instruction'] )
+				->usingSystemInstruction( $system_instruction )
 				->generateText();
 
 			// Process and validate generated text.

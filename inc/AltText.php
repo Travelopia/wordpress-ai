@@ -74,7 +74,8 @@ class AltText
 				[ 'attachment_id' => $attachment_id ],
 			);
 
-			do_action( $error->get_error_code(), $error->get_error_code(), $error->get_error_message(), $error->get_error_data() );
+			$error_code = (string) $error->get_error_code();
+			do_action( $error_code, $error_code, $error->get_error_message(), $error->get_error_data() );
 			return $error;
 		}
 
@@ -125,7 +126,7 @@ class AltText
 			$options['prompt'] .= sprintf(
 				/* translators: %s: context */
 				__( ' Additional context: %s', 'travelopia-wordpress-ai' ),
-				$options['context'],
+				(string) $options['context'],
 			);
 		}
 

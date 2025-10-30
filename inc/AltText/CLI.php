@@ -58,7 +58,7 @@ class CLI
 
 		if ( isset( $args_assoc['ids'] ) ) {
 			// Process specific image IDs.
-			$ids       = explode( ',', strval( $args_assoc['ids'] ) );
+			$ids       = explode( ',', (string) $args_assoc['ids'] );
 			$image_ids = array_map( 'absint', $ids );
 		} else {
 			// Query all images or missing images.
@@ -89,10 +89,14 @@ class CLI
 				++$success_count;
 			}
 
-			$progress->tick();
+			if ( method_exists( $progress, 'tick' ) ) {
+				$progress->tick();
+			}
 		}
 
-		$progress->finish();
+		if ( method_exists( $progress, 'finish' ) ) {
+			$progress->finish();
+		}
 
 		// Display summary.
 		$total_time = round( microtime( true ) - $start_time, 2 );

@@ -53,9 +53,8 @@ class AltTextPromptField
 	 */
 	public static function sanitize( mixed $value ): string
 	{
-		$sanitized = sanitize_textarea_field( strval( $value ?? '' ) );
+		$sanitized = sanitize_textarea_field( (string) ( $value ?? '' ) );
 
-		// If empty, return default value.
 		if ( empty( trim( $sanitized ) ) ) {
 			return self::get_default();
 		}
@@ -71,7 +70,7 @@ class AltTextPromptField
 	public static function render(): void
 	{
 		$settings = Settings::get();
-		$prompt   = $settings[self::FIELD_NAME] ?? '';
+		$prompt   = (string) ( $settings[self::FIELD_NAME] ?? '' );
 		$enabled  = $settings[EnableAltTextGenerationField::FIELD_NAME] ?? false;
 		?>
 

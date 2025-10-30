@@ -37,7 +37,7 @@ class Settings
 	{
 		return [
 			'alt_text_generation' => false,
-			'alt_text_prompt'     => AltText::get_default_alt_text_prompt(),
+			'alt_text_prompt'     => __( 'Describe this image in a concise, informative way for alt text. Focus on the main subject and important details that would help someone understand what is in the image.', 'travelopia-wordpress-ai' ),
 		];
 	}
 

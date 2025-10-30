@@ -7,6 +7,7 @@
 
 namespace Travelopia\WordPress_AI;
 
+use Exception;
 use Travelopia\WordPress_AI\AltText\Admin;
 use Travelopia\WordPress_AI\Providers\OpenAI;
 use WP_CLI;
@@ -37,7 +38,7 @@ class AltText
 		}
 
 		// Hooks.
-		add_action( 'add_attachment', [ __CLASS__, 'maybe_generate_alt_text_on_upload' ], 20 );
+		add_action( 'add_attachment', [ __CLASS__, 'generate_alt_text_for_attachment' ], 20 );
 
 		// Bootstrap admin functionality.
 		Admin::bootstrap();
@@ -46,22 +47,6 @@ class AltText
 		if ( defined( 'WP_CLI' ) && true === WP_CLI && class_exists( 'WP_CLI' ) ) {
 			WP_CLI::add_command( 'travelopia-wp-ai alt-text', AltText\CLI::class );
 		}
-	}
-
-	/**
-	 * Generate alt text for an uploaded image if missing.
-	 *
-	 * @param int $attachment_id Attachment ID.
-	 *
-	 * @return void
-	 */
-	public static function maybe_generate_alt_text_on_upload( int $attachment_id = 0 ): void
-	{
-		if ( ! wp_attachment_is_image( $attachment_id ) ) {
-			return;
-		}
-
-		self::generate_alt_text_for_attachment( $attachment_id );
 	}
 
 	/**
@@ -78,21 +63,25 @@ class AltText
 		$image_url = wp_get_attachment_url( $attachment_id );
 
 		if ( ! is_string( $image_url ) ) {
-			return self::create_alt_text_error(
-				'invalid_image_url',
-				__( 'Could not get image URL or is not a string.', 'travelopia-wordpress-ai' ),
+			$error = new WP_Error(
+				'travelopia_wordpress_ai_alt_text_error',
+				__(
+					'Could not get image URL or is not a string.',
+					'travelopia-wordpress-ai',
+				),
 				[ 'attachment_id' => $attachment_id ],
 			);
-		}
 
-		// Initialize context.
-		$context = '';
+			do_action( $error->get_error_code(), $error->get_error_code(), $error->get_error_message(), $error->get_error_data() );
+			return $error;
+		}
 
 		/**
 		 * Should we include additional context about the image?
 		 *
 		 * @param bool $include_context Whether to include context.
 		 */
+		$context         = '';
 		$include_context = (bool) apply_filters( 'travelopia_wordpress_ai_alt_text_include_context', true );
 
 		// Build context from metadata if requested.
@@ -121,13 +110,11 @@ class AltText
 		 */
 		$options = (array) apply_filters(
 			'travelopia_wordpress_ai_alt_text_generation_options',
-			array_merge(
-				OpenAI::get_default_options(),
-				[
-					'prompt'  => Settings::get_setting( 'alt_text_prompt', '' ),
-					'context' => $context,
-				],
-			),
+			[
+				...OpenAI::get_default_options(),
+				'prompt'  => Settings::get_setting( 'alt_text_prompt', '' ),
+				'context' => $context,
+			],
 			$attachment_id,
 		);
 
@@ -156,53 +143,6 @@ class AltText
 		do_action( 'travelopia_wordpress_ai_alt_text_generated', $attachment_id, $alt_text );
 
 		return $alt_text;
-	}
-
-	/**
-	 * Get the translated default AI prompt.
-	 *
-	 * @return string Translated default prompt.
-	 */
-	public static function get_default_alt_text_prompt(): string
-	{
-		return __( 'Describe this image in a concise, informative way for alt text. Focus on the main subject and important details that would help someone understand what is in the image.', 'travelopia-wordpress-ai' );
-	}
-
-	/**
-	 * Get meta query for missing alt text filter.
-	 *
-	 * @return array<int|string, mixed> Meta query array.
-	 */
-	public static function get_missing_alt_text_meta_query(): array
-	{
-		return [
-			'relation' => 'OR',
-			[
-				'key'     => '_wp_attachment_image_alt',
-				'compare' => 'NOT EXISTS',
-			],
-			[
-				'key'     => '_wp_attachment_image_alt',
-				'value'   => '',
-				'compare' => '=',
-			],
-		];
-	}
-
-	/**
-	 * Create a standardized WP_Error for alt text operations.
-	 *
-	 * @param string               $error_code    Error code.
-	 * @param string               $error_message Error message.
-	 * @param array<string, mixed> $error_data    Additional error data.
-	 *
-	 * @return WP_Error
-	 */
-	public static function create_alt_text_error( string $error_code = '', string $error_message = '', array $error_data = [] ): WP_Error
-	{
-		$error = new WP_Error( $error_code, $error_message, $error_data );
-		do_action( 'travelopia_wordpress_ai_alt_text_error', $error_code, $error_message, $error_data );
-		return $error;
 	}
 
 	/**
@@ -245,7 +185,18 @@ class AltText
 
 		// Filter for missing alt text.
 		if ( $missing_only ) {
-			$query_args['meta_query'] = self::get_missing_alt_text_meta_query();
+			$query_args['meta_query'] = [
+				'relation' => 'OR',
+				[
+					'key'     => '_wp_attachment_image_alt',
+					'compare' => 'NOT EXISTS',
+				],
+				[
+					'key'     => '_wp_attachment_image_alt',
+					'value'   => '',
+					'compare' => '=',
+				],
+			];
 		}
 
 		$images_query = new WP_Query( $query_args );

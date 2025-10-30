@@ -40,7 +40,7 @@ class AltText
 		}
 
 		// Hooks.
-		add_action( 'add_attachment', [ __CLASS__, 'generate_alt_text_for_attachment' ], 20 );
+		add_action( 'add_attachment', [ __CLASS__, 'generate' ], 20 );
 
 		// Bootstrap admin functionality.
 		Admin::bootstrap();
@@ -59,16 +59,16 @@ class AltText
 	 *
 	 * @return string|WP_Error Generated alt text on success, WP_Error on failure.
 	 */
-	public static function generate_alt_text_for_attachment( int $attachment_id = 0, bool $update = true ): WP_Error|string
+	public static function generate( int $attachment_id = 0, bool $update = true ): WP_Error|string
 	{
 		// Get actual image URL for the attachment.
 		$image_url = wp_get_attachment_url( $attachment_id );
 
-		if ( ! is_string( $image_url ) ) {
+		if ( ! is_string( $image_url ) || ! wp_attachment_is_image( $attachment_id ) ) {
 			$error = new WP_Error(
-				'travelopia_wordpress_ai_alt_text_error',
+				'travelopia_wordpress_ai_alt_text_invalid_image',
 				__(
-					'Could not get image URL or is not a string.',
+					'Invalid image.',
 					'travelopia-wordpress-ai',
 				),
 				[ 'attachment_id' => $attachment_id ],

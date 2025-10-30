@@ -10,6 +10,7 @@ namespace Travelopia\WordPress_AI\AltText;
 use Travelopia\WordPress_AI\AltText;
 use WP_Post;
 use WP_REST_Request;
+use WP_Screen;
 
 class Admin
 {
@@ -34,13 +35,13 @@ class Admin
 	{
 		$screen = get_current_screen();
 
-		if ( ! $screen || 'attachment' !== $screen->id ) {
+		if ( ! $screen instanceof WP_Screen || 'attachment' !== $screen->id ) {
 			return null;
 		}
 
 		$post_id = isset( $_GET['post'] ) ? absint( $_GET['post'] ) : 0;
 
-		if ( ! $post_id ) {
+		if ( empty( $post_id ) ) {
 			return null;
 		}
 
@@ -52,11 +53,7 @@ class Admin
 
 		$post = get_post( $post_id );
 
-		if ( ! $post instanceof WP_Post ) {
-			return null;
-		}
-
-		if ( 'attachment' !== $post->post_type || ! str_contains( $post->post_mime_type, 'image' ) ) {
+		if ( ! $post instanceof WP_Post || 'attachment' !== $post->post_type || ! str_contains( $post->post_mime_type, 'image' ) ) {
 			return null;
 		}
 
@@ -65,7 +62,7 @@ class Admin
 		$alt_text        = get_post_meta( $post->ID, '_wp_attachment_image_alt', true );
 
 		if ( $is_generation && empty( $alt_text ) ) {
-			$result = AltText::generate_alt_text_for_attachment( $post->ID, update: true );
+			$result = AltText::generate( $post->ID, update: true );
 
 			if ( ! is_wp_error( $result ) ) {
 				$alt_text = $result;
@@ -73,7 +70,7 @@ class Admin
 		}
 
 		if ( $is_regeneration ) {
-			$result = AltText::generate_alt_text_for_attachment( $post->ID, update: false );
+			$result = AltText::generate( $post->ID, update: false );
 
 			if ( ! is_wp_error( $result ) ) {
 				$alt_text = $result;
@@ -160,11 +157,7 @@ class Admin
 	 */
 	public static function media_row_actions( array $actions = [], ?WP_Post $post = null ): array
 	{
-		if ( ! $post instanceof WP_Post ) {
-			return $actions;
-		}
-
-		if ( 'attachment' !== $post->post_type || ! str_contains( $post->post_mime_type, 'image' ) ) {
+		if ( ! $post instanceof WP_Post || 'attachment' !== $post->post_type || ! str_contains( $post->post_mime_type, 'image' ) ) {
 			return $actions;
 		}
 

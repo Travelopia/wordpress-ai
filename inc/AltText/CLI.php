@@ -81,7 +81,7 @@ class CLI
 		);
 
 		foreach ( $image_ids as $image_id ) {
-			$result = AltText::generate_alt_text_for_attachment( $image_id );
+			$result = AltText::generate( $image_id );
 
 			if ( $result instanceof WP_Error ) {
 				++$failed_count;

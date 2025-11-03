@@ -41,7 +41,11 @@ class AltTextGenerator extends HTMLElement {
 		this.innerHTML = '';
 
 		// Check if we have the necessary data.
-		if ( ! window.travelopiaWpAi || ! window.travelopiaWpAi.attachment || ! window.travelopiaWpAi.urls ) {
+		if (
+			! window.travelopiaWpAi ||
+			! window.travelopiaWpAi.attachment ||
+			! window.travelopiaWpAi.urls
+		) {
 			// Exit early if required data is not available.
 			return;
 		}

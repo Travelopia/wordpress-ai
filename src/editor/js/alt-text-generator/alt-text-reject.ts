@@ -38,7 +38,11 @@ class AltTextReject extends HTMLElement {
 	 */
 	private render(): void {
 		// Check if we have the necessary data.
-		if ( ! window.travelopiaWpAi || ! window.travelopiaWpAi.urls || ! window.travelopiaWpAi.labels ) {
+		if (
+			! window.travelopiaWpAi ||
+			! window.travelopiaWpAi.urls ||
+			! window.travelopiaWpAi.labels
+		) {
 			// Exit early if required data is not available.
 			return;
 		}

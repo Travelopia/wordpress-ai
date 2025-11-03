@@ -28,6 +28,8 @@ vendor
 !phpunit.xml
 !.stylelintrc
 !.stylelintignore
+!.prettierrc.js
+!.prettierignore
 !tsconfig.json
 !webpack.config.js
 !postcss.config.js

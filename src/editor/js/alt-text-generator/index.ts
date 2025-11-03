@@ -24,8 +24,8 @@ window.addEventListener( 'DOMContentLoaded', () => {
 	}
 
 	// Find the WordPress alt text textarea.
-	const textarea = document.querySelector<HTMLTextAreaElement>(
-		'textarea[name="_wp_attachment_image_alt"]#attachment_alt',
+	const textarea = document.querySelector< HTMLTextAreaElement >(
+		'textarea[name="_wp_attachment_image_alt"]#attachment_alt'
 	);
 
 	// Exit early if textarea is not found.

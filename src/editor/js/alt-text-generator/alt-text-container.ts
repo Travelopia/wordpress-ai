@@ -88,7 +88,7 @@ class AltTextContainer extends window.HTMLElement {
 	attributeChangedCallback(
 		name: string,
 		oldValue: string,
-		newValue: string,
+		newValue: string
 	): void {
 		// Check if the value has changed.
 		if ( oldValue === newValue ) {

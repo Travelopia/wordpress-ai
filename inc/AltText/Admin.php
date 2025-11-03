@@ -41,9 +41,9 @@ class Admin
 	public static function display_admin_notices(): void
 	{
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- This is just displaying a notice, not processing data.
-		if ( isset( $_GET['tp_error'] ) ) {
+		if ( isset( $_GET['tp_ai_error'] ) ) {
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- This is just displaying a notice, not processing data.
-			$error_code = sanitize_key( (string) wp_unslash( $_GET['tp_error'] ) );
+			$error_code = sanitize_key( (string) wp_unslash( $_GET['tp_ai_error'] ) );
 
 			$error_messages = [
 				'invalid_post_id'       => __( 'Invalid post ID.', 'travelopia-wordpress-ai' ),
@@ -181,7 +181,7 @@ class Admin
 			wp_safe_redirect(
 				add_query_arg(
 					[
-						'tp_error' => $e->getMessage(),
+						'tp_ai_error' => $e->getMessage(),
 					],
 					$redirect_url,
 				),

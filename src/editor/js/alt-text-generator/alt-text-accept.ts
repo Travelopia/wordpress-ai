@@ -56,7 +56,7 @@ class AltTextAccept extends HTMLElement {
 	 *
 	 * @param {Event} event Click event.
 	 */
-	private async handleClick( event: Event ): Promise<void> {
+	private async handleClick( event: Event ): Promise< void > {
 		// Prevent default anchor behavior.
 		event.preventDefault();
 
@@ -74,8 +74,8 @@ class AltTextAccept extends HTMLElement {
 		}
 
 		// Get alt text from the WordPress textarea.
-		const textarea = document.querySelector<HTMLTextAreaElement>(
-			'textarea[name="_wp_attachment_image_alt"]#attachment_alt',
+		const textarea = document.querySelector< HTMLTextAreaElement >(
+			'textarea[name="_wp_attachment_image_alt"]#attachment_alt'
 		);
 		const altText = textarea?.value || '';
 
@@ -147,7 +147,10 @@ class AltTextAccept extends HTMLElement {
 				this.textContent = acceptText;
 
 				// Dispatch error event with API error details.
-				this.dispatchErrorEvent( `API Error: ${ response.status }`, errorData );
+				this.dispatchErrorEvent(
+					`API Error: ${ response.status }`,
+					errorData
+				);
 			}
 		} catch ( error ) {
 			// Re-enable button on error.

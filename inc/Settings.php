@@ -238,20 +238,22 @@ class Settings
 			return;
 		}
 
-		$plugin_dir_url = plugin_dir_url( dirname( __DIR__ ) );
+		$plugin_dir_path = dirname( __DIR__ );
+		$plugin_dir_url  = plugin_dir_url( $plugin_dir_path . '/plugin.php' );
+		$asset_file      = include $plugin_dir_path . '/dist/settings.asset.php';
 
 		wp_enqueue_style(
-			'travelopia-wp-ai-admin',
-			$plugin_dir_url . 'dist/admin.css',
+			'travelopia-wp-ai-settings',
+			$plugin_dir_url . 'dist/settings.css',
 			[],
-			'1.0.0',
+			$asset_file['version'] ?? '1.0.0',
 		);
 
 		wp_enqueue_script(
-			'travelopia-wp-ai-admin',
-			$plugin_dir_url . 'dist/admin.js',
-			[],
-			'1.0.0',
+			'travelopia-wp-ai-settings',
+			$plugin_dir_url . 'dist/settings.js',
+			$asset_file['dependencies'] ?? [],
+			$asset_file['version'] ?? '1.0.0',
 			true,
 		);
 	}

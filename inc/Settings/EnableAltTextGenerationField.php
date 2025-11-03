@@ -37,7 +37,7 @@ class EnableAltTextGenerationField
 	{
 		add_settings_field(
 			self::FIELD_NAME,
-			__( 'Enable AI Alt Text Generation', 'travelopia-wordpress-ai' ),
+			__( 'Enable Alt Text Generation', 'travelopia-wordpress-ai' ),
 			[ __CLASS__, 'render' ],
 			Settings::PAGE_SLUG,
 			Settings::SECTION_ID,
@@ -75,10 +75,10 @@ class EnableAltTextGenerationField
 				value="1"
 				<?php checked( $enabled ); ?>
 			/>
-			<?php esc_html_e( 'Enable AI-powered alt text generation', 'travelopia-wordpress-ai' ); ?>
+			<?php esc_html_e( 'Automatically generate alt text for images using AI', 'travelopia-wordpress-ai' ); ?>
 		</label>
 		<p class="description">
-			<?php esc_html_e( 'When enabled, AI will be used to generate alt text for images.', 'travelopia-wordpress-ai' ); ?>
+			<?php esc_html_e( 'Generate descriptive alt text when images are uploaded to your media library.', 'travelopia-wordpress-ai' ); ?>
 		</p>
 		<?php
 	}

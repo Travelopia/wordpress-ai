@@ -20,8 +20,8 @@ class Page
 	{
 		add_settings_section(
 			Settings::SECTION_ID,
-			__( 'AI Alt Text Generation Settings', 'travelopia-wordpress-ai' ),
-			fn () => esc_html_e( 'Configure the AI-powered alt text generation settings for your WordPress site.', 'travelopia-wordpress-ai' ),
+			__( 'Alt Text Generation', 'travelopia-wordpress-ai' ),
+			fn () => esc_html_e( 'Configure how AI generates alt text for images on your site.', 'travelopia-wordpress-ai' ),
 			Settings::PAGE_SLUG,
 		);
 	}

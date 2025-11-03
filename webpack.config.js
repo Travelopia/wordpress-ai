@@ -10,9 +10,9 @@ module.exports = () => {
 	return {
 		...defaultConfig,
 		entry: {
-			admin: [
-				'./src/editor/ts/admin.ts',
-				'./src/editor/scss/admin.css',
+			settings: [
+				'./src/settings/index.ts',
+				'./src/settings/index.css',
 			],
 			editor: [
 				'./src/editor/js/index.ts',
@@ -27,8 +27,9 @@ module.exports = () => {
 			clean: false,
 		},
 		plugins: [
-			...defaultConfig.plugins.filter( ( plugin ) =>
-				plugin && plugin.constructor.name !== 'MiniCssExtractPlugin'
+			...defaultConfig.plugins.filter(
+				( plugin ) =>
+					plugin && plugin.constructor.name !== 'MiniCssExtractPlugin'
 			),
 			new MiniCssExtractPlugin( {
 				filename: '[name].css',

@@ -37,7 +37,7 @@ class AltTextPromptField
 	{
 		add_settings_field(
 			self::FIELD_NAME,
-			__( 'AI Alt Text Prompt', 'travelopia-wordpress-ai' ),
+			__( 'Custom Prompt', 'travelopia-wordpress-ai' ),
 			[ __CLASS__, 'render' ],
 			Settings::PAGE_SLUG,
 			Settings::SECTION_ID,
@@ -79,12 +79,12 @@ class AltTextPromptField
 			name="<?php echo esc_attr( Settings::OPTION_NAME ); ?>[<?php echo esc_attr( self::FIELD_NAME ); ?>]"
 			rows="4"
 			cols="50"
-			placeholder="<?php esc_attr_e( 'Enter your AI prompt here...', 'travelopia-wordpress-ai' ); ?>"
+			placeholder="<?php esc_attr_e( 'Describe this image for alt text...', 'travelopia-wordpress-ai' ); ?>"
 			<?php disabled( ! $enabled ); ?>
 			class="travelopia-wp-ai-prompt-field"
 		><?php echo esc_textarea( $prompt ); ?></textarea>
 		<p class="description">
-			<?php esc_html_e( 'This prompt will be sent to the AI service to generate alt text for images.', 'travelopia-wordpress-ai' ); ?>
+			<?php esc_html_e( 'Customize how AI describes your images. Leave blank to use the default prompt.', 'travelopia-wordpress-ai' ); ?>
 		</p>
 		<?php
 	}

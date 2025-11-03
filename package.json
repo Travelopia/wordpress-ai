@@ -8,10 +8,12 @@
     "dev": "npm run clear-assets && webpack --mode development --watch",
     "clear-assets": "rm -rf dist",
     "type-check": "tsc --noEmit",
-    "lint": "npm run lint:js && npm run lint:css && npm run lint:php",
+    "lint": "npm run lint:js && npm run lint:css && npm run lint:php && npm run format:php",
     "lint:js": "eslint src --ext .js,.ts,.tsx",
     "lint:css": "stylelint 'src/**/*.{css,scss}'",
     "lint:php": "composer run lint",
+    "format:php": "composer run format",
+    "format:php:fix": "composer run format-fix",
     "lint-test": "npm run lint && npm run test:php && npm run static-analysis:php",
     "test:php": "composer test",
     "static-analysis:php": "composer static-analysis"

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "825fa31f17584faf8a898c469ec8bcc4",
+    "content-hash": "67cc492bbd39afd325f4e22a09b5b5d1",
     "packages": [
         {
             "name": "guzzlehttp/guzzle",
@@ -5941,16 +5941,16 @@
         },
         {
             "name": "travelopia/wordpress-coding-standards",
-            "version": "2.0.1",
+            "version": "2.0.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Travelopia/wordpress-coding-standards-phpcs.git",
-                "reference": "76615b4ee741e15e66515209232a1a164b39f6ff"
+                "reference": "af1cad0327aa17d797cfb2832b2109fc95a45767"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Travelopia/wordpress-coding-standards-phpcs/zipball/76615b4ee741e15e66515209232a1a164b39f6ff",
-                "reference": "76615b4ee741e15e66515209232a1a164b39f6ff",
+                "url": "https://api.github.com/repos/Travelopia/wordpress-coding-standards-phpcs/zipball/af1cad0327aa17d797cfb2832b2109fc95a45767",
+                "reference": "af1cad0327aa17d797cfb2832b2109fc95a45767",
                 "shasum": ""
             },
             "require": {
@@ -5980,9 +5980,9 @@
             "description": "Travelopia's PHP WordPress Coding Standards",
             "support": {
                 "issues": "https://github.com/Travelopia/wordpress-coding-standards-phpcs/issues",
-                "source": "https://github.com/Travelopia/wordpress-coding-standards-phpcs/tree/2.0.1"
+                "source": "https://github.com/Travelopia/wordpress-coding-standards-phpcs/tree/2.0.3"
             },
-            "time": "2025-10-22T04:26:32+00:00"
+            "time": "2025-10-30T06:35:43+00:00"
         },
         {
             "name": "wp-cli/mustache",

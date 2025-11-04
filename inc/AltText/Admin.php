@@ -12,6 +12,8 @@ use Travelopia\WordPress_AI\AltText;
 use WP_Error;
 use WP_Post;
 
+use const Travelopia\WordPress_AI\REST_API_NAMESPACE;
+
 class Admin
 {
 	/**
@@ -31,6 +33,8 @@ class Admin
 		add_filter( 'media_row_actions', [ __CLASS__, 'media_row_actions' ], 10, 2 );
 		add_action( 'admin_action_' . self::ACTION_GENERATE_ALT_TEXT, [ __CLASS__, 'handle_generate_alt_text_action' ] );
 		add_action( 'admin_notices', [ __CLASS__, 'display_admin_notices' ] );
+		add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_editor_scripts' ] );
+		add_action( 'rest_api_init', [ __CLASS__, 'register_rest_routes' ] );
 	}
 
 	/**
@@ -213,5 +217,80 @@ class Admin
 			],
 			admin_url( 'admin.php' ),
 		);
+	}
+
+	/**
+	 * Enqueue editor scripts on attachment edit screen.
+	 *
+	 * @param string $hook_suffix Current admin page hook suffix.
+	 *
+	 * @return void
+	 */
+	public static function enqueue_editor_scripts( string $hook_suffix = '' ): void
+	{
+		// Only load on post.php (attachment edit screen).
+		if ( 'post.php' !== $hook_suffix ) {
+			return;
+		}
+
+		// Get the current screen.
+		$screen = get_current_screen();
+
+		// Only load for attachment post type.
+		if ( ! $screen || 'attachment' !== $screen->post_type ) {
+			return;
+		}
+
+		// Get current post to verify it's an image.
+		global $post;
+
+		if ( ! $post instanceof WP_Post || ! str_contains( $post->post_mime_type, 'image' ) ) {
+			return;
+		}
+
+		// Get plugin directory paths.
+		$plugin_dir_path = dirname( __DIR__, 2 );
+		$plugin_dir_url  = plugin_dir_url( $plugin_dir_path . '/plugin.php' );
+		$asset_file      = include $plugin_dir_path . '/dist/alt-text.asset.php';
+
+		// Enqueue script.
+		wp_enqueue_script(
+			'travelopia-wp-ai-alt-text',
+			$plugin_dir_url . 'dist/alt-text.js',
+			$asset_file['dependencies'] ?? [],
+			$asset_file['version'] ?? '1.0.0',
+			true,
+		);
+
+		// Get current alt text.
+		$alt_text = get_post_meta( $post->ID, '_wp_attachment_image_alt', true );
+
+		// Localize script with data.
+		wp_localize_script(
+			'travelopia-wp-ai-alt-text',
+			'travelopiaWpAi',
+			[
+				'attachmentId'   => $post->ID,
+				'currentAltText' => is_string( $alt_text ) ? $alt_text : '',
+				'restUrl'        => rest_url( REST_API_NAMESPACE . '/alt-text/generate' ),
+				'nonce'          => wp_create_nonce( 'wp_rest' ),
+				'labels'         => [
+					'generate'   => __( 'Generate Alt Text', 'travelopia-wordpress-ai' ),
+					'regenerate' => __( 'Regenerate Alt Text', 'travelopia-wordpress-ai' ),
+					'saving'     => __( 'Generating...', 'travelopia-wordpress-ai' ),
+				],
+			],
+		);
+	}
+
+	/**
+	 * Register REST API routes.
+	 *
+	 * @return void
+	 */
+	public static function register_rest_routes(): void
+	{
+		$generate_controller = new RestApi\Generate();
+		$generate_controller->register_routes();
 	}
 }

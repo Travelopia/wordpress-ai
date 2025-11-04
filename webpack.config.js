@@ -14,10 +14,7 @@ module.exports = () => {
 				'./src/settings/index.ts',
 				'./src/settings/index.css',
 			],
-			editor: [
-				'./src/editor/js/index.ts',
-				'./src/editor/scss/index.scss',
-			],
+			'alt-text': './src/alt-text/index.ts',
 		},
 		output: {
 			...defaultConfig.output,

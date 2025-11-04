@@ -11,6 +11,8 @@
 
 namespace Travelopia\WordPress_AI;
 
+const REST_API_NAMESPACE = 'travelopia-wp-ai/v1';
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }

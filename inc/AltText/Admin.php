@@ -290,7 +290,7 @@ class Admin
 	 */
 	public static function register_rest_routes(): void
 	{
-		$generate_controller = new RestApi\Generate();
-		$generate_controller->register_routes();
+		$rest_api = new RestApi();
+		$rest_api->register_routes();
 	}
 }

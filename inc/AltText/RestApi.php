@@ -1,11 +1,11 @@
 <?php
 /**
- * Generate Alt Text REST API endpoint.
+ * Alt Text REST API.
  *
  * @package travelopia-wordpress-ai
  */
 
-namespace Travelopia\WordPress_AI\AltText\RestApi;
+namespace Travelopia\WordPress_AI\AltText;
 
 use Exception;
 use Travelopia\WordPress_AI\AltText;
@@ -19,9 +19,9 @@ use WP_REST_Server;
 use const Travelopia\WordPress_AI\REST_API_NAMESPACE;
 
 /**
- * Class Generate.
+ * Class RestApi.
  */
-class Generate extends WP_REST_Controller
+class RestApi extends WP_REST_Controller
 {
 	/**
 	 * The namespace of this controller's route.
@@ -35,7 +35,7 @@ class Generate extends WP_REST_Controller
 	 *
 	 * @var string
 	 */
-	protected $rest_base = 'alt-text/generate';
+	protected $rest_base = 'alt-text';
 
 	/**
 	 * Register the routes for the objects of the controller.
@@ -46,7 +46,7 @@ class Generate extends WP_REST_Controller
 	{
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base,
+			'/' . $this->rest_base . '/generate',
 			[
 				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'generate_alt_text' ],

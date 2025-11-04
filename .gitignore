@@ -37,6 +37,7 @@ vendor
 !README.md
 !plugin.php
 !assets
+!tests
 
 # --- Source Code
 !inc

@@ -8,7 +8,7 @@
 >
 	<testsuites>
 		<testsuite name="wordpress-ai-tests">
-			<directory prefix="class-test-" suffix=".php">.tests/php</directory>
+			<directory suffix="Test.php">tests</directory>
 		</testsuite>
 	</testsuites>
 	<php>

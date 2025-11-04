@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: Travelopia WordPress AI
- * Description: WordPress Plugin for AI-powered alt text generation
+ * Description: AI functionality for WordPress
  * Author: Travelopia Team
  * Author URI: https://www.travelopia.com
  * Version: 0.1.0.

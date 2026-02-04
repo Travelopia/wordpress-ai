@@ -8,19 +8,19 @@
     }
   },
   "require": {
-    "php": "^8.2",
-    "wordpress/php-ai-client": "^0.1.0",
-    "php-http/guzzle7-adapter": "^1.0",
-    "guzzlehttp/guzzle": "^7.9",
-    "http-interop/http-factory-guzzle": "^1.2"
+    "php": "^8.3",
+    "wordpress/php-ai-client": "^0.4.2",
+    "php-http/guzzle7-adapter": "^1.1.0",
+    "guzzlehttp/guzzle": "^7.10.0",
+    "http-interop/http-factory-guzzle": "^1.2.1"
   },
   "require-dev": {
     "roots/wordpress": "*",
-    "phpstan/phpstan": "^1.10",
+    "phpstan/phpstan": "^2.1.38",
     "travelopia/wordpress-coding-standards": "^2",
-    "wp-cli/wp-cli": "^2.12",
+    "wp-cli/wp-cli": "^v2.12.0",
     "phpunit/phpunit": "^9.6",
-    "wp-phpunit/wp-phpunit": "^6.8",
+    "wp-phpunit/wp-phpunit": "*",
     "yoast/phpunit-polyfills": "^2.0"
   },
   "scripts": {

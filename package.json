@@ -8,6 +8,10 @@
     "build": "npm run clear-assets && tsc --noEmit && webpack --mode production",
     "dev": "npm run clear-assets && webpack --mode development --watch",
     "clear-assets": "rm -rf dist",
+    "wp-env": "wp-env",
+    "wp-env:start": "wp-env start",
+    "wp-env:stop": "wp-env stop",
+    "wp-env:destroy": "wp-env destroy",
     "type-check": "tsc --noEmit",
     "lint": "npm run lint:js && npm run lint:css && npm run lint:php && npm run format:php",
     "lint:js": "wp-scripts lint-js src",
@@ -21,9 +25,10 @@
     "static-analysis:php": "composer static-analysis"
   },
   "devDependencies": {
-    "@travelopia/eslint-plugin-wordpress-coding-standards": "^2.0.1",
-    "@wordpress/scripts": "^30.26.0",
-    "mini-css-extract-plugin": "^2.9.4"
+    "@travelopia/eslint-plugin-wordpress-coding-standards": "^2.0.2",
+    "@wordpress/env": "^10.39.0",
+    "@wordpress/scripts": "^31.4.0",
+    "mini-css-extract-plugin": "^2.10.0"
   },
   "overrides": {
     "prettier": "npm:wp-prettier@3.0.3"

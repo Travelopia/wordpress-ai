@@ -2,93 +2,32 @@
  * WordPress AI Webpack Config.
  */
 
-// External dependencies.
-import MiniCssExtractPlugin from 'mini-css-extract-plugin';
-import TerserPlugin from 'terser-webpack-plugin';
-import path from 'path';
-import { fileURLToPath } from 'url';
+const path = require( 'path' );
+const MiniCssExtractPlugin = require( 'mini-css-extract-plugin' );
+const defaultConfig = require( '@wordpress/scripts/config/webpack.config' );
 
-// Variables.
-const __filename = fileURLToPath( import.meta.url );
-const __dirname = path.dirname( __filename );
-
-// Config.
-export default () => {
-	// Configuration.
+module.exports = () => {
 	return {
-		stats: 'minimal',
-		cache: {
-			type: 'memory',
-		},
+		...defaultConfig,
 		entry: {
-			admin: [
-				'./src/editor/ts/admin.ts',
-				'./src/editor/scss/admin.css',
+			settings: [
+				'./src/settings/index.ts',
+				'./src/settings/index.css',
 			],
-			editor: [
-				'./src/editor/js/index.ts',
-				'./src/editor/scss/index.scss',
-			],
-		},
-		module: {
-			rules: [
-				{
-					test: /\.tsx?$/,
-					use: [
-						{
-							loader: 'ts-loader',
-							options: {
-								transpileOnly: true,
-							},
-						},
-					],
-					exclude: /node_modules/,
-				},
-				{
-					test: /\.(sa|sc|c)ss$/,
-					use: [
-						MiniCssExtractPlugin.loader,
-						{
-							loader: 'css-loader',
-							options: {
-								url: false,
-							},
-						},
-						{
-							loader: 'sass-loader',
-							options: {
-								sassOptions: {
-									outputStyle: 'compressed',
-								},
-							},
-						},
-					],
-				},
-			],
-		},
-		resolve: {
-			extensions: [ '.tsx', '.ts', '.js' ],
+			'alt-text': './src/alt-text/index.ts',
 		},
 		output: {
+			...defaultConfig.output,
 			path: path.resolve( __dirname, 'dist' ),
 			filename: '[name].js',
 			publicPath: '/',
-		},
-		optimization: {
-			removeEmptyChunks: true,
-			minimize: true,
-			minimizer: [
-				new TerserPlugin( {
-					terserOptions: {
-						format: {
-							comments: false,
-						},
-					},
-					extractComments: false,
-				} ),
-			],
+			clean: false,
 		},
 		plugins: [
+			...defaultConfig.plugins.filter(
+				( plugin ) =>
+					plugin && plugin.constructor.name !== 'MiniCssExtractPlugin'
+			),
 			new MiniCssExtractPlugin( {
 				filename: '[name].css',
 			} ),

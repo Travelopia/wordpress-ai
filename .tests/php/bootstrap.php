@@ -25,10 +25,8 @@ require_once getenv( 'WP_PHPUNIT__DIR' ) . '/includes/functions.php';
  * @return void
  */
 function _manually_load_plugin(): void {
-	// Load plugin namespace files.
-	require __DIR__ . '/../../inc/namespace.php';
-	require __DIR__ . '/../../inc/admin/namespace.php';
-	require __DIR__ . '/../../inc/alt-text/namespace.php';
+	// Load plugin main file - composer autoloader handles PSR-4 class loading.
+	require __DIR__ . '/../../plugin.php';
 }
 
 // Load the plugin before WordPress initializes.

@@ -8,12 +8,14 @@
 .travelopia-wp-ai-prompt-field {
 	width: 100%;
 	max-width: 600px;
-	line-height: 1.4;
+	line-height: 1.5;
+	font-size: 14px;
 }
 
 .travelopia-wp-ai-prompt-field:disabled {
 	background-color: #f6f7f7;
 	color: #646970;
+	cursor: not-allowed;
 }
 
 /* Info box styling */
@@ -44,15 +46,23 @@
 	margin-bottom: 0.25rem;
 }
 
+/* Improved form table spacing */
 .form-table th[scope="row"] {
 	vertical-align: top;
 	padding-top: 15px;
+	padding-bottom: 20px;
 }
 
-/* Character counter styling */
+.form-table td {
+	padding-bottom: 20px;
+}
+
+/* Description text styling */
 .description {
 	color: #646970;
-	font-style: italic;
+	font-size: 13px;
+	line-height: 1.5;
+	margin-top: 8px;
 }
 
 /* Toggle field styling */
@@ -60,9 +70,15 @@ label[for="ai-alt-text-enabled"] {
 	display: flex;
 	align-items: center;
 	gap: 8px;
-	font-weight: 500;
+	font-weight: 400;
+	font-size: 14px;
 }
 
 #ai-alt-text-enabled {
 	margin: 0;
+}
+
+/* Add visual separation between fields */
+.form-table tr:not(:last-child) {
+	border-bottom: 1px solid #f0f0f1;
 }

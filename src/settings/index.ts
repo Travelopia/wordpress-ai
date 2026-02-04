@@ -5,8 +5,12 @@
 // On DOM ready.
 document.addEventListener( 'DOMContentLoaded', (): void => {
 	// Get references to the checkbox and textarea elements.
-	const enableCheckbox = document.getElementById( 'ai-alt-text-enabled' ) as HTMLInputElement | null;
-	const promptTextarea = document.getElementById( 'ai-alt-text-prompt' ) as HTMLTextAreaElement | null;
+	const enableCheckbox = document.getElementById(
+		'ai-alt-text-enabled'
+	) as HTMLInputElement | null;
+	const promptTextarea = document.getElementById(
+		'ai-alt-text-prompt'
+	) as HTMLTextAreaElement | null;
 
 	// Toggles the disabled state of the prompt textarea based on the checkbox state.
 	function togglePromptField(): void {

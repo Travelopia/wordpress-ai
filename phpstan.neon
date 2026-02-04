@@ -4,9 +4,10 @@ parameters:
 		- plugin.php
 	scanDirectories:
 		- vendor
+		- wordpress
 	paths:
 		- inc
 	excludePaths:
 		- vendor/wordpress/wp-admin/includes/noop.php
 	ignoreErrors:
-		- '#Parameter \#1 \$value of function strval expects bool\|float\|int\|resource\|string\|null, (.*) given.#'
+		- '#Cannot cast .* to string#'

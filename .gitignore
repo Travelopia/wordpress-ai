@@ -17,6 +17,7 @@ vendor
 !.gitignore
 !.gitmodules
 !.tests
+!.php-cs-fixer.dist.php
 !composer.json
 !composer.lock
 !.nvmrc
@@ -27,6 +28,8 @@ vendor
 !phpunit.xml
 !.stylelintrc
 !.stylelintignore
+!.prettierrc.js
+!.prettierignore
 !tsconfig.json
 !webpack.config.js
 !postcss.config.js
@@ -34,6 +37,7 @@ vendor
 !README.md
 !plugin.php
 !assets
+!tests
 
 # --- Source Code
 !inc

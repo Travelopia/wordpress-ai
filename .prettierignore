@@ -1,0 +1,15 @@
+node_modules
+vendor
+build
+dist
+
+# Ignore specific file types
+*.scss
+*.css
+*.json
+*.php
+*.md
+*.html
+*.svg
+*.yml
+*.yaml

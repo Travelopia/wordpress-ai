@@ -1,36 +1,31 @@
 {
   "name": "travelopia-wp-ai",
   "version": "0.1.0",
-  "type": "module",
   "description": "AI-powered alt text generation for WordPress.",
+  "author": "Travelopia Team",
+  "license": "MIT",
   "scripts": {
     "build": "npm run clear-assets && tsc --noEmit && webpack --mode production",
     "dev": "npm run clear-assets && webpack --mode development --watch",
     "clear-assets": "rm -rf dist",
     "type-check": "tsc --noEmit",
-    "lint": "npm run lint:js && npm run lint:css && npm run lint:php",
-    "lint:js": "eslint src --ext .js,.ts,.tsx",
-    "lint:css": "stylelint 'src/**/*.{css,scss}'",
+    "lint": "npm run lint:js && npm run lint:css && npm run lint:php && npm run format:php",
+    "lint:js": "wp-scripts lint-js src",
+    "format:js": "wp-scripts format src",
+    "lint:css": "wp-scripts lint-style src",
     "lint:php": "composer run lint",
+    "format:php": "composer run format",
+    "format:php:fix": "composer run format-fix",
     "lint-test": "npm run lint && npm run test:php && npm run static-analysis:php",
     "test:php": "composer test",
     "static-analysis:php": "composer static-analysis"
   },
   "devDependencies": {
-    "@wordpress/stylelint-config": "^21.2.0",
-    "css-loader": "^7.1.2",
-    "eslint": "^8.57.0",
-    "mini-css-extract-plugin": "^2.9.4",
-    "sass": "^1.92.1",
-    "sass-loader": "^16.0.5",
-    "stylelint": "^14.16.1",
-    "terser-webpack-plugin": "^5.3.6",
-    "ts-loader": "^9.5.4",
-    "typescript": "^5.6.2",
-    "webpack": "^5.101.3",
-    "webpack-cli": "^5.1.4",
-    "@travelopia/eslint-plugin-wordpress-coding-standards": "^1.0.0"
+    "@travelopia/eslint-plugin-wordpress-coding-standards": "^2.0.1",
+    "@wordpress/scripts": "^30.26.0",
+    "mini-css-extract-plugin": "^2.9.4"
   },
-  "author": "Travelopia Team",
-  "license": "MIT"
+  "overrides": {
+    "prettier": "npm:wp-prettier@3.0.3"
+  }
 }

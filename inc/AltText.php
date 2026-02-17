@@ -46,7 +46,7 @@ class AltText
 		Admin::bootstrap();
 
 		// Register WP CLI commands.
-		if ( defined( 'WP_CLI' ) && true === WP_CLI && class_exists( 'WP_CLI' ) ) {
+		if ( class_exists( 'WP_CLI' ) ) {
 			WP_CLI::add_command( 'travelopia-wp-ai alt-text', AltText\CLI::class );
 		}
 	}
@@ -111,18 +111,28 @@ class AltText
 		 * @param array $default_options The generation options.
 		 * @param int   $attachment_id   The attachment ID.
 		 */
-		$options = (array) apply_filters(
+		$default_options = [
+			...OpenAI::get_default_options(),
+			'prompt'  => Settings::get_setting( AltTextPromptField::FIELD_NAME, '' ),
+			'context' => $context,
+		];
+
+		$filtered = apply_filters(
 			'travelopia_wordpress_ai_alt_text_generation_options',
-			[
-				...OpenAI::get_default_options(),
-				'prompt'  => Settings::get_setting( AltTextPromptField::FIELD_NAME, '' ),
-				'context' => $context,
-			],
+			$default_options,
 			$attachment_id,
 		);
 
+		$options = is_array( $filtered ) ? $filtered : $default_options;
+
+		// Ensure string keys from the filter output.
+		$options = array_combine(
+			array_map( static fn ( mixed $key ): string => (string) $key, array_keys( $options ) ),
+			array_values( $options ),
+		);
+
 		// Add context to prompt if requested.
-		if ( ! empty( $options['context'] ) ) {
+		if ( ! empty( $options['context'] ) && is_string( $options['prompt'] ) ) {
 			$options['prompt'] .= sprintf(
 				/* translators: %s: context */
 				__( ' Additional context: %s', 'travelopia-wordpress-ai' ),

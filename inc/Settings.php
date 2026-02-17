@@ -45,6 +45,13 @@ class Settings
 	public const SECTION_ID = 'travelopia_wp_ai_main_section';
 
 	/**
+	 * Cached settings.
+	 *
+	 * @var array<string, mixed>|null
+	 */
+	private static ?array $settings = null;
+
+	/**
 	 * Settings fields.
 	 *
 	 * @var array<class-string>
@@ -111,20 +118,24 @@ class Settings
 	 */
 	public static function get( bool $force = false ): array
 	{
-		static $settings = null;
-
-		if ( false === $force && is_array( $settings ) ) {
-			return $settings;
+		if ( false === $force && null !== self::$settings ) {
+			return self::$settings;
 		}
 
 		$default_settings = self::get_default_settings();
-		$settings         = get_option( self::OPTION_NAME, $default_settings );
+		$saved_settings   = get_option( self::OPTION_NAME, [] );
+		$saved_settings   = is_array( $saved_settings ) ? $saved_settings : [];
 
-		if ( ! is_array( $settings ) ) {
-			$settings = $default_settings;
+		// Merge saved settings into defaults, ensuring string keys are preserved.
+		self::$settings = $default_settings;
+
+		foreach ( $saved_settings as $key => $value ) {
+			if ( is_string( $key ) && array_key_exists( $key, $default_settings ) ) {
+				self::$settings[ $key ] = $value;
+			}
 		}
 
-		return $settings;
+		return self::$settings;
 	}
 
 	/**
@@ -241,19 +252,21 @@ class Settings
 		$plugin_dir_path = dirname( __DIR__ );
 		$plugin_dir_url  = plugin_dir_url( $plugin_dir_path . '/plugin.php' );
 		$asset_file      = include $plugin_dir_path . '/dist/settings.asset.php';
+		$dependencies    = is_array( $asset_file ) && isset( $asset_file['dependencies'] ) && is_array( $asset_file['dependencies'] ) ? array_map( static fn ( mixed $dep ): string => (string) $dep, $asset_file['dependencies'] ) : [];
+		$version         = is_array( $asset_file ) && isset( $asset_file['version'] ) && is_string( $asset_file['version'] ) ? $asset_file['version'] : '1.0.0';
 
 		wp_enqueue_style(
 			'travelopia-wp-ai-settings',
 			$plugin_dir_url . 'dist/settings.css',
 			[],
-			$asset_file['version'] ?? '1.0.0',
+			$version,
 		);
 
 		wp_enqueue_script(
 			'travelopia-wp-ai-settings',
 			$plugin_dir_url . 'dist/settings.js',
-			$asset_file['dependencies'] ?? [],
-			$asset_file['version'] ?? '1.0.0',
+			$dependencies,
+			$version,
 			true,
 		);
 	}

@@ -16,6 +16,27 @@ editing an existing image.
 - **PHP**: 8.2+
 - **AI provider key**: You’ll need an API key for your chosen provider.
 
+### Local Development
+
+**Prerequisites**: Node.js, PHP 8.3+, Composer, MySQL (via Homebrew)
+
+**Dev environment** (WordPress Playground — no Docker needed):
+
+```bash
+npm run start          # installs deps and starts wp-env with Playground runtime
+```
+
+**Running tests** (requires local MySQL):
+
+```bash
+brew services start mysql
+mysql -u root -h 127.0.0.1 -e "CREATE DATABASE IF NOT EXISTS wordpress_tests;"
+npm run test:php
+```
+
+MySQL connection defaults to `root@127.0.0.1` with no password. Override with env vars:
+`WP_DB_NAME`, `WP_DB_USER`, `WP_DB_PASSWORD`, `WP_DB_HOST`.
+
 ### Install
 
 1. Copy the `wordpress-ai` folder into `wp-content/plugins/`.

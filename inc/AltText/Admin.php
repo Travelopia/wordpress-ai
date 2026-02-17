@@ -47,7 +47,8 @@ class Admin
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- This is just displaying a notice, not processing data.
 		if ( isset( $_GET['tp_ai_error'] ) ) {
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- This is just displaying a notice, not processing data.
-			$error_code = sanitize_key( (string) wp_unslash( $_GET['tp_ai_error'] ) );
+			$raw_error  = is_string( $_GET['tp_ai_error'] ) ? $_GET['tp_ai_error'] : '';
+			$error_code = sanitize_key( $raw_error );
 
 			$error_messages = [
 				'invalid_post_id'       => __( 'Invalid post ID.', 'travelopia-wordpress-ai' ),
@@ -72,7 +73,8 @@ class Admin
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- This is just displaying a notice, not processing data.
 		if ( isset( $_GET['tp_success'] ) ) {
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- This is just displaying a notice, not processing data.
-			$success_code = sanitize_key( (string) wp_unslash( $_GET['tp_success'] ) );
+			$raw_success  = is_string( $_GET['tp_success'] ) ? $_GET['tp_success'] : '';
+			$success_code = sanitize_key( $raw_success );
 
 			$success_messages = [
 				'generated'   => __( 'Alt text generated successfully.', 'travelopia-wordpress-ai' ),
@@ -141,7 +143,9 @@ class Admin
 			// Verify nonce.
 			$nonce_action = 'generate_alt_text_' . $post_id;
 
-			if ( ! isset( $_GET['tp_nonce'] ) || ! wp_verify_nonce( $_GET['tp_nonce'], $nonce_action ) ) {
+			$nonce = isset( $_GET['tp_nonce'] ) && is_string( $_GET['tp_nonce'] ) ? sanitize_text_field( $_GET['tp_nonce'] ) : '';
+
+			if ( ! wp_verify_nonce( $nonce, $nonce_action ) ) {
 				throw new Exception( 'security_check_failed' );
 			}
 
@@ -252,13 +256,15 @@ class Admin
 		$plugin_dir_path = dirname( __DIR__, 2 );
 		$plugin_dir_url  = plugin_dir_url( $plugin_dir_path . '/plugin.php' );
 		$asset_file      = include $plugin_dir_path . '/dist/alt-text.asset.php';
+		$dependencies    = is_array( $asset_file ) && isset( $asset_file['dependencies'] ) && is_array( $asset_file['dependencies'] ) ? array_map( static fn ( mixed $dep ): string => (string) $dep, $asset_file['dependencies'] ) : [];
+		$version         = is_array( $asset_file ) && isset( $asset_file['version'] ) && is_string( $asset_file['version'] ) ? $asset_file['version'] : '1.0.0';
 
 		// Enqueue script.
 		wp_enqueue_script(
 			'travelopia-wp-ai-alt-text',
 			$plugin_dir_url . 'dist/alt-text.js',
-			$asset_file['dependencies'] ?? [],
-			$asset_file['version'] ?? '1.0.0',
+			$dependencies,
+			$version,
 			true,
 		);
 

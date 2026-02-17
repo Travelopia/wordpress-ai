@@ -8,6 +8,6 @@ parameters:
 	paths:
 		- inc
 	excludePaths:
-		- vendor/wordpress/wp-admin/includes/noop.php
+		- wordpress/wp-admin/includes/noop.php
 	ignoreErrors:
 		- '#Cannot cast .* to string#'

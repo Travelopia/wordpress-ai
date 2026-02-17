@@ -34,6 +34,7 @@ vendor
 !webpack.config.js
 !postcss.config.js
 !wp-cli.yml
+!.wp-env.json
 !README.md
 !plugin.php
 !assets

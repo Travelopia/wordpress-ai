@@ -8,8 +8,9 @@
     "build": "npm run clear-assets && tsc --noEmit && webpack --mode production",
     "dev": "npm run clear-assets && webpack --mode development --watch",
     "clear-assets": "rm -rf dist",
+    "start": "composer install && npm ci && npm run wp-env:start",
     "wp-env": "wp-env",
-    "wp-env:start": "wp-env start",
+    "wp-env:start": "wp-env start --runtime=playground",
     "wp-env:stop": "wp-env stop",
     "wp-env:destroy": "wp-env destroy",
     "type-check": "tsc --noEmit",
@@ -20,8 +21,9 @@
     "lint:php": "composer run lint",
     "format:php": "composer run format",
     "format:php:fix": "composer run format-fix",
-    "lint-test": "npm run lint && npm run test:php && npm run static-analysis:php",
-    "test:php": "composer test",
+    "lint-test": "npm run lint && npm run test:php:setup && npm run static-analysis:php",
+    "test:php": "./vendor/bin/phpunit",
+    "test:php:setup": "composer install && npm run test:php",
     "static-analysis:php": "composer static-analysis"
   },
   "devDependencies": {

@@ -1,36 +1,13 @@
 <?php
 /**
- * Bootstrap for unit tests.
+ * PHPUnit bootstrap file.
  *
- * Sets up the testing environment by loading dependencies, the plugin files,
- * and initializing WordPress testing framework.
- *
- * @package trav-ai
- *
- * @phpcs:disable PSR1.Files.SideEffects
+ * @package travelopia-wordpress-ai
  */
 
-// Load Composer dependencies.
-require_once __DIR__ . '/../../vendor/autoload.php';
+require_once dirname( __DIR__, 2 ) . '/vendor/autoload.php';
 
-// Load WordPress PHPUnit test functions.
-require_once getenv( 'WP_PHPUNIT__DIR' ) . '/includes/functions.php';
+$_tests_dir = getenv( 'WP_TESTS_DIR' ) ?: dirname( __DIR__, 2 ) . '/vendor/wp-phpunit/wp-phpunit';
 
-/**
- * Manually load the plugin for testing.
- *
- * This function is called before WordPress initializes to ensure
- * the plugin code is available during tests.
- *
- * @return void
- */
-function _manually_load_plugin(): void {
-	// Load plugin main file - composer autoloader handles PSR-4 class loading.
-	require __DIR__ . '/../../plugin.php';
-}
-
-// Load the plugin before WordPress initializes.
-tests_add_filter( 'muplugins_loaded', '_manually_load_plugin' );
-
-// Bootstrap PHPUnit tests with WordPress.
-require_once getenv( 'WP_PHPUNIT__DIR' ) . '/includes/bootstrap.php';
+require_once $_tests_dir . '/includes/functions.php';
+require_once $_tests_dir . '/includes/bootstrap.php';

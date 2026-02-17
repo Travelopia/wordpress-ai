@@ -4,8 +4,59 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d371eb499a76587602ec3956b2ce685d",
+    "content-hash": "f2da8f6f67049c7a8cc32650fba45c47",
     "packages": [
+        {
+            "name": "aysnc/wordpress-php-ai-client-bedrock",
+            "version": "0.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Aysnc-Labs/wordpress-php-ai-client-bedrock.git",
+                "reference": "83e78e7a192545e4ca6d2b9163058554e83a184f"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Aysnc-Labs/wordpress-php-ai-client-bedrock/zipball/83e78e7a192545e4ca6d2b9163058554e83a184f",
+                "reference": "83e78e7a192545e4ca6d2b9163058554e83a184f",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^8.3",
+                "wordpress/php-ai-client": "^0.4"
+            },
+            "require-dev": {
+                "aysnc/wordpress-php-cs-fixer": "^0.3.0",
+                "aysnc/wordpress-phpcs": "^0.1.0",
+                "guzzlehttp/psr7": "^1.0 || ^2.0",
+                "php-http/curl-client": "^2.0",
+                "phpstan/phpstan": "^2.1",
+                "phpunit/phpunit": "^9.6",
+                "squizlabs/php_codesniffer": "^3.13.5",
+                "yoast/phpunit-polyfills": "^2.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Aysnc\\WordPress\\PhpAiClientBedrock\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Aysnc",
+                    "homepage": "https://aysnc.dev"
+                }
+            ],
+            "description": "AWS Bedrock provider for the WordPress PHP AI Client SDK.",
+            "support": {
+                "issues": "https://github.com/Aysnc-Labs/wordpress-php-ai-client-bedrock/issues",
+                "source": "https://github.com/Aysnc-Labs/wordpress-php-ai-client-bedrock/tree/0.1.0"
+            },
+            "time": "2026-01-31T08:14:30+00:00"
+        },
         {
             "name": "guzzlehttp/guzzle",
             "version": "7.10.0",

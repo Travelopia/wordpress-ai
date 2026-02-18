@@ -15,6 +15,7 @@ vendor
 !.editorconfig
 !.github
 !.gitignore
+!.gitattributes
 !.gitmodules
 !.tests
 !.php-cs-fixer.dist.php

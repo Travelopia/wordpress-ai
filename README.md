@@ -22,12 +22,6 @@ The plugin supports multiple providers out of the box:
 - **AWS Bedrock** (default)
 - **OpenAI**
 
-Switch providers with a single filter:
-
-```php
-add_filter( 'travelopia_wordpress_ai_provider', fn() => 'openai' );
-```
-
 ### Provider Configuration
 
 **AWS Bedrock** (Claude 3.5 Sonnet) — set via `wp-config.php` or environment variable:
@@ -70,6 +64,89 @@ WP-CLI examples:
 wp travelopia-wp-ai alt-text generate --missing   # only images without alt text
 wp travelopia-wp-ai alt-text generate --all        # every image
 wp travelopia-wp-ai alt-text generate --ids=1,2,3  # specific attachments
+```
+
+## Hooks
+
+### Filters
+
+**`travelopia_wordpress_ai_provider`** — Switch the active AI provider.
+
+```php
+add_filter(
+	'travelopia_wordpress_ai_provider',
+	fn() => 'openai'
+);
+```
+
+---
+
+**`travelopia_wordpress_ai_alt_text_generation_options`** — Override model, temperature, or system instruction for alt text generation.
+
+```php
+add_filter(
+	'travelopia_wordpress_ai_alt_text_generation_options',
+	function ( array $options, int $attachment_id ): array {
+		$options['model']              = 'anthropic.claude-3-5-sonnet-20241022-v2:0';
+		$options['temperature']        = 0.5;
+		$options['system_instruction'] = 'You are an accessibility expert.';
+		return $options;
+	},
+	10,
+	2
+);
+```
+
+---
+
+**`travelopia_wordpress_ai_alt_text_include_context`** — By default, the plugin sends the image title and filename as additional context alongside the image to help the AI produce more accurate alt text. Set this to `false` to send only the image itself.
+
+```php
+add_filter(
+	'travelopia_wordpress_ai_alt_text_include_context',
+	'__return_false'
+);
+```
+
+---
+
+**`travelopia_wordpress_ai_settings_capability`** — Control which user role can access the plugin settings page. Defaults to `manage_options` (Administrator).
+
+```php
+add_filter(
+	'travelopia_wordpress_ai_settings_capability',
+	fn() => 'edit_posts'
+);
+```
+
+### Actions
+
+**`travelopia_wordpress_ai_alt_text_generated`** — Fired after alt text is successfully generated for an attachment.
+
+```php
+add_action(
+	'travelopia_wordpress_ai_alt_text_generated',
+	function ( int $attachment_id, string $alt_text ): void {
+		// Log, notify, or post-process.
+	},
+	10,
+	2
+);
+```
+
+---
+
+**`travelopia_wordpress_ai_bedrock_error`** / **`travelopia_wordpress_ai_open_ai_error`** — Fired when a provider encounters an error during generation.
+
+```php
+add_action(
+	'travelopia_wordpress_ai_bedrock_error',
+	function ( string $code, string $message, array $data ): void {
+		// Handle error.
+	},
+	10,
+	3
+);
 ```
 
 ## Privacy

@@ -7,8 +7,6 @@
 
 namespace Travelopia\WordPress_AI;
 
-use Travelopia\WordPress_AI\Adapters\AiAdapter;
-
 /**
  * Registry for AI adapters.
  */
@@ -17,7 +15,7 @@ class Adapter
 	/**
 	 * Registered adapters.
 	 *
-	 * @var array<string, class-string<AiAdapter>>
+	 * @var array<string, class-string<Adapters\AbstractAiAdapter>>
 	 */
 	private static array $adapters = [];
 
@@ -31,8 +29,8 @@ class Adapter
 	/**
 	 * Register an adapter.
 	 *
-	 * @param string                  $name    Adapter name.
-	 * @param class-string<AiAdapter> $adapter Adapter class name.
+	 * @param string                                   $name    Adapter name.
+	 * @param class-string<Adapters\AbstractAiAdapter> $adapter Adapter class name.
 	 *
 	 * @return void
 	 */
@@ -56,7 +54,7 @@ class Adapter
 	/**
 	 * Get the active adapter class.
 	 *
-	 * @return class-string<AiAdapter>|null Adapter class name or null if not set.
+	 * @return class-string<Adapters\AbstractAiAdapter>|null Adapter class name or null if not set.
 	 */
 	public static function get(): ?string
 	{

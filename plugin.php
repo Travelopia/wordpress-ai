@@ -22,8 +22,8 @@ if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
 }
 
 // Register AI adapters.
-Adapter::register( 'openai', Providers\OpenAI::class );
-Adapter::register( 'bedrock', Providers\Bedrock::class );
+Adapter::register( 'openai', Adapters\OpenAI::class );
+Adapter::register( 'bedrock', Adapters\Bedrock::class );
 
 /**
  * Filter the active AI provider.

@@ -122,7 +122,9 @@ class AltTextGenerator extends HTMLElement {
 					'X-WP-Nonce': this.restNonce,
 				},
 				body: JSON.stringify( {
-					post_id: this.attachmentId,
+					input: {
+						post_id: this.attachmentId,
+					},
 				} ),
 			} );
 

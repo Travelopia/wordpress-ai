@@ -12,8 +12,6 @@ use Travelopia\WordPress_AI\AltText;
 use WP_Error;
 use WP_Post;
 
-use const Travelopia\WordPress_AI\REST_API_NAMESPACE;
-
 class Admin
 {
 	/**
@@ -34,7 +32,7 @@ class Admin
 		add_action( 'admin_action_' . self::ACTION_GENERATE_ALT_TEXT, [ __CLASS__, 'handle_generate_alt_text_action' ] );
 		add_action( 'admin_notices', [ __CLASS__, 'display_admin_notices' ] );
 		add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_editor_scripts' ] );
-		add_action( 'rest_api_init', [ __CLASS__, 'register_rest_routes' ] );
+		add_action( 'wp_abilities_api_init', [ __CLASS__, 'register_abilities' ] );
 	}
 
 	/**
@@ -278,7 +276,7 @@ class Admin
 			[
 				'attachmentId'   => $post->ID,
 				'currentAltText' => is_string( $alt_text ) ? $alt_text : '',
-				'restUrl'        => rest_url( REST_API_NAMESPACE . '/alt-text/generate' ),
+				'restUrl'        => rest_url( 'wp-abilities/v1/abilities/' . Ability::ABILITY_NAME . '/run' ),
 				'nonce'          => wp_create_nonce( 'wp_rest' ),
 				'labels'         => [
 					'generate'   => __( 'Generate Alt Text', 'travelopia-wordpress-ai' ),
@@ -290,13 +288,12 @@ class Admin
 	}
 
 	/**
-	 * Register REST API routes.
+	 * Register abilities.
 	 *
 	 * @return void
 	 */
-	public static function register_rest_routes(): void
+	public static function register_abilities(): void
 	{
-		$rest_api = new RestApi();
-		$rest_api->register_routes();
+		Ability::register();
 	}
 }

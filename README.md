@@ -1,94 +1,77 @@
-## Travelopia WordPress AI Plugin
+# Travelopia WordPress AI
 
-**What it does**: Automatically generates image alt text using AI when you upload an image to the Media Library, or when
-editing an existing image.
+![maintenance-status](https://img.shields.io/badge/maintenance-actively--developed-brightgreen.svg)
 
-### Features
+An extensible WordPress plugin that brings AI capabilities to your content workflows. Configure your preferred AI provider once, and unlock a growing set of features — starting with automatic image alt text generation.
 
-- **Auto-generate on upload**: Fills the Alt Text field right after the file is uploaded.
-- **Generate on edit**: From the Edit Media screen, trigger generation for existing images.
-- **Respects manual alt text**: Won’t overwrite existing alt text unless you explicitly regenerate.
-- **Pluggable provider**: Designed to work with common AI APIs (provider wiring can be swapped).
+<table width="100%">
+	<tr>
+		<td align="left" width="70%">
+        	<p>Built by the super talented team at <strong><a href="https://www.travelopia.com/work-with-us/">Travelopia</a></strong>.</p>
+		</td>
+		<td align="center" width="30%">
+			<img src="https://www.travelopia.com/wp-content/themes/travelopia/src/assets/svg/logo-travelopia-circle.svg" width="50" />
+		</td>
+	</tr>
+</table>
 
-### Requirements
+## AI Providers
 
-- **WordPress**: 6.0+
-- **PHP**: 8.2+
-- **AI provider key**: You’ll need an API key for your chosen provider.
+The plugin supports multiple providers out of the box:
 
-### Local Development
+- **AWS Bedrock** (default)
+- **OpenAI**
 
-**Prerequisites**: Node.js, PHP 8.3+, Composer, MySQL (via Homebrew)
-
-**Dev environment** (WordPress Playground — no Docker needed):
-
-```bash
-npm run start          # installs deps and starts wp-env with Playground runtime
-```
-
-**Running tests** (requires local MySQL):
-
-```bash
-brew services start mysql
-mysql -u root -h 127.0.0.1 -e "CREATE DATABASE IF NOT EXISTS wordpress_tests;"
-npm run test:php
-```
-
-MySQL connection defaults to `root@127.0.0.1` with no password. Override with env vars:
-`WP_DB_NAME`, `WP_DB_USER`, `WP_DB_PASSWORD`, `WP_DB_HOST`.
-
-### Install
-
-1. Copy the `wordpress-ai` folder into `wp-content/plugins/`.
-2. Activate "Travelopia WordPress AI" in Plugins.
-
-### Configure
-
-- Set your OpenAI API key (environment variable or wp-config.php).
-- Optional: Update prompt/language or control overwrite behavior.
-
-**Set OpenAI API Key:**
-
-Option 1 - Environment Variable (Recommended):
-
-```bash
-export OPENAI_API_KEY="your-openai-api-key-here"
-```
-
-Option 2 - WordPress wp-config.php:
+Switch providers with a single filter:
 
 ```php
-define( 'OPENAI_API_KEY', 'your-openai-api-key-here' );
+add_filter( 'travelopia_wordpress_ai_provider', fn() => 'openai' );
 ```
 
-Option 3 - Server Environment:
-Add to your server's environment variables.
+### Provider Configuration
 
-**Get an OpenAI API Key:**
+**AWS Bedrock** (Claude 3.5 Sonnet) — set via `wp-config.php` or environment variable:
 
-1. Go to https://platform.openai.com/api-keys
-2. Create a new API key
-3. Copy the key and set it using one of the methods above
+```php
+define( 'AWS_BEDROCK_API_KEY', 'your-key-here' );
+define( 'AWS_BEDROCK_REGION', 'us-east-1' ); // optional, defaults to us-east-1
+```
 
-**Note:** The plugin uses GPT-4o Mini for image analysis, which supports vision capabilities.
+```bash
+export AWS_BEDROCK_API_KEY="your-key-here"
+export AWS_BEDROCK_REGION="us-east-1" # optional, defaults to us-east-1
+```
 
-### Usage
+**OpenAI** (GPT-4o Mini) — set via `wp-config.php` or environment variable:
 
-- **New uploads**: Go to Media > Add New and upload an image. Alt text is generated automatically.
-- **Existing images**: Open Media > Library, edit an image, and click “Generate Alt Text”
+```php
+define( 'OPENAI_API_KEY', 'your-key-here' );
+```
 
-### Privacy
+```bash
+export OPENAI_API_KEY="your-key-here"
+```
 
-- Images (or related metadata) may be sent to OpenAI to generate alt text.
+## Features
 
-### Troubleshooting
+### Alt Text Generation
 
-- **No alt text generated**: Check OpenAI API key, provider availability, and that the site can make outbound requests.
-- **Overwrites**: If you don't want overwrites, disable the regenerate action or ensure the plugin is configured to skip
-  when alt text exists.
+Automatically generates descriptive alt text for images — improving accessibility and SEO with zero manual effort.
 
-### Roadmap
+- **Auto-generate on upload** — alt text is filled in the moment an image hits the Media Library
+- **Generate for existing images** — click "Generate Alt Text" from the attachment edit screen
+- **Batch processing via WP-CLI** — backfill alt text for your entire media library
+- **Respects manual alt text** — never overwrites unless you explicitly regenerate
+- **Customizable prompt** — tailor the generation instructions from the settings page
 
-- Batch backfill for existing media
-- Multi-language support and prompt tuning
-- Provider selection UI and per-role permissions
+WP-CLI examples:
+
+```bash
+wp travelopia-wp-ai alt-text generate --missing   # only images without alt text
+wp travelopia-wp-ai alt-text generate --all        # every image
+wp travelopia-wp-ai alt-text generate --ids=1,2,3  # specific attachments
+```
+
+## Privacy
+
+Images are sent to your configured AI provider for analysis when generating alt text.

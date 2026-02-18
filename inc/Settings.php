@@ -7,8 +7,6 @@
 
 namespace Travelopia\WordPress_AI;
 
-use Travelopia\WordPress_AI\Settings\AltTextPromptField;
-use Travelopia\WordPress_AI\Settings\EnableAltTextGenerationField;
 use Travelopia\WordPress_AI\Settings\Page;
 
 /**
@@ -38,11 +36,25 @@ class Settings
 	public const SETTINGS_GROUP = 'travelopia_wp_ai_settings_group';
 
 	/**
-	 * Main settings section ID.
+	 * Alt text generation field name.
 	 *
 	 * @var string
 	 */
-	public const SECTION_ID = 'travelopia_wp_ai_main_section';
+	public const FIELD_ALT_TEXT_GENERATION = 'alt_text_generation';
+
+	/**
+	 * Alt text prompt field name.
+	 *
+	 * @var string
+	 */
+	public const FIELD_ALT_TEXT_PROMPT = 'alt_text_prompt';
+
+	/**
+	 * Default alt text prompt.
+	 *
+	 * @var string
+	 */
+	public const DEFAULT_ALT_TEXT_PROMPT = 'Describe this image in a concise, informative way for alt text. Focus on the main subject and important details that would help someone understand what is in the image.';
 
 	/**
 	 * Cached settings.
@@ -52,28 +64,49 @@ class Settings
 	private static ?array $settings = null;
 
 	/**
-	 * Settings fields.
-	 *
-	 * @var array<class-string>
-	 */
-	private const FIELDS = [
-		EnableAltTextGenerationField::class,
-		AltTextPromptField::class,
-	];
-
-	/**
 	 * Bootstrap settings functionality.
 	 *
 	 * @return void
 	 */
 	public static function bootstrap(): void
 	{
+		add_action( 'init', [ __CLASS__, 'register_rest_setting' ] );
 		add_action( 'admin_menu', [ __CLASS__, 'setup_settings' ] );
-		add_action( 'admin_init', [ __CLASS__, 'initialize_settings' ] );
 		add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_admin_styles' ] );
 		add_filter(
 			'plugin_action_links_' . plugin_basename( dirname( __DIR__ ) . '/plugin.php' ),
 			[ __CLASS__, 'add_settings_link' ],
+		);
+	}
+
+	/**
+	 * Register setting with REST API schema.
+	 *
+	 * @return void
+	 */
+	public static function register_rest_setting(): void
+	{
+		register_setting(
+			self::SETTINGS_GROUP,
+			self::OPTION_NAME,
+			[
+				'type'              => 'object',
+				'sanitize_callback' => [ __CLASS__, 'sanitize_settings' ],
+				'default'           => self::get_default_settings(),
+				'show_in_rest'      => [
+					'schema' => [
+						'type'       => 'object',
+						'properties' => [
+							self::FIELD_ALT_TEXT_GENERATION => [
+								'type' => 'boolean',
+							],
+							self::FIELD_ALT_TEXT_PROMPT => [
+								'type' => 'string',
+							],
+						],
+					],
+				],
+			],
 		);
 	}
 
@@ -100,13 +133,10 @@ class Settings
 	 */
 	public static function get_default_settings(): array
 	{
-		$defaults = [];
-
-		foreach ( self::FIELDS as $field_class ) {
-			$defaults[ $field_class::FIELD_NAME ] = $field_class::get_default();
-		}
-
-		return $defaults;
+		return [
+			self::FIELD_ALT_TEXT_GENERATION => false,
+			self::FIELD_ALT_TEXT_PROMPT     => self::DEFAULT_ALT_TEXT_PROMPT,
+		];
 	}
 
 	/**
@@ -166,14 +196,12 @@ class Settings
 			return self::get_default_settings();
 		}
 
-		$sanitized = [];
+		$alt_text_prompt = sanitize_textarea_field( (string) ( $input[ self::FIELD_ALT_TEXT_PROMPT ] ?? '' ) );
 
-		foreach ( self::FIELDS as $field_class ) {
-			$field_name               = $field_class::FIELD_NAME;
-			$sanitized[ $field_name ] = $field_class::sanitize( $input[ $field_name ] ?? null );
-		}
-
-		return $sanitized;
+		return [
+			self::FIELD_ALT_TEXT_GENERATION => ! empty( $input[ self::FIELD_ALT_TEXT_GENERATION ] ),
+			self::FIELD_ALT_TEXT_PROMPT     => empty( trim( $alt_text_prompt ) ) ? self::DEFAULT_ALT_TEXT_PROMPT : $alt_text_prompt,
+		];
 	}
 
 	/**
@@ -190,29 +218,6 @@ class Settings
 			self::PAGE_SLUG,
 			[ Page::class, 'render' ],
 		);
-	}
-
-	/**
-	 * Initialize and register settings.
-	 *
-	 * @return void
-	 */
-	public static function initialize_settings(): void
-	{
-		register_setting(
-			self::SETTINGS_GROUP,
-			self::OPTION_NAME,
-			[
-				'sanitize_callback' => [ __CLASS__, 'sanitize_settings' ],
-				'default'           => self::get_default_settings(),
-			],
-		);
-
-		Page::register();
-
-		foreach ( self::FIELDS as $field_class ) {
-			$field_class::register();
-		}
 	}
 
 	/**
@@ -258,7 +263,7 @@ class Settings
 		wp_enqueue_style(
 			'travelopia-wp-ai-settings',
 			$plugin_dir_url . 'dist/settings.css',
-			[],
+			[ 'wp-components' ],
 			$version,
 		);
 
@@ -268,6 +273,12 @@ class Settings
 			$dependencies,
 			$version,
 			true,
+		);
+
+		wp_add_inline_script(
+			'travelopia-wp-ai-settings',
+			'window.travelopiaWpAiSettings = ' . wp_json_encode( self::get() ) . ';',
+			'before',
 		);
 	}
 }

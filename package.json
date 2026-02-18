@@ -26,6 +26,16 @@
     "test:php:setup": "composer install && npm run test:php",
     "static-analysis:php": "composer static-analysis"
   },
+  "dependencies": {
+    "@wordpress/api-fetch": "^7.0.0",
+    "@wordpress/components": "^29.0.0",
+    "@wordpress/data": "^10.0.0",
+    "@wordpress/dataviews": "^4.0.0",
+    "@wordpress/dom-ready": "^4.0.0",
+    "@wordpress/element": "^6.0.0",
+    "@wordpress/i18n": "^5.0.0",
+    "@wordpress/notices": "^5.0.0"
+  },
   "devDependencies": {
     "@travelopia/eslint-plugin-wordpress-coding-standards": "^2.0.2",
     "@wordpress/env": "^10.39.0",

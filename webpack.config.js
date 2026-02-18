@@ -11,7 +11,7 @@ module.exports = () => {
 		...defaultConfig,
 		entry: {
 			settings: [
-				'./src/settings/index.ts',
+				'./src/settings/index.tsx',
 				'./src/settings/index.css',
 			],
 			'alt-text': './src/alt-text/index.ts',

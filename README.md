@@ -149,6 +149,17 @@ add_action(
 );
 ```
 
+## Local Development
+
+```bash
+npm run start          # install deps and start the dev environment
+npm run wp-env:start   # start the dev environment (without installing deps)
+npm run wp-env:stop    # stop the dev environment
+npm run test:php       # run PHP tests (requires local MySQL)
+```
+
+PHP tests require a local MySQL instance as WordPress Playground does not support MySQL yet. MySQL defaults to `root@127.0.0.1` with no password — override with environment variables: `WP_DB_NAME`, `WP_DB_USER`, `WP_DB_PASSWORD`, `WP_DB_HOST`.
+
 ## Privacy
 
 Images are sent to your configured AI provider for analysis when generating alt text.

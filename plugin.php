@@ -32,6 +32,7 @@ Adapter::register( 'bedrock', Adapters\Bedrock::class );
  *
  * @param string $provider The provider name. Default 'bedrock'.
  */
+
 // Default provider.
 Adapter::set( 'bedrock' );
 

@@ -349,4 +349,124 @@ class AltTextTest extends WP_UnitTestCase
 		$this->assertContains( $id_without_alt, $results );
 		$this->assertNotContains( $id_with_alt, $results );
 	}
+
+	/**
+	 * Test query_images respects per_page limit.
+	 *
+	 * @return void
+	 */
+	public function test_query_images_per_page(): void
+	{
+		$this->create_image_attachment();
+		$this->create_image_attachment();
+		$this->create_image_attachment();
+
+		$results = AltText::query_images( per_page: 2 );
+
+		$this->assertCount( 2, $results );
+	}
+
+	/**
+	 * Test query_images pagination returns different pages.
+	 *
+	 * @return void
+	 */
+	public function test_query_images_pagination(): void
+	{
+		$id1 = $this->create_image_attachment();
+		$id2 = $this->create_image_attachment();
+		$id3 = $this->create_image_attachment();
+
+		$page1 = AltText::query_images( per_page: 2, page: 1 );
+		$page2 = AltText::query_images( per_page: 2, page: 2 );
+
+		// Page 1 and page 2 must not overlap.
+		$this->assertEmpty( array_intersect( $page1, $page2 ) );
+
+		// All 3 IDs appear across both pages.
+		$all_ids = array_merge( $page1, $page2 );
+		$this->assertContains( $id1, $all_ids );
+		$this->assertContains( $id2, $all_ids );
+		$this->assertContains( $id3, $all_ids );
+	}
+
+	/**
+	 * Test query_images page beyond total returns empty.
+	 *
+	 * @return void
+	 */
+	public function test_query_images_page_beyond_total(): void
+	{
+		$this->create_image_attachment();
+
+		$results = AltText::query_images( per_page: 50, page: 999 );
+
+		$this->assertEmpty( $results );
+	}
+
+	/**
+	 * Test count_images returns total image count.
+	 *
+	 * @return void
+	 */
+	public function test_count_images(): void
+	{
+		$before = AltText::count_images();
+
+		$this->create_image_attachment();
+		$this->create_image_attachment();
+
+		$after = AltText::count_images();
+
+		$this->assertSame( $before + 2, $after );
+	}
+
+	/**
+	 * Test count_images with missing_only counts only images without alt text.
+	 *
+	 * @return void
+	 */
+	public function test_count_images_missing_only(): void
+	{
+		$id_with_alt = $this->create_image_attachment();
+		$this->create_image_attachment();
+		$this->create_image_attachment();
+
+		update_post_meta( $id_with_alt, '_wp_attachment_image_alt', 'Has alt text' );
+
+		$total   = AltText::count_images( missing_only: false );
+		$missing = AltText::count_images( missing_only: true );
+
+		$this->assertGreaterThanOrEqual( 2, $missing );
+		$this->assertLessThan( $total, $missing );
+	}
+
+	/**
+	 * Test count_images returns zero when no images exist.
+	 *
+	 * @return void
+	 */
+	public function test_count_images_returns_integer(): void
+	{
+		$result = AltText::count_images();
+
+		$this->assertIsInt( $result );
+		$this->assertGreaterThanOrEqual( 0, $result );
+	}
+
+	/**
+	 * Test count_images matches query_images result count.
+	 *
+	 * @return void
+	 */
+	public function test_count_images_matches_query(): void
+	{
+		$this->create_image_attachment();
+		$this->create_image_attachment();
+
+		$count   = AltText::count_images();
+		$queried = AltText::query_images( per_page: $count + 1 );
+
+		$this->assertSame( $count, count( $queried ) );
+	}
 }

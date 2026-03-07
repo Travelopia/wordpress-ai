@@ -47,7 +47,7 @@ class BedrockTest extends WP_UnitTestCase
 	{
 		$options = Bedrock::get_default_options();
 
-		$this->assertSame( 'anthropic.claude-3-5-sonnet-20241022-v2:0', $options['model'] );
+		$this->assertSame( 'anthropic.claude-sonnet-4-6', $options['model'] );
 		$this->assertSame( 0.1, $options['temperature'] );
 		$this->assertArrayHasKey( 'system_instruction', $options );
 	}
@@ -157,7 +157,7 @@ class BedrockTest extends WP_UnitTestCase
 		TestableBedrock::generate_alt_text( 'https://example.com/image.jpg' );
 
 		$this->assertSame( '', TestableBedrock::$last_call_args['prompt'] );
-		$this->assertSame( 'anthropic.claude-3-5-sonnet-20241022-v2:0', TestableBedrock::$last_call_args['model'] );
+		$this->assertSame( 'anthropic.claude-sonnet-4-6', TestableBedrock::$last_call_args['model'] );
 		$this->assertSame( 0.1, TestableBedrock::$last_call_args['temperature'] );
 	}
 

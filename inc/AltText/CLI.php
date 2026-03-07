@@ -60,8 +60,9 @@ class CLI
 	 */
 	public function generate( array $args = [], array $args_assoc = [] ): void
 	{
-		$missing_only = isset( $args_assoc['missing'] );
-		$batch_size   = (int) ( $args_assoc['batch-size'] ?? AltText::DEFAULT_BATCH_SIZE );
+		$missing_only   = isset( $args_assoc['missing'] );
+		$batch_size_raw = $args_assoc['batch-size'] ?? AltText::DEFAULT_BATCH_SIZE;
+		$batch_size     = is_numeric( $batch_size_raw ) ? (int) $batch_size_raw : AltText::DEFAULT_BATCH_SIZE;
 
 		if ( isset( $args_assoc['ids'] ) ) {
 			$ids       = explode( ',', (string) $args_assoc['ids'] );
@@ -151,8 +152,7 @@ class CLI
 		$failed_ids = [];
 
 		do {
-			// --missing: always page 1 since processed items drop out of the result set.
-			// --all: standard page increment.
+			// --missing re-queries page 1 (processed items drop out of result set); --all uses standard page increment.
 			$query_page = $missing_only ? 1 : $page;
 
 			$batch = AltText::query_images(

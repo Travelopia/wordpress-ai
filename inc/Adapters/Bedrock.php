@@ -93,8 +93,7 @@ class Bedrock extends AbstractAiAdapter
 	 */
 	protected static function call_ai_client( string $prompt, string $model, float $temperature, string $image_url, string $system_instruction ): string
 	{
-		// Bedrock API requires base64-encoded file data — it cannot accept URLs.
-		// Resolve to a local path (standard WP uploads) or data URI (remote storage like S3/CDN).
+		// Bedrock API requires base64-encoded file data — resolve to local path (WP uploads) or data URI (S3/CDN).
 		$file = static::resolve_file_for_bedrock( $image_url );
 
 		return AiClient::prompt( $prompt )
@@ -145,13 +144,14 @@ class Bedrock extends AbstractAiAdapter
 	protected static function resolve_local_path( string $url ): ?string
 	{
 		$upload_dir = wp_get_upload_dir();
-		$base_url   = $upload_dir['baseurl'] ?? '';
+		$base_url   = is_string( $upload_dir['baseurl'] ) ? $upload_dir['baseurl'] : '';
+		$base_dir   = is_string( $upload_dir['basedir'] ) ? $upload_dir['basedir'] : '';
 
 		if ( empty( $base_url ) || ! str_starts_with( $url, $base_url ) ) {
 			return null;
 		}
 
-		$local_path = str_replace( $base_url, $upload_dir['basedir'], $url );
+		$local_path = str_replace( $base_url, $base_dir, $url );
 
 		if ( ! file_exists( $local_path ) || ! is_file( $local_path ) ) {
 			return null;
@@ -178,12 +178,12 @@ class Bedrock extends AbstractAiAdapter
 			],
 		);
 
-		if ( is_wp_error( $response ) ) {
+		if ( $response instanceof WP_Error ) {
 			throw new RuntimeException(
 				sprintf(
 					/* translators: %s: error message */
-					__( 'Failed to download image: %s', 'travelopia-wordpress-ai' ),
-					$response->get_error_message(),
+					esc_html__( 'Failed to download image: %s', 'travelopia-wordpress-ai' ),
+					esc_html( $response->get_error_message() ),
 				),
 			);
 		}
@@ -193,9 +193,9 @@ class Bedrock extends AbstractAiAdapter
 		if ( 200 !== $status_code ) {
 			throw new RuntimeException(
 				sprintf(
-					/* translators: %d: HTTP status code */
-					__( 'Failed to download image: HTTP %d', 'travelopia-wordpress-ai' ),
-					$status_code,
+					/* translators: %s: HTTP status code */
+					esc_html__( 'Failed to download image: HTTP %s', 'travelopia-wordpress-ai' ),
+					esc_html( (string) $status_code ),
 				),
 			);
 		}
@@ -204,7 +204,7 @@ class Bedrock extends AbstractAiAdapter
 
 		if ( empty( $body ) ) {
 			throw new RuntimeException(
-				__( 'Failed to download image: empty response body.', 'travelopia-wordpress-ai' ),
+				esc_html__( 'Failed to download image: empty response body.', 'travelopia-wordpress-ai' ),
 			);
 		}
 
@@ -217,7 +217,7 @@ class Bedrock extends AbstractAiAdapter
 
 		// Fallback mime type from URL extension if content-type header is missing.
 		if ( empty( $mime_type ) || ! is_string( $mime_type ) ) {
-			$mime_type = wp_check_filetype( $url )['type'] ?? 'application/octet-stream';
+			$mime_type = (string) ( wp_check_filetype( $url )['type'] ?? 'application/octet-stream' );
 		}
 
 		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Required for Bedrock API.

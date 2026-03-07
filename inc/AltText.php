@@ -180,7 +180,7 @@ class AltText
 		int $page = 1,
 		int $per_page = self::DEFAULT_BATCH_SIZE,
 	): array {
-		$query_args = static::build_query_args( $missing_only );
+		$query_args = self::build_query_args( $missing_only );
 
 		// Handle specific image IDs.
 		if ( ! empty( $image_ids ) ) {
@@ -208,8 +208,9 @@ class AltText
 	 *
 	 * @return int Total image count.
 	 */
-	public static function count_images( bool $missing_only = false ): int {
-		$query_args = static::build_query_args( $missing_only );
+	public static function count_images( bool $missing_only = false ): int
+	{
+		$query_args = self::build_query_args( $missing_only );
 
 		$query_args['posts_per_page'] = 1;
 		$query_args['no_found_rows']  = false;
@@ -226,7 +227,8 @@ class AltText
 	 *
 	 * @return array<string, mixed> Query arguments.
 	 */
-	private static function build_query_args( bool $missing_only = false ): array {
+	private static function build_query_args( bool $missing_only = false ): array
+	{
 		$query_args = [
 			'post_type'              => 'attachment',
 			'post_mime_type'         => 'image',
@@ -237,7 +239,7 @@ class AltText
 		];
 
 		if ( $missing_only ) {
-			$query_args['meta_query'] = [ // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+			$query_args['meta_query'] = [ // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query.
 				'relation' => 'OR',
 				[
 					'key'     => '_wp_attachment_image_alt',

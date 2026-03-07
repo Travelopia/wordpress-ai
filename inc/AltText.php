@@ -31,6 +31,11 @@ class AltText
 	 */
 	public static function bootstrap(): void
 	{
+		// Register WP CLI commands regardless of settings — CLI should always be available.
+		if ( class_exists( 'WP_CLI' ) ) {
+			WP_CLI::add_command( 'travelopia-wp-ai alt-text', AltText\CLI::class );
+		}
+
 		// Check if this module is enabled.
 		if ( true !== Settings::get_setting( Settings::FIELD_ALT_TEXT_GENERATION, false ) ) {
 			return;

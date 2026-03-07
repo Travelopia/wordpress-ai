@@ -46,11 +46,6 @@ class AltText
 
 		// Bootstrap admin functionality.
 		Admin::bootstrap();
-
-		// Register WP CLI commands.
-		if ( class_exists( 'WP_CLI' ) ) {
-			WP_CLI::add_command( 'travelopia-wp-ai alt-text', AltText\CLI::class );
-		}
 	}
 
 	/**
@@ -185,7 +180,53 @@ class AltText
 		int $page = 1,
 		int $per_page = self::DEFAULT_BATCH_SIZE,
 	): array {
-		// Build query arguments.
+		$query_args = static::build_query_args( $missing_only );
+
+		// Handle specific image IDs.
+		if ( ! empty( $image_ids ) ) {
+			$query_args['post__in']       = $image_ids;
+			$query_args['posts_per_page'] = count( $image_ids );
+			$query_args['no_found_rows']  = true;
+		} else {
+			$query_args['posts_per_page'] = $per_page;
+			$query_args['paged']          = $page;
+			$query_args['no_found_rows']  = true;
+		}
+
+		$images_query = new WP_Query( $query_args );
+
+		return array_map( 'absint', $images_query->posts );
+	}
+
+	/**
+	 * Count images matching the given criteria.
+	 *
+	 * Uses a lightweight COUNT query via found_posts — fetches only 1 row
+	 * to avoid loading large result sets into memory.
+	 *
+	 * @param bool $missing_only Only count images missing alt text.
+	 *
+	 * @return int Total image count.
+	 */
+	public static function count_images( bool $missing_only = false ): int {
+		$query_args = static::build_query_args( $missing_only );
+
+		$query_args['posts_per_page'] = 1;
+		$query_args['no_found_rows']  = false;
+
+		$images_query = new WP_Query( $query_args );
+
+		return (int) $images_query->found_posts;
+	}
+
+	/**
+	 * Build shared WP_Query arguments for image queries.
+	 *
+	 * @param bool $missing_only Only images missing alt text.
+	 *
+	 * @return array<string, mixed> Query arguments.
+	 */
+	private static function build_query_args( bool $missing_only = false ): array {
 		$query_args = [
 			'post_type'              => 'attachment',
 			'post_mime_type'         => 'image',
@@ -195,21 +236,8 @@ class AltText
 			'update_post_term_cache' => false,
 		];
 
-		// Handle specific image IDs.
-		if ( ! empty( $image_ids ) ) {
-			$query_args['post__in']       = $image_ids;
-			$query_args['posts_per_page'] = -1;
-			$query_args['no_found_rows']  = true;
-		} else {
-			// Pagination for all images.
-			$query_args['posts_per_page'] = $per_page;
-			$query_args['paged']          = $page;
-			$query_args['no_found_rows']  = false;
-		}
-
-		// Filter for missing alt text.
 		if ( $missing_only ) {
-			$query_args['meta_query'] = [
+			$query_args['meta_query'] = [ // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 				'relation' => 'OR',
 				[
 					'key'     => '_wp_attachment_image_alt',
@@ -223,8 +251,6 @@ class AltText
 			];
 		}
 
-		$images_query = new WP_Query( $query_args );
-
-		return array_map( 'absint', $images_query->posts );
+		return $query_args;
 	}
 }

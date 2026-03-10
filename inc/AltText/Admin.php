@@ -253,10 +253,16 @@ class Admin
 
 		// Get plugin directory paths.
 		$plugin_dir_path = dirname( __DIR__, 2 );
-		$plugin_dir_url  = plugin_dir_url( $plugin_dir_path . '/plugin.php' );
-		$asset_file      = include $plugin_dir_path . '/dist/alt-text.asset.php';
-		$dependencies    = is_array( $asset_file ) && isset( $asset_file['dependencies'] ) && is_array( $asset_file['dependencies'] ) ? array_map( static fn ( mixed $dep ): string => (string) $dep, $asset_file['dependencies'] ) : [];
-		$version         = is_array( $asset_file ) && isset( $asset_file['version'] ) && is_string( $asset_file['version'] ) ? $asset_file['version'] : '1.0.0';
+		$asset_file_path = $plugin_dir_path . '/dist/alt-text.asset.php';
+
+		if ( ! file_exists( $asset_file_path ) ) {
+			return;
+		}
+
+		$plugin_dir_url = plugin_dir_url( $plugin_dir_path . '/plugin.php' );
+		$asset_file     = include $asset_file_path;
+		$dependencies   = is_array( $asset_file ) && isset( $asset_file['dependencies'] ) && is_array( $asset_file['dependencies'] ) ? array_map( static fn ( mixed $dep ): string => (string) $dep, $asset_file['dependencies'] ) : [];
+		$version        = is_array( $asset_file ) && isset( $asset_file['version'] ) && is_string( $asset_file['version'] ) ? $asset_file['version'] : '1.0.0';
 
 		// Enqueue script.
 		wp_enqueue_script(

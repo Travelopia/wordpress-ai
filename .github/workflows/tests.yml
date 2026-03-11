@@ -94,3 +94,10 @@ jobs:
           WP_DB_USER: root
           WP_DB_PASSWORD: root
           WP_DB_HOST: 127.0.0.1
+
+  tests:
+    name: tests
+    runs-on: ubuntu-latest
+    needs: [ lint, static-analysis, test ]
+    steps:
+      - run: echo "All checks passed."

@@ -8,6 +8,7 @@
 namespace Travelopia\WordPress_AI\Adapters;
 
 use Aysnc\WordPress\PhpAiClientBedrock\AwsBedrockProvider;
+use RuntimeException;
 use WordPress\AiClient\AiClient;
 use WP_Error;
 
@@ -92,11 +93,78 @@ class Bedrock extends AbstractAiAdapter
 	 */
 	protected static function call_ai_client( string $prompt, string $model, float $temperature, string $image_url, string $system_instruction ): string
 	{
+		// Bedrock API requires base64-encoded file data — download and encode as data URI.
+		$data_uri = static::download_to_data_uri( $image_url );
+
 		return AiClient::prompt( $prompt )
 			->usingModel( AwsBedrockProvider::model( $model ) )
 			->usingTemperature( $temperature )
-			->withFile( $image_url )
+			->withFile( $data_uri )
 			->usingSystemInstruction( $system_instruction )
 			->generateText();
+	}
+
+	/**
+	 * Download a remote URL and convert it to a data URI.
+	 *
+	 * @param string $url The URL to download.
+	 *
+	 * @return string Data URI (e.g. data:image/jpeg;base64,...).
+	 *
+	 * @throws RuntimeException If the download fails.
+	 */
+	protected static function download_to_data_uri( string $url ): string
+	{
+		$response = wp_remote_get(
+			$url,
+			[
+				'timeout' => 30,
+			],
+		);
+
+		if ( $response instanceof WP_Error ) {
+			throw new RuntimeException(
+				sprintf(
+					/* translators: %s: error message */
+					esc_html__( 'Failed to download image: %s', 'travelopia-wordpress-ai' ),
+					esc_html( $response->get_error_message() ),
+				),
+			);
+		}
+
+		$status_code = wp_remote_retrieve_response_code( $response );
+
+		if ( 200 !== $status_code ) {
+			throw new RuntimeException(
+				sprintf(
+					/* translators: %s: HTTP status code */
+					esc_html__( 'Failed to download image: HTTP %s', 'travelopia-wordpress-ai' ),
+					esc_html( (string) $status_code ),
+				),
+			);
+		}
+
+		$body = wp_remote_retrieve_body( $response );
+
+		if ( empty( $body ) ) {
+			throw new RuntimeException(
+				esc_html__( 'Failed to download image: empty response body.', 'travelopia-wordpress-ai' ),
+			);
+		}
+
+		$mime_type = wp_remote_retrieve_header( $response, 'content-type' );
+
+		// Strip charset or boundary parameters (e.g. "image/jpeg; charset=utf-8").
+		if ( is_string( $mime_type ) && str_contains( $mime_type, ';' ) ) {
+			$mime_type = trim( explode( ';', $mime_type )[0] );
+		}
+
+		// Fallback mime type from URL extension if content-type header is missing.
+		if ( empty( $mime_type ) || ! is_string( $mime_type ) ) {
+			$mime_type = (string) ( wp_check_filetype( $url )['type'] ?? 'application/octet-stream' );
+		}
+
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Required for Bedrock API.
+		return sprintf( 'data:%s;base64,%s', $mime_type, base64_encode( $body ) );
 	}
 }

@@ -7,8 +7,8 @@ on:
     branches: [ main ]
 
 jobs:
-  lint:
-    name: Lint
+  lint-and-test:
+    name: Lint and Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,7 +17,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
-          cache: npm
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -25,10 +24,23 @@ jobs:
           php-version: "8.3"
           tools: composer:v2
 
-      - name: Install dependencies
-        run: |
-          npm ci
-          composer install --no-interaction
+      - name: Composer cache
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles( 'composer.lock' ) }}-${{ hashFiles( '.github/workflows/tests.yml' ) }}
+
+      - name: Node cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-${{ hashFiles( 'package-lock.json' ) }}-${{ hashFiles( '.github/workflows/tests.yml' ) }}
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction
+
+      - name: Install Node dependencies
+        run: npm ci
 
       - name: Lint JS
         run: npm run lint:js
@@ -42,62 +54,15 @@ jobs:
       - name: Format PHP
         run: npm run format:php
 
-  static-analysis:
-    name: Static Analysis
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: "8.3"
-          tools: composer:v2
-
-      - name: Install dependencies
-        run: composer install --no-interaction
-
       - name: PHPStan
         run: npm run static-analysis:php
 
-  test:
-    name: PHPUnit
-    runs-on: ubuntu-latest
-    services:
-      mysql:
-        image: mysql:8.0
-        env:
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: wordpress_tests
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=3
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: "8.3"
-          tools: composer:v2
-
-      - name: Install dependencies
-        run: composer install --no-interaction
+      - name: Start wp-env
+        run: npm run wp-env:start
 
       - name: Run PHPUnit
-        run: npm run test:php
-        env:
-          WP_DB_USER: root
-          WP_DB_PASSWORD: root
-          WP_DB_HOST: 127.0.0.1
+        run: npm run test:php:setup
 
-  tests:
-    name: tests
-    runs-on: ubuntu-latest
-    needs: [ lint, static-analysis, test ]
-    steps:
-      - run: echo "All checks passed."
+      - name: Stop wp-env
+        if: always()
+        run: npm run wp-env:stop

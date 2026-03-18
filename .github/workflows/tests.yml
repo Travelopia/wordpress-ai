@@ -7,8 +7,8 @@ on:
     branches: [ main ]
 
 jobs:
-  lint:
-    name: Lint
+  lint-and-test:
+    name: Lint and Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -42,46 +42,8 @@ jobs:
       - name: Format PHP
         run: npm run format:php
 
-  static-analysis:
-    name: Static Analysis
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: "8.3"
-          tools: composer:v2
-
-      - name: Install dependencies
-        run: composer install --no-interaction
-
       - name: PHPStan
         run: npm run static-analysis:php
-
-  test:
-    name: PHPUnit
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: "8.3"
-          tools: composer:v2
-
-      - name: Install dependencies
-        run: |
-          npm ci
-          composer install --no-interaction
 
       - name: Start wp-env
         run: npm run wp-env:start

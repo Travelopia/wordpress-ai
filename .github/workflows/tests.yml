@@ -17,7 +17,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
-          cache: npm
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -25,10 +24,23 @@ jobs:
           php-version: "8.3"
           tools: composer:v2
 
-      - name: Install dependencies
-        run: |
-          npm ci
-          composer install --no-interaction
+      - name: Composer cache
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles( 'composer.lock' ) }}-${{ hashFiles( '.github/workflows/tests.yml' ) }}
+
+      - name: Node cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-${{ hashFiles( 'package-lock.json' ) }}-${{ hashFiles( '.github/workflows/tests.yml' ) }}
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction
+
+      - name: Install Node dependencies
+        run: npm ci
 
       - name: Lint JS
         run: npm run lint:js

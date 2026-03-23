@@ -23,7 +23,9 @@ abstract class AbstractAiAdapter
 	 *
 	 * @return void
 	 */
-	public static function boot(): void {}
+	public static function boot(): void
+	{
+	}
 
 	/**
 	 * Error action hook prefix. Subclasses should override this.

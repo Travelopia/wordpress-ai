@@ -1,0 +1,24 @@
+/**
+ * Travelopia WordPress AI Settings Styles
+ */
+
+#travelopia-wp-ai-settings {
+	margin-top: 16px;
+}
+
+#travelopia-wp-ai-settings .components-notice-list {
+	margin-bottom: 16px;
+}
+
+#travelopia-wp-ai-settings .components-card {
+	max-width: 700px;
+}
+
+#travelopia-wp-ai-settings .components-card__header h2 {
+	margin: 0;
+	font-size: 14px;
+}
+
+
+
+/*# sourceMappingURL=settings.css.map*/

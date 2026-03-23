@@ -32,6 +32,7 @@ class Admin
 		add_action( 'admin_action_' . self::ACTION_GENERATE_ALT_TEXT, [ __CLASS__, 'handle_generate_alt_text_action' ] );
 		add_action( 'admin_notices', [ __CLASS__, 'display_admin_notices' ] );
 		add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_editor_scripts' ] );
+		add_action( 'wp_abilities_api_categories_init', [ __CLASS__, 'register_ability_categories' ] );
 		add_action( 'wp_abilities_api_init', [ __CLASS__, 'register_abilities' ] );
 	}
 
@@ -252,10 +253,16 @@ class Admin
 
 		// Get plugin directory paths.
 		$plugin_dir_path = dirname( __DIR__, 2 );
-		$plugin_dir_url  = plugin_dir_url( $plugin_dir_path . '/plugin.php' );
-		$asset_file      = include $plugin_dir_path . '/dist/alt-text.asset.php';
-		$dependencies    = is_array( $asset_file ) && isset( $asset_file['dependencies'] ) && is_array( $asset_file['dependencies'] ) ? array_map( static fn ( mixed $dep ): string => (string) $dep, $asset_file['dependencies'] ) : [];
-		$version         = is_array( $asset_file ) && isset( $asset_file['version'] ) && is_string( $asset_file['version'] ) ? $asset_file['version'] : '1.0.0';
+		$asset_file_path = $plugin_dir_path . '/dist/alt-text.asset.php';
+
+		if ( ! file_exists( $asset_file_path ) ) {
+			return;
+		}
+
+		$plugin_dir_url = plugin_dir_url( $plugin_dir_path . '/plugin.php' );
+		$asset_file     = include $asset_file_path;
+		$dependencies   = is_array( $asset_file ) && isset( $asset_file['dependencies'] ) && is_array( $asset_file['dependencies'] ) ? array_map( static fn ( mixed $dep ): string => (string) $dep, $asset_file['dependencies'] ) : [];
+		$version        = is_array( $asset_file ) && isset( $asset_file['version'] ) && is_string( $asset_file['version'] ) ? $asset_file['version'] : '1.0.0';
 
 		// Enqueue script.
 		wp_enqueue_script(
@@ -283,6 +290,22 @@ class Admin
 					'regenerate' => __( 'Regenerate Alt Text', 'travelopia-wordpress-ai' ),
 					'saving'     => __( 'Generating...', 'travelopia-wordpress-ai' ),
 				],
+			],
+		);
+	}
+
+	/**
+	 * Register ability categories.
+	 *
+	 * @return void
+	 */
+	public static function register_ability_categories(): void
+	{
+		wp_register_ability_category(
+			'ai',
+			[
+				'label'       => __( 'AI', 'travelopia-wordpress-ai' ),
+				'description' => __( 'Abilities that use AI to generate or process content.', 'travelopia-wordpress-ai' ),
 			],
 		);
 	}

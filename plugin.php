@@ -11,9 +11,6 @@
 
 namespace Travelopia\WordPress_AI;
 
-use Aysnc\WordPress\PhpAiClientBedrock\AwsBedrockProvider;
-use WordPress\AiClient\AiClient;
-
 const REST_API_NAMESPACE = 'travelopia-wp-ai/v1';
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -23,9 +20,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
 	require_once __DIR__ . '/vendor/autoload.php';
 }
-
-// Register the AWS Bedrock provider with AiClient (not built-in, comes from aysnc/wordpress-php-ai-client-bedrock).
-AiClient::defaultRegistry()->registerProvider( AwsBedrockProvider::class );
 
 // Register AI adapters.
 Adapter::register( 'openai', Adapters\OpenAI::class );

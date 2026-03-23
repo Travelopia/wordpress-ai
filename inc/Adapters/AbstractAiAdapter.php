@@ -16,6 +16,16 @@ use WP_Error;
 abstract class AbstractAiAdapter
 {
 	/**
+	 * Boot the adapter. Called once during registration.
+	 *
+	 * Subclasses can override this to perform one-time setup such as
+	 * registering external AiClient providers.
+	 *
+	 * @return void
+	 */
+	public static function boot(): void {}
+
+	/**
 	 * Error action hook prefix. Subclasses should override this.
 	 *
 	 * @var string

@@ -18,6 +18,19 @@ use WP_Error;
 class Bedrock extends AbstractAiAdapter
 {
 	/**
+	 * Boot the Bedrock adapter.
+	 *
+	 * Registers the AWS Bedrock provider with AiClient since it is not
+	 * built-in and comes from the aysnc/wordpress-php-ai-client-bedrock package.
+	 *
+	 * @return void
+	 */
+	public static function boot(): void
+	{
+		AiClient::defaultRegistry()->registerProvider( AwsBedrockProvider::class );
+	}
+
+	/**
 	 * Error action hook name.
 	 *
 	 * @var string

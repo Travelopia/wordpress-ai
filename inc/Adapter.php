@@ -37,6 +37,7 @@ class Adapter
 	public static function register( string $name, string $adapter ): void // phpcs:ignore Squiz.Commenting.FunctionComment.IncorrectTypeHint -- class-string not supported as native type hint.
 	{
 		self::$adapters[ $name ] = $adapter;
+		$adapter::boot();
 	}
 
 	/**

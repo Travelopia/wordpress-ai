@@ -15,6 +15,12 @@ An extensible WordPress plugin that brings AI capabilities to your content workf
 	</tr>
 </table>
 
+## Installation
+
+```
+composer require travelopia/wordpress-ai
+```
+
 ## AI Providers
 
 The plugin supports multiple providers out of the box:

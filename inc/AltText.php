@@ -59,7 +59,7 @@ class AltText
 	public static function generate( int $attachment_id = 0, bool $update = true ): WP_Error|string
 	{
 		// Get actual image URL for the attachment.
-		$image_url = wp_get_attachment_url( $attachment_id );
+		$image_url = wp_get_attachment_image_url( $attachment_id, 'large' );
 
 		if ( ! is_string( $image_url ) || ! wp_attachment_is_image( $attachment_id ) ) {
 			$error = new WP_Error(

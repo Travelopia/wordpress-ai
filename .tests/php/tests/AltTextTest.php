@@ -299,6 +299,87 @@ class AltTextTest extends WP_UnitTestCase
 	}
 
 	/**
+	 * Test invalid-image error fires the generic error action.
+	 *
+	 * @return void
+	 */
+	public function test_invalid_image_fires_generic_error_action(): void
+	{
+		$this->register_mock_adapter();
+
+		$fired_with = null;
+		add_action(
+			'travelopia_wordpress_ai_error',
+			// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- Parameters used via compact.
+			static function ( string $code, string $message, array $data ) use ( &$fired_with ): void {
+				$fired_with = compact( 'code', 'message', 'data' );
+			},
+			10,
+			3,
+		);
+
+		AltText::generate( 0 );
+
+		$this->assertNotNull( $fired_with );
+		$this->assertSame( 'travelopia_wordpress_ai_alt_text_invalid_image', $fired_with['code'] );
+		$this->assertSame( 0, $fired_with['data']['attachment_id'] );
+
+		remove_all_actions( 'travelopia_wordpress_ai_error' );
+	}
+
+	/**
+	 * Test invalid-image does not fire an action named after the error code.
+	 *
+	 * @return void
+	 */
+	public function test_invalid_image_does_not_fire_action_named_after_error_code(): void
+	{
+		$this->register_mock_adapter();
+
+		$action_fired = false;
+		add_action(
+			'travelopia_wordpress_ai_alt_text_invalid_image',
+			static function () use ( &$action_fired ): void {
+				$action_fired = true;
+			},
+		);
+
+		AltText::generate( 0 );
+
+		$this->assertFalse( $action_fired );
+
+		remove_all_actions( 'travelopia_wordpress_ai_alt_text_invalid_image' );
+	}
+
+	/**
+	 * Test no_adapter error fires the generic error action.
+	 *
+	 * @return void
+	 */
+	public function test_no_adapter_fires_generic_error_action(): void
+	{
+		$attachment_id = $this->create_image_attachment();
+
+		$fired_with = null;
+		add_action(
+			'travelopia_wordpress_ai_error',
+			// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- Parameters used via compact.
+			static function ( string $code, string $message, array $data ) use ( &$fired_with ): void {
+				$fired_with = compact( 'code', 'message', 'data' );
+			},
+			10,
+			3,
+		);
+
+		AltText::generate( $attachment_id );
+
+		$this->assertNotNull( $fired_with );
+		$this->assertSame( 'travelopia_wordpress_ai_no_adapter', $fired_with['code'] );
+
+		remove_all_actions( 'travelopia_wordpress_ai_error' );
+	}
+
+	/**
 	 * Test query_images returns image attachment IDs.
 	 *
 	 * @return void

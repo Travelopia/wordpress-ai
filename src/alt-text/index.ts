@@ -179,7 +179,10 @@ class AltTextGenerator extends HTMLElement {
 		const messageEl = document.createElement( 'div' );
 		messageEl.className = `notice notice-${ type } is-dismissible`;
 		messageEl.style.marginTop = '10px';
-		messageEl.innerHTML = `<p>${ message }</p>`;
+
+		const messageText = document.createElement( 'p' );
+		messageText.textContent = message;
+		messageEl.appendChild( messageText );
 
 		// Add message after button
 		this.appendChild( messageEl );

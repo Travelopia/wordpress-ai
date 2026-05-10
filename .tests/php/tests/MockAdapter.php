@@ -30,6 +30,13 @@ class MockAdapter extends AbstractAiAdapter
 	public static ?array $last_call = null;
 
 	/**
+	 * Number of times boot() has been invoked.
+	 *
+	 * @var int
+	 */
+	public static int $boot_count = 0;
+
+	/**
 	 * Reset mock state.
 	 *
 	 * @return void
@@ -38,6 +45,17 @@ class MockAdapter extends AbstractAiAdapter
 	{
 		self::$mock_response = '';
 		self::$last_call     = null;
+		self::$boot_count    = 0;
+	}
+
+	/**
+	 * Track boot invocations.
+	 *
+	 * @return void
+	 */
+	public static function boot(): void
+	{
+		++self::$boot_count;
 	}
 
 	/**

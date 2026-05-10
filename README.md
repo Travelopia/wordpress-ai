@@ -69,10 +69,22 @@ The "Enable Alt Text Generation" toggle in settings controls automatic generatio
 WP-CLI examples:
 
 ```bash
-wp travelopia-wp-ai alt-text generate --missing   # only images without alt text
-wp travelopia-wp-ai alt-text generate --all        # every image
-wp travelopia-wp-ai alt-text generate --ids=1,2,3  # specific attachments
+wp travelopia-wp-ai alt-text generate --missing            # only images without alt text
+wp travelopia-wp-ai alt-text generate --all                # every image
+wp travelopia-wp-ai alt-text generate --ids=1,2,3          # specific attachments
+wp travelopia-wp-ai alt-text generate --all --batch-size=20  # smaller batches for memory-constrained envs
 ```
+
+**Flags** for `wp travelopia-wp-ai alt-text generate`:
+
+| Flag | Description |
+|---|---|
+| `--ids=<id,id,...>` | Comma-separated attachment IDs to process. |
+| `--missing` | Only process images currently without alt text. |
+| `--all` | Process every image attachment on the site. |
+| `--batch-size=<number>` | Images per batch when paginating. Default `50`. Object cache is flushed between batches to keep memory bounded. |
+
+One of `--ids`, `--missing`, or `--all` is required.
 
 ## Hooks
 

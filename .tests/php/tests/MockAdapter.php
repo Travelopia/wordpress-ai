@@ -30,6 +30,20 @@ class MockAdapter extends AbstractAiAdapter
 	public static ?array $last_call = null;
 
 	/**
+	 * Number of times generate_alt_text has been invoked.
+	 *
+	 * @var int
+	 */
+	public static int $call_count = 0;
+
+	/**
+	 * Number of times the adapter has been booted.
+	 *
+	 * @var int
+	 */
+	public static int $boot_count = 0;
+
+	/**
 	 * Reset mock state.
 	 *
 	 * @return void
@@ -38,6 +52,8 @@ class MockAdapter extends AbstractAiAdapter
 	{
 		self::$mock_response = '';
 		self::$last_call     = null;
+		self::$call_count    = 0;
+		self::$boot_count    = 0;
 	}
 
 	/**
@@ -50,6 +66,7 @@ class MockAdapter extends AbstractAiAdapter
 	 */
 	public static function generate_alt_text( string $image_url = '', array $options = [] ): string|WP_Error
 	{
+		++self::$call_count;
 		self::$last_call = compact( 'image_url', 'options' );
 		return self::$mock_response;
 	}

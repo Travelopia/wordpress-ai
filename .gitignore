@@ -37,6 +37,7 @@ vendor
 !wp-cli.yml
 !.wp-env.json
 !README.md
+!docs
 !plugin.php
 !assets
 !tests

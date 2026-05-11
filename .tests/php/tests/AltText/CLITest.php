@@ -60,4 +60,18 @@ class CLITest extends WP_UnitTestCase
 		}
 		return $ids;
 	}
+
+	/**
+	 * --missing --limit=2 caps attempts at exactly 2 even when more images are missing.
+	 *
+	 * @return void
+	 */
+	public function test_limit_caps_attempts_with_missing(): void
+	{
+		$this->create_images( 5 );
+
+		( new CLI() )->generate( [], [ 'missing' => true, 'limit' => 2 ] );
+
+		$this->assertSame( 2, MockAdapter::$call_count );
+	}
 }

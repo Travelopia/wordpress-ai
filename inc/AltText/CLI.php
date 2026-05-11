@@ -64,10 +64,19 @@ class CLI
 		$batch_size_raw = $args_assoc['batch-size'] ?? AltText::DEFAULT_BATCH_SIZE;
 		$batch_size     = is_numeric( $batch_size_raw ) ? (int) $batch_size_raw : AltText::DEFAULT_BATCH_SIZE;
 
+		$limit_raw = $args_assoc['limit'] ?? null;
+		$limit     = null;
+		if ( null !== $limit_raw ) {
+			if ( ! is_numeric( $limit_raw ) || (int) $limit_raw <= 0 ) {
+				WP_CLI::error( __( 'Limit must be a positive integer.', 'travelopia-wordpress-ai' ) );
+			}
+			$limit = (int) $limit_raw;
+		}
+
 		if ( isset( $args_assoc['ids'] ) ) {
 			$ids       = explode( ',', (string) $args_assoc['ids'] );
 			$image_ids = array_map( 'absint', $ids );
-			$this->process_ids( $image_ids );
+			$this->process_ids( $image_ids, $limit );
 			return;
 		}
 
@@ -75,7 +84,7 @@ class CLI
 			WP_CLI::error( __( 'Please specify --ids, --missing, or --all.', 'travelopia-wordpress-ai' ) );
 		}
 
-		$this->process_batched( $missing_only, $batch_size );
+		$this->process_batched( $missing_only, $batch_size, $limit );
 	}
 
 	/**
@@ -83,11 +92,12 @@ class CLI
 	 *
 	 * Used for --ids flag where the set is user-provided and bounded.
 	 *
-	 * @param int[] $image_ids Image attachment IDs.
+	 * @param int[]    $image_ids Image attachment IDs.
+	 * @param ?int     $limit     Maximum number of images to attempt. Null means no limit.
 	 *
 	 * @return void
 	 */
-	private function process_ids( array $image_ids ): void
+	private function process_ids( array $image_ids, ?int $limit = null ): void
 	{
 		if ( empty( $image_ids ) ) {
 			WP_CLI::warning( __( 'No images found to process.', 'travelopia-wordpress-ai' ) );
@@ -113,12 +123,13 @@ class CLI
 	 *
 	 * For --all: uses standard page incrementing.
 	 *
-	 * @param bool $missing_only Only process images missing alt text.
-	 * @param int  $batch_size   Images per batch.
+	 * @param bool  $missing_only Only process images missing alt text.
+	 * @param int   $batch_size   Images per batch.
+	 * @param ?int  $limit        Maximum number of images to attempt. Null means no limit.
 	 *
 	 * @return void
 	 */
-	private function process_batched( bool $missing_only, int $batch_size ): void
+	private function process_batched( bool $missing_only, int $batch_size, ?int $limit = null ): void
 	{
 		$total = AltText::count_images( missing_only: $missing_only );
 
@@ -126,6 +137,9 @@ class CLI
 			WP_CLI::warning( __( 'No images found to process.', 'travelopia-wordpress-ai' ) );
 			return;
 		}
+
+		$cap          = $limit ?? PHP_INT_MAX;
+		$progress_max = min( $total, $cap );
 
 		WP_CLI::log(
 			sprintf(
@@ -138,14 +152,15 @@ class CLI
 
 		$success_count = 0;
 		$failed_count  = 0;
+		$attempts      = 0;
 		$start_time    = microtime( true );
 		$progress      = make_progress_bar(
 			sprintf(
 				/* translators: %d: number of images */
 				__( 'Processing %d images', 'travelopia-wordpress-ai' ),
-				$total,
+				$progress_max,
 			),
-			$total,
+			$progress_max,
 		);
 
 		$page       = 1;
@@ -173,7 +188,12 @@ class CLI
 			}
 
 			foreach ( $actionable as $image_id ) {
+				if ( $attempts >= $cap ) {
+					break 2;
+				}
+
 				$result = AltText::generate( $image_id );
+				++$attempts;
 
 				if ( $result instanceof WP_Error ) {
 					$failed_ids[] = $image_id;

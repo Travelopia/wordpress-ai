@@ -198,4 +198,25 @@ class CLITest extends WP_UnitTestCase
 
 		$this->assertSame( 15, MockAdapter::$call_count );
 	}
+
+	/**
+	 * Failures count toward the --limit cap, not just successes.
+	 *
+	 * @return void
+	 */
+	public function test_limit_counts_failures(): void
+	{
+		$this->create_images( 5 );
+		MockAdapter::$mock_response = new \WP_Error( 'mock_fail', 'Always fails' );
+
+		( new CLI() )->generate(
+			[],
+			[
+				'missing' => true,
+				'limit'   => 3,
+			],
+		);
+
+		$this->assertSame( 3, MockAdapter::$call_count );
+	}
 }

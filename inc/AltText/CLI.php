@@ -35,6 +35,12 @@ class CLI
 	 * [--batch-size=<number>]
 	 * : Number of images to process per batch. Default 50.
 	 *
+	 * [--limit=<number>]
+	 * : Maximum number of images to attempt in this run (success or failure).
+	 * : Useful for cost measurement, quality dry-runs, and chunked backfills.
+	 * : With --ids: truncates the supplied list to the first N entries.
+	 * : With --all: not resumable — successive runs reprocess the same first N images.
+	 *
 	 * ## EXAMPLES
 	 *
 	 *     # Generate alt text for specific images
@@ -49,12 +55,18 @@ class CLI
 	 *     # Process in smaller batches (useful for memory-constrained environments)
 	 *     wp travelopia-wp-ai alt-text generate --all --batch-size=20
 	 *
+	 *     # Cost / quality sample — process 1000 missing, then stop
+	 *     wp travelopia-wp-ai alt-text generate --missing --limit=1000
+	 *
+	 *     # Chunked nightly backfill — 5000 a night via cron
+	 *     wp travelopia-wp-ai alt-text generate --missing --limit=5000
+	 *
 	 * @param array<string, mixed> $args       WP CLI arguments.
 	 * @param array<string, mixed> $args_assoc WP CLI associative arguments.
 	 *
 	 * @subcommand generate
 	 *
-	 * @synopsis [--ids=<1,2,3>] [--missing] [--all] [--batch-size=<number>]
+	 * @synopsis [--ids=<1,2,3>] [--missing] [--all] [--batch-size=<number>] [--limit=<number>]
 	 *
 	 * @return void
 	 */

@@ -157,4 +157,24 @@ class CLITest extends WP_UnitTestCase
 			],
 		);
 	}
+
+	/**
+	 * --limit greater than the natural total processes all available images.
+	 *
+	 * @return void
+	 */
+	public function test_limit_greater_than_total_processes_all(): void
+	{
+		$this->create_images( 3 );
+
+		( new CLI() )->generate(
+			[],
+			[
+				'missing' => true,
+				'limit'   => 100,
+			],
+		);
+
+		$this->assertSame( 3, MockAdapter::$call_count );
+	}
 }

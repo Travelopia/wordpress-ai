@@ -78,10 +78,12 @@ class CLI
 
 		$limit_raw = $args_assoc['limit'] ?? null;
 		$limit     = null;
+
 		if ( null !== $limit_raw ) {
-			if ( ! is_numeric( $limit_raw ) || (int) (string) $limit_raw <= 0 ) {
+			if ( ! is_numeric( $limit_raw ) || 0 >= (int) (string) $limit_raw ) {
 				WP_CLI::error( __( 'Limit must be a positive integer.', 'travelopia-wordpress-ai' ) );
 			}
+
 			$limit = (int) (string) $limit_raw;
 		}
 

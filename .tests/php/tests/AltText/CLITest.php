@@ -100,4 +100,61 @@ class CLITest extends WP_UnitTestCase
 
 		$this->assertSame( 2, MockAdapter::$call_count );
 	}
+
+	/**
+	 * --limit=0 raises WP_CLI::error.
+	 *
+	 * @return void
+	 */
+	public function test_limit_zero_errors(): void
+	{
+		$this->expectException( \RuntimeException::class );
+		$this->expectExceptionMessageMatches( '/positive integer/i' );
+
+		( new CLI() )->generate(
+			[],
+			[
+				'missing' => true,
+				'limit'   => 0,
+			],
+		);
+	}
+
+	/**
+	 * --limit=-5 raises WP_CLI::error.
+	 *
+	 * @return void
+	 */
+	public function test_limit_negative_errors(): void
+	{
+		$this->expectException( \RuntimeException::class );
+		$this->expectExceptionMessageMatches( '/positive integer/i' );
+
+		( new CLI() )->generate(
+			[],
+			[
+				'missing' => true,
+				'limit'   => -5,
+			],
+		);
+	}
+
+	/**
+	 * --limit=abc raises WP_CLI::error.
+	 *
+	 * @return void
+	 */
+	public function test_limit_non_numeric_errors(): void
+	{
+		$this->expectException( \RuntimeException::class );
+		$this->expectExceptionMessageMatches( '/positive integer/i' );
+
+		( new CLI() )->generate(
+			[],
+			[
+				'missing' => true,
+				'limit'   => 'abc',
+			],
+		);
+	}
 }

@@ -177,4 +177,25 @@ class CLITest extends WP_UnitTestCase
 
 		$this->assertSame( 3, MockAdapter::$call_count );
 	}
+
+	/**
+	 * --limit=15 with --batch-size=10 stops mid-batch (covers break 2).
+	 *
+	 * @return void
+	 */
+	public function test_limit_breaks_mid_batch(): void
+	{
+		$this->create_images( 30 );
+
+		( new CLI() )->generate(
+			[],
+			[
+				'missing'    => true,
+				'batch-size' => 10,
+				'limit'      => 15,
+			],
+		);
+
+		$this->assertSame( 15, MockAdapter::$call_count );
+	}
 }

@@ -70,7 +70,13 @@ class CLITest extends WP_UnitTestCase
 	{
 		$this->create_images( 5 );
 
-		( new CLI() )->generate( [], [ 'missing' => true, 'limit' => 2 ] );
+		( new CLI() )->generate(
+			[],
+			[
+				'missing' => true,
+				'limit' => 2,
+			]
+		);
 
 		$this->assertSame( 2, MockAdapter::$call_count );
 	}

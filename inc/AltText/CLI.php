@@ -67,10 +67,10 @@ class CLI
 		$limit_raw = $args_assoc['limit'] ?? null;
 		$limit     = null;
 		if ( null !== $limit_raw ) {
-			if ( ! is_numeric( $limit_raw ) || (int) $limit_raw <= 0 ) {
+			if ( ! is_numeric( $limit_raw ) || (int) (string) $limit_raw <= 0 ) {
 				WP_CLI::error( __( 'Limit must be a positive integer.', 'travelopia-wordpress-ai' ) );
 			}
-			$limit = (int) $limit_raw;
+			$limit = (int) (string) $limit_raw;
 		}
 
 		if ( isset( $args_assoc['ids'] ) ) {
@@ -92,12 +92,12 @@ class CLI
 	 *
 	 * Used for --ids flag where the set is user-provided and bounded.
 	 *
-	 * @param int[]    $image_ids Image attachment IDs.
-	 * @param ?int     $limit     Maximum number of images to attempt. Null means no limit.
+	 * @param int[] $image_ids Image attachment IDs.
+	 * @param ?int  $limit     Maximum number of images to attempt. Null means no limit. Used in Task 4.
 	 *
 	 * @return void
 	 */
-	private function process_ids( array $image_ids, ?int $limit = null ): void
+	private function process_ids( array $image_ids, ?int $limit = null ): void // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- $limit slice added in follow-up commit.
 	{
 		if ( empty( $image_ids ) ) {
 			WP_CLI::warning( __( 'No images found to process.', 'travelopia-wordpress-ai' ) );
@@ -123,9 +123,9 @@ class CLI
 	 *
 	 * For --all: uses standard page incrementing.
 	 *
-	 * @param bool  $missing_only Only process images missing alt text.
-	 * @param int   $batch_size   Images per batch.
-	 * @param ?int  $limit        Maximum number of images to attempt. Null means no limit.
+	 * @param bool $missing_only Only process images missing alt text.
+	 * @param int  $batch_size   Images per batch.
+	 * @param ?int $limit        Maximum number of images to attempt. Null means no limit.
 	 *
 	 * @return void
 	 */

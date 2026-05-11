@@ -219,4 +219,24 @@ class CLITest extends WP_UnitTestCase
 
 		$this->assertSame( 3, MockAdapter::$call_count );
 	}
+
+	/**
+	 * --all --limit=N caps attempts to N from the front of the result set.
+	 *
+	 * @return void
+	 */
+	public function test_limit_caps_attempts_with_all(): void
+	{
+		$this->create_images( 5 );
+
+		( new CLI() )->generate(
+			[],
+			[
+				'all'   => true,
+				'limit' => 2,
+			],
+		);
+
+		$this->assertSame( 2, MockAdapter::$call_count );
+	}
 }

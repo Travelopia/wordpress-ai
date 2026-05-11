@@ -80,4 +80,24 @@ class CLITest extends WP_UnitTestCase
 
 		$this->assertSame( 2, MockAdapter::$call_count );
 	}
+
+	/**
+	 * --ids=A,B,C,D,E --limit=2 processes only the first two IDs.
+	 *
+	 * @return void
+	 */
+	public function test_limit_with_ids_truncates_list(): void
+	{
+		$ids = $this->create_images( 5 );
+
+		( new CLI() )->generate(
+			[],
+			[
+				'ids'   => implode( ',', $ids ),
+				'limit' => 2,
+			],
+		);
+
+		$this->assertSame( 2, MockAdapter::$call_count );
+	}
 }

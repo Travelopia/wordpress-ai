@@ -91,17 +91,24 @@ class CLI
 	 * Process a known list of image IDs.
 	 *
 	 * Used for --ids flag where the set is user-provided and bounded.
+	 * When $limit is provided, truncates the list to the first N entries
+	 * before processing — letting cost / quality sampling work for known
+	 * ID lists too.
 	 *
 	 * @param int[] $image_ids Image attachment IDs.
-	 * @param ?int  $limit     Maximum number of images to attempt. Null means no limit. Used in Task 4.
+	 * @param ?int  $limit     Maximum number of images to attempt. Null means no limit.
 	 *
 	 * @return void
 	 */
-	private function process_ids( array $image_ids, ?int $limit = null ): void // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- $limit slice added in follow-up commit.
+	private function process_ids( array $image_ids, ?int $limit = null ): void
 	{
 		if ( empty( $image_ids ) ) {
 			WP_CLI::warning( __( 'No images found to process.', 'travelopia-wordpress-ai' ) );
 			return;
+		}
+
+		if ( null !== $limit ) {
+			$image_ids = array_slice( $image_ids, 0, $limit );
 		}
 
 		$start_time = microtime( true );

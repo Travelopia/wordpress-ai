@@ -7,9 +7,9 @@
 
 namespace Travelopia\WordPress_AI\Tests\AltText;
 
-use RuntimeException;
 use Travelopia\WordPress_AI\Adapter;
 use Travelopia\WordPress_AI\AltText\CLI;
+use Travelopia\WordPress_AI\Tests\AltText\CLITestLogger;
 use Travelopia\WordPress_AI\Tests\MockAdapter;
 use WP_CLI;
 use WP_UnitTestCase;
@@ -60,25 +60,4 @@ class CLITest extends WP_UnitTestCase
 		}
 		return $ids;
 	}
-}
-
-/**
- * Quiet WP_CLI logger that throws on error() so PHPUnit can catch it.
- */
-class CLITestLogger
-{
-	/**
-	 * @param string $message Error message.
-	 * @return void
-	 */
-	public function error( string $message ): void
-	{
-		throw new RuntimeException( $message );
-	}
-
-	public function warning( string $message ): void {}
-	public function success( string $message ): void {}
-	public function info( string $message ): void {}
-	public function log( string $message ): void {}
-	public function debug( string $message, string $group = '' ): void {}
 }

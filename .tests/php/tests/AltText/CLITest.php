@@ -7,11 +7,13 @@
 
 namespace Travelopia\WordPress_AI\Tests\AltText;
 
+use RuntimeException;
 use Travelopia\WordPress_AI\Adapter;
 use Travelopia\WordPress_AI\AltText\CLI;
 use Travelopia\WordPress_AI\Tests\AltText\CLITestLogger;
 use Travelopia\WordPress_AI\Tests\MockAdapter;
 use WP_CLI;
+use WP_Error;
 use WP_UnitTestCase;
 
 class CLITest extends WP_UnitTestCase
@@ -108,7 +110,7 @@ class CLITest extends WP_UnitTestCase
 	 */
 	public function test_limit_zero_errors(): void
 	{
-		$this->expectException( \RuntimeException::class );
+		$this->expectException( RuntimeException::class );
 		$this->expectExceptionMessageMatches( '/positive integer/i' );
 
 		( new CLI() )->generate(
@@ -127,7 +129,7 @@ class CLITest extends WP_UnitTestCase
 	 */
 	public function test_limit_negative_errors(): void
 	{
-		$this->expectException( \RuntimeException::class );
+		$this->expectException( RuntimeException::class );
 		$this->expectExceptionMessageMatches( '/positive integer/i' );
 
 		( new CLI() )->generate(
@@ -146,7 +148,7 @@ class CLITest extends WP_UnitTestCase
 	 */
 	public function test_limit_non_numeric_errors(): void
 	{
-		$this->expectException( \RuntimeException::class );
+		$this->expectException( RuntimeException::class );
 		$this->expectExceptionMessageMatches( '/positive integer/i' );
 
 		( new CLI() )->generate(
@@ -207,7 +209,7 @@ class CLITest extends WP_UnitTestCase
 	public function test_limit_counts_failures(): void
 	{
 		$this->create_images( 5 );
-		MockAdapter::$mock_response = new \WP_Error( 'mock_fail', 'Always fails' );
+		MockAdapter::$mock_response = new WP_Error( 'mock_fail', 'Always fails' );
 
 		( new CLI() )->generate(
 			[],

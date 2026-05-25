@@ -229,6 +229,7 @@ class CLI
 					);
 				} else {
 					++$success_count;
+					$this->log_success( $image_id, $result );
 				}
 
 				if ( method_exists( $progress, 'tick' ) ) {
@@ -287,6 +288,7 @@ class CLI
 				);
 			} else {
 				++$success_count;
+				$this->log_success( $image_id, $result );
 			}
 
 			if ( method_exists( $progress, 'tick' ) ) {
@@ -302,6 +304,32 @@ class CLI
 			'success' => $success_count,
 			'failed'  => $failed_count,
 		];
+	}
+
+	/**
+	 * Log a successful generation with the image identity and the alt text produced.
+	 *
+	 * Surfaces ID + attachment title + generated text so a developer running
+	 * `--limit` or batched runs can eyeball quality without opening wp-admin.
+	 *
+	 * @param int    $image_id Attachment ID.
+	 * @param string $alt_text Generated alt text.
+	 *
+	 * @return void
+	 */
+	private function log_success( int $image_id, string $alt_text ): void
+	{
+		$title = get_the_title( $image_id );
+
+		WP_CLI::log(
+			sprintf(
+				/* translators: 1: attachment ID, 2: attachment title, 3: generated alt text */
+				__( 'ID %1$d "%2$s": %3$s', 'travelopia-wordpress-ai' ),
+				$image_id,
+				'' !== $title ? $title : __( '(untitled)', 'travelopia-wordpress-ai' ),
+				$alt_text,
+			),
+		);
 	}
 
 	/**

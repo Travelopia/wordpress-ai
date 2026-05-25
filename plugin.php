@@ -53,6 +53,38 @@ function register_default_adapters(): void
 	Adapter::set( $provider );
 }
 
+/*
+ * Guarded bootstraps for the Settings and AltText modules.
+ *
+ * Same rationale as `register_default_adapters`: when the composer
+ * autoloader is not wired into `wp-config.php`, an unguarded callable
+ * such as `[ Settings::class, 'bootstrap' ]` fatals at
+ * `wp-includes/class-wp-hook.php` when WP-Hook invokes it — the class is
+ * referenced as a string at registration time (no autoload) but
+ * `call_user_func_array` triggers the autoload when the hook fires.
+ *
+ * Wrapping each bootstrap in a named function lets us `class_exists`-
+ * guard before the invocation, turning a missing autoloader into a
+ * graceful no-op rather than a fatal during WordPress boot.
+ */
+function bootstrap_settings(): void
+{
+	if ( ! class_exists( __NAMESPACE__ . '\\Settings' ) ) {
+		return;
+	}
+
+	Settings::bootstrap();
+}
+
+function bootstrap_alt_text(): void
+{
+	if ( ! class_exists( __NAMESPACE__ . '\\AltText' ) ) {
+		return;
+	}
+
+	AltText::bootstrap();
+}
+
 add_action( 'plugins_loaded', __NAMESPACE__ . '\\register_default_adapters', 5 );
-add_action( 'plugins_loaded', [ Settings::class, 'bootstrap' ] );
-add_action( 'plugins_loaded', [ AltText::class, 'bootstrap' ] );
+add_action( 'plugins_loaded', __NAMESPACE__ . '\\bootstrap_settings' );
+add_action( 'plugins_loaded', __NAMESPACE__ . '\\bootstrap_alt_text' );

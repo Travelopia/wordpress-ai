@@ -6,7 +6,6 @@
  */
 
 require_once dirname( __DIR__, 2 ) . '/vendor/autoload.php';
-require_once __DIR__ . '/stubs/wp-cli-utils.php';
 
 $_tests_dir = getenv( 'WP_TESTS_DIR' );
 

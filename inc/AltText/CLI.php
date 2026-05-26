@@ -15,6 +15,9 @@ use function WP_CLI\Utils\make_progress_bar;
 
 /**
  * CLI handler for alt text generation.
+ *
+ * Thin presentation layer around AltText::run_batch — parses CLI arguments,
+ * renders progress / log output, delegates all batch logic to the service.
  */
 class CLI
 {
@@ -90,7 +93,7 @@ class CLI
 		if ( isset( $args_assoc['ids'] ) ) {
 			$ids       = explode( ',', (string) $args_assoc['ids'] );
 			$image_ids = array_map( 'absint', $ids );
-			$this->process_ids( $image_ids, $limit );
+			$this->run_ids( $image_ids, $limit );
 			return;
 		}
 
@@ -98,51 +101,57 @@ class CLI
 			WP_CLI::error( __( 'Please specify --ids, --missing, or --all.', 'travelopia-wordpress-ai' ) );
 		}
 
-		$this->process_batched( $missing_only, $batch_size, $limit );
+		$this->run_paginated( $missing_only, $batch_size, $limit );
 	}
 
 	/**
-	 * Process a known list of image IDs.
+	 * Run against a user-supplied ID list.
 	 *
-	 * Used for --ids flag where the set is user-provided and bounded.
-	 * When $limit is provided, truncates the list to the first N entries
-	 * before processing — letting cost / quality sampling work for known
-	 * ID lists too.
-	 *
-	 * @param int[] $image_ids Image attachment IDs.
+	 * @param int[] $image_ids Attachment IDs.
 	 * @param ?int  $limit     Maximum number of images to attempt. Null means no limit.
 	 *
 	 * @return void
 	 */
-	private function process_ids( array $image_ids, ?int $limit = null ): void
+	private function run_ids( array $image_ids, ?int $limit ): void
 	{
 		if ( empty( $image_ids ) ) {
 			WP_CLI::warning( __( 'No images found to process.', 'travelopia-wordpress-ai' ) );
 			return;
 		}
 
-		if ( null !== $limit ) {
-			$image_ids = array_slice( $image_ids, 0, $limit );
-		}
+		$effective_total = null !== $limit ? min( count( $image_ids ), $limit ) : count( $image_ids );
 
 		$start_time = microtime( true );
-		$counts     = $this->process_batch( $image_ids, count( $image_ids ) );
+		$progress   = make_progress_bar(
+			sprintf(
+				/* translators: %d: number of images */
+				__( 'Processing %d images', 'travelopia-wordpress-ai' ),
+				$effective_total,
+			),
+			$effective_total,
+		);
+
+		$counts = AltText::run_batch(
+			image_ids: $image_ids,
+			limit:     $limit,
+			on_image:  function ( int $image_id, mixed $result ) use ( $progress ): void {
+				$this->emit_per_image( $image_id, $result );
+
+				if ( method_exists( $progress, 'tick' ) ) {
+					$progress->tick();
+				}
+			},
+		);
+
+		if ( method_exists( $progress, 'finish' ) ) {
+			$progress->finish();
+		}
 
 		$this->summary( $counts['success'], $counts['failed'], $start_time );
 	}
 
 	/**
-	 * Process images in batches using paginated queries.
-	 *
-	 * Fetches images in configurable batch sizes to keep memory usage
-	 * constant regardless of total image count. Flushes the object cache
-	 * between batches to prevent memory growth.
-	 *
-	 * For --missing: always re-queries page 1 since successfully processed
-	 * images drop out of the result set. Tracks failed IDs to break out
-	 * if only unprocessable images remain.
-	 *
-	 * For --all: uses standard page incrementing.
+	 * Run against the paginated attachment query.
 	 *
 	 * @param bool $missing_only Only process images missing alt text.
 	 * @param int  $batch_size   Images per batch.
@@ -150,7 +159,7 @@ class CLI
 	 *
 	 * @return void
 	 */
-	private function process_batched( bool $missing_only, int $batch_size, ?int $limit = null ): void
+	private function run_paginated( bool $missing_only, int $batch_size, ?int $limit ): void
 	{
 		$total = AltText::count_images( missing_only: $missing_only );
 
@@ -159,8 +168,7 @@ class CLI
 			return;
 		}
 
-		$cap          = $limit ?? PHP_INT_MAX;
-		$progress_max = min( $total, $cap );
+		$effective_total = null !== $limit ? min( $total, $limit ) : $total;
 
 		WP_CLI::log(
 			sprintf(
@@ -171,154 +179,58 @@ class CLI
 			),
 		);
 
-		$success_count = 0;
-		$failed_count  = 0;
-		$attempts      = 0;
-		$start_time    = microtime( true );
-		$progress      = make_progress_bar(
+		$start_time = microtime( true );
+		$progress   = make_progress_bar(
 			sprintf(
 				/* translators: %d: number of images */
 				__( 'Processing %d images', 'travelopia-wordpress-ai' ),
-				$progress_max,
+				$effective_total,
 			),
-			$progress_max,
+			$effective_total,
 		);
 
-		$page       = 1;
-		$failed_ids = [];
-
-		do {
-			// --missing re-queries page 1 (processed items drop out of result set); --all uses standard page increment.
-			$query_page = $missing_only ? 1 : $page;
-
-			$batch = AltText::query_images(
-				missing_only: $missing_only,
-				page:         $query_page,
-				per_page:     $batch_size,
-			);
-
-			if ( empty( $batch ) ) {
-				break;
-			}
-
-			// Skip already-failed IDs to prevent infinite loops on --missing.
-			$actionable = $missing_only ? array_diff( $batch, $failed_ids ) : $batch;
-
-			if ( empty( $actionable ) ) {
-				break;
-			}
-
-			foreach ( $actionable as $image_id ) {
-				if ( $attempts >= $cap ) {
-					break 2;
-				}
-
-				$result = AltText::generate( $image_id );
-				++$attempts;
-
-				if ( $result instanceof WP_Error ) {
-					$failed_ids[] = $image_id;
-					++$failed_count;
-					WP_CLI::warning(
-						sprintf(
-							/* translators: 1: attachment ID, 2: error message */
-							__( 'ID %1$d failed: %2$s', 'travelopia-wordpress-ai' ),
-							$image_id,
-							$result->get_error_message(),
-						),
-					);
-				} else {
-					++$success_count;
-					$this->log_success( $image_id );
-				}
+		$counts = AltText::run_batch(
+			missing_only: $missing_only,
+			batch_size:   $batch_size,
+			limit:        $limit,
+			on_image:     function ( int $image_id, mixed $result ) use ( $progress ): void {
+				$this->emit_per_image( $image_id, $result );
 
 				if ( method_exists( $progress, 'tick' ) ) {
 					$progress->tick();
 				}
-			}
-
-			// Free memory between batches.
-			if ( function_exists( 'wp_cache_flush_runtime' ) ) {
-				wp_cache_flush_runtime();
-			}
-
-			++$page;
-		} while ( true );
-
-		if ( method_exists( $progress, 'finish' ) ) {
-			$progress->finish();
-		}
-
-		$this->summary( $success_count, $failed_count, $start_time );
-	}
-
-	/**
-	 * Process a single batch of image IDs and tick the progress bar.
-	 *
-	 * @param int[] $image_ids Image attachment IDs.
-	 * @param int   $total     Total images for the progress bar.
-	 *
-	 * @return array{success: int, failed: int} Counts.
-	 */
-	private function process_batch( array $image_ids, int $total ): array
-	{
-		$success_count = 0;
-		$failed_count  = 0;
-		$progress      = make_progress_bar(
-			sprintf(
-				/* translators: %d: number of images */
-				__( 'Processing %d images', 'travelopia-wordpress-ai' ),
-				$total,
-			),
-			$total,
+			},
 		);
 
-		foreach ( $image_ids as $image_id ) {
-			$result = AltText::generate( $image_id );
-
-			if ( $result instanceof WP_Error ) {
-				++$failed_count;
-				WP_CLI::warning(
-					sprintf(
-						/* translators: 1: attachment ID, 2: error message */
-						__( 'ID %1$d failed: %2$s', 'travelopia-wordpress-ai' ),
-						$image_id,
-						$result->get_error_message(),
-					),
-				);
-			} else {
-				++$success_count;
-				$this->log_success( $image_id );
-			}
-
-			if ( method_exists( $progress, 'tick' ) ) {
-				$progress->tick();
-			}
-		}
-
 		if ( method_exists( $progress, 'finish' ) ) {
 			$progress->finish();
 		}
 
-		return [
-			'success' => $success_count,
-			'failed'  => $failed_count,
-		];
+		$this->summary( $counts['success'], $counts['failed'], $start_time );
 	}
 
 	/**
-	 * Log a successful generation with the image identity.
+	 * Emit per-image output: a warning on WP_Error or a success log otherwise.
 	 *
-	 * Surfaces ID + attachment title so a developer running `--limit` or
-	 * batched runs can eyeball which images were just processed without
-	 * opening wp-admin.
-	 *
-	 * @param int $image_id Attachment ID.
+	 * @param int   $image_id Attachment ID.
+	 * @param mixed $result   Result from AltText::generate — string on success, WP_Error on failure.
 	 *
 	 * @return void
 	 */
-	private function log_success( int $image_id ): void
+	private function emit_per_image( int $image_id, mixed $result ): void
 	{
+		if ( $result instanceof WP_Error ) {
+			WP_CLI::warning(
+				sprintf(
+					/* translators: 1: attachment ID, 2: error message */
+					__( 'ID %1$d failed: %2$s', 'travelopia-wordpress-ai' ),
+					$image_id,
+					$result->get_error_message(),
+				),
+			);
+			return;
+		}
+
 		$title = get_the_title( $image_id );
 
 		WP_CLI::log(

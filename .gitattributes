@@ -1,8 +1,10 @@
 # Ignore stuff in export
 .github export-ignore
 .tests export-ignore
-vendor export-ignore
-wordpress export-ignore
+# Anchored to root so the committed, scoped `dependencies/vendor` and
+# `dependencies/wordpress` bundle survive Composer's dist archive.
+/vendor export-ignore
+/wordpress export-ignore
 node_modules export-ignore
 .browserslistrc export-ignore
 .editorconfig export-ignore

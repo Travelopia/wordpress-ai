@@ -7,9 +7,9 @@
 
 namespace Travelopia\WordPress_AI\Adapters;
 
-use Aysnc\WordPress\PhpAiClientBedrock\AwsBedrockProvider;
 use RuntimeException;
-use WordPress\AiClient\AiClient;
+use Travelopia\WordPress_AI\Dependencies\Aysnc\WordPress\PhpAiClientBedrock\AwsBedrockProvider;
+use Travelopia\WordPress_AI\Dependencies\WordPress\AiClient\AiClient;
 use WP_Error;
 
 /**

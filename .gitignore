@@ -4,7 +4,8 @@
 
 # --- Packages
 node_modules
-vendor
+# Root Composer dir only — the scoped `dependencies/vendor/` bundle is committed.
+/vendor
 
 # --- Root
 /*
@@ -42,7 +43,14 @@ vendor
 !assets
 !tests
 
+# --- Build tooling
+!bin
+!scoper.inc.php
+
 # --- Source Code
 !inc
 !src
 !dist
+
+# --- Scoped dependency bundle (committed, like dist; built by composer build:dependencies)
+!dependencies

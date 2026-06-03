@@ -17,6 +17,25 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/*
+ * Load the scoped AI dependency bundle.
+ *
+ * `dependencies/` is a committed, self-contained copy of the AI client runtime
+ * (php-ai-client + Bedrock provider + Guzzle), namespace-isolated under
+ * `Travelopia\WordPress_AI\Dependencies\*` by PHP-Scoper. The isolation is what
+ * lets the plugin coexist with the unscoped `WordPress\AiClient\*` copy that
+ * WordPress 7.0+ ships in core — without it, the two declarations collide and
+ * fatal during boot. Regenerate via `composer build:dependencies`; see
+ * docs/dependencies.md.
+ */
+if ( file_exists( __DIR__ . '/dependencies/vendor/autoload.php' ) ) {
+	require_once __DIR__ . '/dependencies/vendor/autoload.php';
+}
+
+/*
+ * Local Composer autoloader for the plugin's own classes when running
+ * standalone (dev / CI). In a consuming site the host autoloader provides them.
+ */
 if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
 	require_once __DIR__ . '/vendor/autoload.php';
 }

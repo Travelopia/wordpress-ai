@@ -7,8 +7,8 @@
 
 namespace Travelopia\WordPress_AI\Adapters;
 
-use WordPress\AiClient\AiClient;
-use WordPress\AiClient\ProviderImplementations\OpenAi\OpenAiProvider;
+use Travelopia\WordPress_AI\Dependencies\WordPress\AiClient\AiClient;
+use Travelopia\WordPress_AI\Dependencies\WordPress\AiClient\ProviderImplementations\OpenAi\OpenAiProvider;
 use WP_Error;
 
 /**

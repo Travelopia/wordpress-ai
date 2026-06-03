@@ -5,9 +5,14 @@ parameters:
 	scanDirectories:
 		- vendor
 		- wordpress
+		- dependencies
 	paths:
 		- inc
 	excludePaths:
 		- wordpress/wp-admin/includes/noop.php
+		# php-scoper (require-dev) bundles jetbrains/phpstorm-stubs, whose
+		# incomplete built-in signatures (e.g. array_keys) otherwise override
+		# PHPStan's own and produce false positives against our code.
+		- vendor/jetbrains/phpstorm-stubs/*
 	ignoreErrors:
 		- '#Cannot cast .* to string#'

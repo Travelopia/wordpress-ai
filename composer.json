@@ -4,16 +4,12 @@
   "autoload": {
     "psr-4": {
       "Travelopia\\WordPress_AI\\": "./inc",
-      "Travelopia\\WordPress_AI\\Tests\\": "./.tests/php/tests"
+      "Travelopia\\WordPress_AI\\Tests\\": "./.tests/php/tests",
+      "Aysnc\\WordPress\\PhpAiClientBedrock\\": "./inc/Providers/Bedrock"
     }
   },
   "require": {
-    "php": "^8.3",
-    "wordpress/php-ai-client": "^0.4.2",
-    "php-http/guzzle7-adapter": "^1.1.0",
-    "guzzlehttp/guzzle": "^7.10.0",
-    "http-interop/http-factory-guzzle": "^1.2.1",
-    "aysnc/wordpress-php-ai-client-bedrock": "^0.1.0"
+    "php": "^8.3"
   },
   "require-dev": {
     "roots/wordpress": "*",

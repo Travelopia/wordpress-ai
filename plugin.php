@@ -41,6 +41,16 @@ function register_default_adapters(): void
 		return;
 	}
 
+	/*
+	 * The adapters build on the PHP AI Client framework that WordPress 7.0+
+	 * ships in core (`wp-includes/php-ai-client`). On older WordPress the
+	 * framework is absent, so there is nothing to register — no-op gracefully
+	 * rather than fataling. This plugin targets WordPress 7.0+.
+	 */
+	if ( ! class_exists( 'WordPress\\AiClient\\AiClient' ) ) {
+		return;
+	}
+
 	Adapter::register( 'openai', Adapters\OpenAI::class );
 	Adapter::register( 'bedrock', Adapters\Bedrock::class );
 

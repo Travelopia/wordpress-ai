@@ -7,8 +7,6 @@
 
 namespace Travelopia\WordPress_AI\Adapters;
 
-use WordPress\AiClient\AiClient;
-use WordPress\AiClient\ProviderImplementations\OpenAi\OpenAiProvider;
 use WP_Error;
 
 /**
@@ -88,15 +86,16 @@ class OpenAI extends AbstractAiAdapter
 	 * @param string $image_url          The image URL.
 	 * @param string $system_instruction The system instruction.
 	 *
+	 * WordPress core's bundled AI client ships no concrete OpenAI provider yet, and
+	 * the upstream OpenAI provider package still targets php-ai-client 0.4. Until a
+	 * compatible provider exists this adapter cannot generate, so it returns an empty
+	 * string and callers surface the standard empty-response error. Bedrock is the
+	 * supported provider (see Adapters\Bedrock).
+	 *
 	 * @return string The generated text.
 	 */
 	protected static function call_ai_client( string $prompt, string $model, float $temperature, string $image_url, string $system_instruction ): string
 	{
-		return AiClient::prompt( $prompt )
-			->usingModel( OpenAiProvider::model( $model ) )
-			->usingTemperature( $temperature )
-			->withFile( $image_url )
-			->usingSystemInstruction( $system_instruction )
-			->generateText();
+		return '';
 	}
 }

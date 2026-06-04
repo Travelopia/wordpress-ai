@@ -51,6 +51,12 @@ function register_default_adapters(): void
 		return;
 	}
 
+	/*
+	 * The OpenAI adapter is registered but currently a no-op — WordPress core's
+	 * AI client ships no OpenAI provider yet, and the upstream provider still
+	 * targets php-ai-client 0.4. Left in place for now; safe to remove (with its
+	 * adapter + tests) if OpenAI support isn't required before a 1.x provider lands.
+	 */
 	Adapter::register( 'openai', Adapters\OpenAI::class );
 	Adapter::register( 'bedrock', Adapters\Bedrock::class );
 

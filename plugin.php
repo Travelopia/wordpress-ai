@@ -4,7 +4,7 @@
  * Description: AI functionality for WordPress
  * Author: Travelopia Team
  * Author URI: https://www.travelopia.com
- * Version: 0.1.0
+ * Version: 0.2.0
  *
  * @package travelopia-wordpress-ai
  */

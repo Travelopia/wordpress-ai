@@ -3,10 +3,11 @@
 | Field | Value |
 |-------|-------|
 | **Status** | In review |
-| **Branch** | `feature/wp-7-0-core-ai-framework` |
-| **PR** | [Travelopia/wordpress-ai#29](https://github.com/Travelopia/wordpress-ai/pull/29) |
-| **Supersedes** | [#28](https://github.com/Travelopia/wordpress-ai/pull/28) (PHP-Scoper / private-namespace approach — closed) |
-| **Downstream** | H&J [hayesandjarvis#1055](https://github.com/Travelopia/hayesandjarvis/pull/1055) (WEBHJ-1198) |
+| **Branch** | `feature/wp-7-0-upstream-bedrock-fix` |
+| **PR** | [Travelopia/wordpress-ai#30](https://github.com/Travelopia/wordpress-ai/pull/30) |
+| **Supersedes** | [#29](https://github.com/Travelopia/wordpress-ai/pull/29) (vendoring approach — closed), [#28](https://github.com/Travelopia/wordpress-ai/pull/28) (PHP-Scoper — closed) |
+| **Upstream fix** | [Aysnc-Labs/wordpress-php-ai-client-bedrock#1](https://github.com/Aysnc-Labs/wordpress-php-ai-client-bedrock/pull/1) (released as `0.2.0`) |
+| **Downstream** | H&J WEBHJ-1198 |
 
 ## Problem
 
@@ -26,30 +27,29 @@ only hides it in this plugin's CI; real WordPress 7.0 sites still crash.
 
 ## Decision
 
-Consume **WordPress core's bundled AI framework** instead of shipping our own
-copy. Two earlier options were considered:
+Contribute the fix **upstream** to `Aysnc-Labs/wordpress-php-ai-client-bedrock`,
+then consume the released package via Composer. Three options were considered:
 
 - **PHP-Scoper isolation** (#28): rename our copy to a private namespace. Works,
-  but ships a duplicate ~300-file bundle and a build step. Rejected as the
-  long-term shape.
-- **Consume core's framework** (this PR): cleaner, no duplication. Chosen.
-
-Core ships only the framework, not concrete providers, so we vendor the AWS
-Bedrock provider (which H&J uses) and bind it to core's framework.
+  but ships a duplicate ~300-file bundle and a build step. Rejected.
+- **Vendoring** (#29): copy the 4 Bedrock provider classes into `inc/Providers/Bedrock/`
+  and drop the Composer dependency. Avoids the collision but puts us in the business
+  of maintaining a fork. Superseded by this PR.
+- **Upstream fix** (this PR): remove `wordpress/php-ai-client` from the Bedrock
+  package's `require` — WP 7.0 core provides the namespace, so the Composer package
+  is redundant and conflicting. Released as `aysnc/wordpress-php-ai-client-bedrock 0.2.0`. Chosen.
 
 ## Approach
 
-- Drop `wordpress/php-ai-client`, `aysnc/wordpress-php-ai-client-bedrock` and
-  guzzle from `require`. Nothing Composer-installed loads `WordPress\AiClient` at
-  runtime — core provides it. This is what removes the collision.
-- Vendor the AWS Bedrock provider (4 classes, MIT, Aysnc-Labs) into
-  `inc/Providers/Bedrock/` under its original namespace, autoloaded via Composer.
-  Excluded from PHPCS/PHP-CS-Fixer to stay close to upstream; `LICENSE` retained.
+- Require `aysnc/wordpress-php-ai-client-bedrock ^0.2.0` via Packagist.
+- `0.2.0` drops `wordpress/php-ai-client` from its own `require`, so no Composer
+  package installs the namespace alongside WP 7.0 core's copy. No PHP source changes
+  needed — the provider classes already import from `WordPress\AiClient\*`.
 - Guard adapter registration behind `class_exists( WordPress\AiClient\AiClient )`
-  so the plugin no-ops on WordPress < 7.0. **The plugin now targets WordPress 7.0+.**
+  so the plugin no-ops on WordPress < 7.0. **The plugin targets WordPress 7.0+.**
 - Fix WordPress 7.0 stub type tightening (nullable `WP_Query::posts`,
   non-empty-string `wp_enqueue_script` deps). Pin wp-env to WordPress 7.0.
-- Add `CoreFrameworkTest` guarding the integration (the Bedrock provider binds to
+- `CoreFrameworkTest` guards the integration (the Bedrock provider binds to
   core's `AbstractApiProvider`).
 
 ## OpenAI
@@ -68,10 +68,10 @@ if any brand runs this plugin on older WordPress.
 ## Testing
 
 Verified on a real WordPress 7.0 container: **PHPUnit 79/79**, no boot fatal;
-PHPStan max clean, PHPCS clean, PHP-CS-Fixer clean.
+PHPStan max clean, PHPCS clean. H&J PHPUnit suite: 110/110, 488 assertions.
 
 ## Downstream (H&J)
 
-Once this is merged and released, bump `travelopia/wordpress-ai` in H&J
-(hayesandjarvis#1055), `composer update`, and confirm `npm run test:php` passes
-on WordPress 7.0.
+Once this is merged and released as `0.2.0`, bump `travelopia/wordpress-ai` to
+`"*"` in H&J, remove `minimum-stability: dev`, `composer update`, and confirm
+`npm run test:php` passes on WordPress 7.0.

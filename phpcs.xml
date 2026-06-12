@@ -4,8 +4,6 @@
 	<file>./inc</file>
 	<file>./.tests</file>
 	<exclude-pattern>./.tests/php/wp-tests-config.php</exclude-pattern>
-	<!-- Vendored AWS Bedrock provider (MIT, Aysnc-Labs) — kept close to upstream. -->
-	<exclude-pattern>./inc/Providers/Bedrock/*</exclude-pattern>
 	<!-- Check up to 20 files simultaneously. -->
 	<arg name="parallel" value="20"/>
 </ruleset>

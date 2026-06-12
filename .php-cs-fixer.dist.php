@@ -13,7 +13,6 @@ $finder = Finder::create()
 		'dist',
 		'vendor',
 		'wordpress',
-		'Providers/Bedrock',
 	] )
 	->append( [
 		__FILE__,

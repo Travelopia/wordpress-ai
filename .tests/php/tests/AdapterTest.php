@@ -9,7 +9,6 @@ namespace Travelopia\WordPress_AI\Tests;
 
 use Travelopia\WordPress_AI\Adapter;
 use Travelopia\WordPress_AI\Adapters\Bedrock;
-use Travelopia\WordPress_AI\Adapters\OpenAI;
 use Travelopia\WordPress_AI\AltText;
 use Travelopia\WordPress_AI\Settings;
 use WP_UnitTestCase;
@@ -59,9 +58,9 @@ class AdapterTest extends WP_UnitTestCase
 	 */
 	public function test_register_and_get(): void
 	{
-		Adapter::register( 'openai', OpenAI::class );
-		Adapter::set( 'openai' );
-		$this->assertSame( OpenAI::class, Adapter::get() );
+		Adapter::register( 'bedrock', Bedrock::class );
+		Adapter::set( 'bedrock' );
+		$this->assertSame( Bedrock::class, Adapter::get() );
 	}
 
 	/**
@@ -71,14 +70,13 @@ class AdapterTest extends WP_UnitTestCase
 	 */
 	public function test_switch_adapter(): void
 	{
-		Adapter::register( 'openai', OpenAI::class );
 		Adapter::register( 'bedrock', Bedrock::class );
-
-		Adapter::set( 'openai' );
-		$this->assertSame( OpenAI::class, Adapter::get() );
 
 		Adapter::set( 'bedrock' );
 		$this->assertSame( Bedrock::class, Adapter::get() );
+
+		Adapter::set( 'nonexistent' );
+		$this->assertNull( Adapter::get() );
 	}
 
 	/**
@@ -88,9 +86,9 @@ class AdapterTest extends WP_UnitTestCase
 	 */
 	public function test_reset(): void
 	{
-		Adapter::register( 'openai', OpenAI::class );
-		Adapter::set( 'openai' );
-		$this->assertSame( OpenAI::class, Adapter::get() );
+		Adapter::register( 'bedrock', Bedrock::class );
+		Adapter::set( 'bedrock' );
+		$this->assertSame( Bedrock::class, Adapter::get() );
 
 		Adapter::reset();
 		$this->assertNull( Adapter::get() );
@@ -103,7 +101,7 @@ class AdapterTest extends WP_UnitTestCase
 	 */
 	public function test_register_overwrites(): void
 	{
-		Adapter::register( 'provider', OpenAI::class );
+		Adapter::register( 'provider', Bedrock::class );
 		Adapter::register( 'provider', Bedrock::class );
 		Adapter::set( 'provider' );
 		$this->assertSame( Bedrock::class, Adapter::get() );
@@ -140,14 +138,11 @@ class AdapterTest extends WP_UnitTestCase
 	 *
 	 * @return void
 	 */
-	public function test_register_default_adapters_registers_both_adapters_and_default_provider(): void
+	public function test_register_default_adapters_registers_bedrock_as_default_provider(): void
 	{
 		register_default_adapters();
 
 		$this->assertSame( Bedrock::class, Adapter::get(), 'Default provider must be bedrock after bootstrap.' );
-
-		Adapter::set( 'openai' );
-		$this->assertSame( OpenAI::class, Adapter::get(), 'OpenAI adapter must be registered after bootstrap.' );
 	}
 
 	/**
@@ -161,13 +156,13 @@ class AdapterTest extends WP_UnitTestCase
 		add_filter(
 			'travelopia_wordpress_ai_provider',
 			static function (): string {
-				return 'openai';
+				return 'bedrock';
 			}
 		);
 
 		register_default_adapters();
 
-		$this->assertSame( OpenAI::class, Adapter::get(), 'Provider filter must override the default during bootstrap.' );
+		$this->assertSame( Bedrock::class, Adapter::get(), 'Provider filter must override the default during bootstrap.' );
 
 		remove_all_filters( 'travelopia_wordpress_ai_provider' );
 	}

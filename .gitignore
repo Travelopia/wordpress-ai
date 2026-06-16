@@ -26,6 +26,7 @@ vendor
 !package-lock.json
 !phpcs.xml
 !phpstan.neon
+!phpstan-stubs
 !phpunit.xml
 !.stylelintrc
 !.stylelintignore

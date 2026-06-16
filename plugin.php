@@ -53,6 +53,10 @@ function register_default_adapters(): void
 
 	Adapter::register( 'bedrock', Adapters\Bedrock::class );
 
+	if ( class_exists( 'WordPress\\AiClient\\ProviderImplementations\\OpenAi\\OpenAiProvider' ) ) {
+		Adapter::register( 'openai', Adapters\OpenAI::class );
+	}
+
 	/**
 	 * Filter the active AI provider.
 	 *

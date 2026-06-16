@@ -9,14 +9,8 @@
  * @package travelopia-wordpress-ai
  */
 
-namespace WordPress\AiClient\ProviderImplementations\OpenAi;
+namespace WordPress\OpenAiAiProvider\Provider;
 
-use WordPress\AiClient\Providers\ApiBasedImplementation\AbstractApiProvider;
+use WordPress\AiClient\Providers\AbstractProvider;
 
-abstract class OpenAiProvider extends AbstractApiProvider
-{
-	protected static function baseUrl(): string
-	{
-		return 'https://api.openai.com/v1';
-	}
-}
+abstract class OpenAiProvider extends AbstractProvider {}

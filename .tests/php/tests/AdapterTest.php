@@ -148,6 +148,29 @@ class AdapterTest extends WP_UnitTestCase
 	}
 
 	/**
+	 * The adapters filter must allow brands to register additional adapters.
+	 *
+	 * @return void
+	 */
+	public function test_adapters_filter_allows_additional_adapters(): void
+	{
+		add_filter(
+			'travelopia_wordpress_ai_adapters',
+			static function ( array $adapters ): array {
+				$adapters['custom'] = Bedrock::class;
+				return $adapters;
+			},
+		);
+
+		register_default_adapters();
+
+		Adapter::set( 'custom' );
+		$this->assertSame( Bedrock::class, Adapter::get(), 'Adapters filter must allow registering additional adapters.' );
+
+		remove_all_filters( 'travelopia_wordpress_ai_adapters' );
+	}
+
+	/**
 	 * The provider filter must still resolve the active adapter when the
 	 * bootstrap runs.
 	 *

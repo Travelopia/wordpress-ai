@@ -5,6 +5,7 @@
  * Author: Travelopia Team
  * Author URI: https://www.travelopia.com
  * Version: 0.2.0
+ * Requires at least: 7.0
  *
  * @package travelopia-wordpress-ai
  */
@@ -51,10 +52,27 @@ function register_default_adapters(): void
 		return;
 	}
 
-	Adapter::register( 'bedrock', Adapters\Bedrock::class );
+	$default_adapters = [ 'bedrock' => Adapters\Bedrock::class ];
 
-	if ( class_exists( 'WordPress\\AiClient\\ProviderImplementations\\OpenAi\\OpenAiProvider' ) ) {
-		Adapter::register( 'openai', Adapters\OpenAI::class );
+	if ( class_exists( 'WordPress\\OpenAiAiProvider\\Provider\\OpenAiProvider' ) ) {
+		$default_adapters['openai'] = Adapters\OpenAI::class;
+	}
+
+	/**
+	 * Filter the registered AI adapters.
+	 *
+	 * Allows brands to add custom adapters without modifying the plugin.
+	 * Receives a map of provider slug to adapter class and must return the same shape.
+	 *
+	 * @param array<string, class-string<Adapters\AbstractAiAdapter>> $adapters
+	 */
+	$adapters = (array) apply_filters( 'travelopia_wordpress_ai_adapters', $default_adapters );
+
+	foreach ( $adapters as $name => $adapter_class ) {
+		if ( is_string( $name ) && is_string( $adapter_class ) ) {
+			/** @var class-string<Adapters\AbstractAiAdapter> $adapter_class */
+			Adapter::register( $name, $adapter_class );
+		}
 	}
 
 	/**

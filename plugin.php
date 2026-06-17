@@ -69,7 +69,15 @@ function register_default_adapters(): void
 	$adapters = (array) apply_filters( 'travelopia_wordpress_ai_adapters', $default_adapters );
 
 	foreach ( $adapters as $name => $adapter_class ) {
-		if ( is_string( $name ) && is_string( $adapter_class ) ) {
+		// Skip anything that is not a real adapter class — Adapter::register()
+		// calls the adapter's boot() immediately, so a bad value from the filter
+		// would otherwise fatal during boot.
+		if (
+			is_string( $name )
+			&& is_string( $adapter_class )
+			&& class_exists( $adapter_class )
+			&& is_subclass_of( $adapter_class, Adapters\AbstractAiAdapter::class )
+		) {
 			/** @var class-string<Adapters\AbstractAiAdapter> $adapter_class */
 			Adapter::register( $name, $adapter_class );
 		}

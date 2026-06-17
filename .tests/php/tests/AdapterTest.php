@@ -205,6 +205,29 @@ class AdapterTest extends WP_UnitTestCase
 	}
 
 	/**
+	 * Selecting a provider that is not registered — e.g. 'openai' chosen via the
+	 * provider filter while the OpenAI connector plugin is not installed — must
+	 * fall back to the bedrock default rather than leaving no active adapter.
+	 *
+	 * @return void
+	 */
+	public function test_unregistered_provider_falls_back_to_bedrock(): void
+	{
+		add_filter(
+			'travelopia_wordpress_ai_provider',
+			static function (): string {
+				return 'openai';
+			},
+		);
+
+		register_default_adapters();
+
+		$this->assertSame( Bedrock::class, Adapter::get(), 'An unregistered provider must fall back to bedrock.' );
+
+		remove_all_filters( 'travelopia_wordpress_ai_provider' );
+	}
+
+	/**
 	 * The provider filter must still resolve the active adapter when the
 	 * bootstrap runs.
 	 *

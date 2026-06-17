@@ -33,6 +33,26 @@ class CoreFrameworkTest extends WP_UnitTestCase
 	}
 
 	/**
+	 * The adapters call a small, specific surface of core's client directly —
+	 * `AiClient::prompt()` and `AiClient::defaultRegistry()`. A core API change
+	 * that removes or renames either must fail loudly here, in CI, rather than
+	 * silently at generation time on a live site.
+	 *
+	 * @return void
+	 */
+	public function test_core_client_exposes_expected_api(): void
+	{
+		$this->assertTrue(
+			method_exists( 'WordPress\\AiClient\\AiClient', 'prompt' ),
+			'WordPress\\AiClient\\AiClient::prompt() is missing — core AI client API has changed.',
+		);
+		$this->assertTrue(
+			method_exists( 'WordPress\\AiClient\\AiClient', 'defaultRegistry' ),
+			'WordPress\\AiClient\\AiClient::defaultRegistry() is missing — core AI client API has changed.',
+		);
+	}
+
+	/**
 	 * The vendored Bedrock provider must bind to core's framework — i.e. it
 	 * extends core's AbstractApiProvider. This is true only if both the provider
 	 * and core's framework resolve to the same WordPress\AiClient namespace.

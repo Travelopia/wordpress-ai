@@ -9,11 +9,7 @@
   },
   "require": {
     "php": "^8.3",
-    "wordpress/php-ai-client": "^0.4.2",
-    "php-http/guzzle7-adapter": "^1.1.0",
-    "guzzlehttp/guzzle": "^7.10.0",
-    "http-interop/http-factory-guzzle": "^1.2.1",
-    "aysnc/wordpress-php-ai-client-bedrock": "^0.1.0"
+    "aysnc/wordpress-php-ai-client-bedrock": "^0.2.0"
   },
   "require-dev": {
     "roots/wordpress": "*",

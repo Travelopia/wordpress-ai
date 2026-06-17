@@ -8,7 +8,7 @@
 namespace Travelopia\WordPress_AI\Adapters;
 
 use WordPress\AiClient\AiClient;
-use WordPress\AiClient\ProviderImplementations\OpenAi\OpenAiProvider;
+use WordPress\OpenAiAiProvider\Provider\OpenAiProvider;
 use WP_Error;
 
 /**
@@ -36,6 +36,22 @@ class OpenAI extends AbstractAiAdapter
 	 * @var string
 	 */
 	protected const ERROR_CODE_FAILED = 'travelopia_wordpress_ai_open_ai_alt_text_generation_failed';
+
+	/**
+	 * Boot the OpenAI adapter.
+	 *
+	 * Registers the OpenAI provider with AiClient so it is available for prompts.
+	 *
+	 * @return void
+	 */
+	public static function boot(): void
+	{
+		if ( ! class_exists( 'WordPress\\OpenAiAiProvider\\Provider\\OpenAiProvider' ) ) {
+			return;
+		}
+
+		AiClient::defaultRegistry()->registerProvider( OpenAiProvider::class );
+	}
 
 	/**
 	 * Validate OpenAI API key availability.

@@ -320,7 +320,7 @@ class AltText
 
 		$images_query = new WP_Query( $query_args );
 
-		return array_map( 'absint', $images_query->posts );
+		return array_map( 'absint', $images_query->posts ?? [] );
 	}
 
 	/**

@@ -12,6 +12,7 @@ use Travelopia\WordPress_AI\Adapters\Bedrock;
 use Travelopia\WordPress_AI\Adapters\OpenAI;
 use Travelopia\WordPress_AI\AltText;
 use Travelopia\WordPress_AI\Settings;
+use stdClass;
 use WP_UnitTestCase;
 
 use function Travelopia\WordPress_AI\bootstrap_alt_text;
@@ -140,14 +141,90 @@ class AdapterTest extends WP_UnitTestCase
 	 *
 	 * @return void
 	 */
-	public function test_register_default_adapters_registers_both_adapters_and_default_provider(): void
+	public function test_register_default_adapters_registers_bedrock_as_default_provider(): void
 	{
 		register_default_adapters();
 
 		$this->assertSame( Bedrock::class, Adapter::get(), 'Default provider must be bedrock after bootstrap.' );
+	}
 
-		Adapter::set( 'openai' );
-		$this->assertSame( OpenAI::class, Adapter::get(), 'OpenAI adapter must be registered after bootstrap.' );
+	/**
+	 * The adapters filter must allow brands to register additional adapters.
+	 *
+	 * @return void
+	 */
+	public function test_adapters_filter_allows_additional_adapters(): void
+	{
+		add_filter(
+			'travelopia_wordpress_ai_adapters',
+			static function ( array $adapters ): array {
+				$adapters['custom'] = Bedrock::class;
+				return $adapters;
+			},
+		);
+
+		register_default_adapters();
+
+		Adapter::set( 'custom' );
+		$this->assertSame( Bedrock::class, Adapter::get(), 'Adapters filter must allow registering additional adapters.' );
+
+		remove_all_filters( 'travelopia_wordpress_ai_adapters' );
+	}
+
+	/**
+	 * The adapters filter must ignore entries that are not valid adapter
+	 * classes. Adapter::register() immediately calls the adapter's boot(), so a
+	 * non-existent or wrong-type class string supplied by a brand would fatal at
+	 * boot — it must be skipped instead, while valid adapters still register.
+	 *
+	 * @return void
+	 */
+	public function test_adapters_filter_skips_invalid_adapter_classes(): void
+	{
+		add_filter(
+			'travelopia_wordpress_ai_adapters',
+			static function ( array $adapters ): array {
+				$adapters['missing']     = 'Travelopia\\WordPress_AI\\Adapters\\DoesNotExist';
+				$adapters['not_adapter'] = stdClass::class;
+				return $adapters;
+			},
+		);
+
+		register_default_adapters();
+
+		Adapter::set( 'missing' );
+		$this->assertNull( Adapter::get(), 'A non-existent adapter class must not be registered.' );
+
+		Adapter::set( 'not_adapter' );
+		$this->assertNull( Adapter::get(), 'A class that is not an AbstractAiAdapter must not be registered.' );
+
+		Adapter::set( 'bedrock' );
+		$this->assertSame( Bedrock::class, Adapter::get(), 'Valid adapters must still register alongside skipped ones.' );
+
+		remove_all_filters( 'travelopia_wordpress_ai_adapters' );
+	}
+
+	/**
+	 * Selecting a provider that is not registered — e.g. 'openai' chosen via the
+	 * provider filter while the OpenAI connector plugin is not installed — must
+	 * fall back to the bedrock default rather than leaving no active adapter.
+	 *
+	 * @return void
+	 */
+	public function test_unregistered_provider_falls_back_to_bedrock(): void
+	{
+		add_filter(
+			'travelopia_wordpress_ai_provider',
+			static function (): string {
+				return 'openai';
+			},
+		);
+
+		register_default_adapters();
+
+		$this->assertSame( Bedrock::class, Adapter::get(), 'An unregistered provider must fall back to bedrock.' );
+
+		remove_all_filters( 'travelopia_wordpress_ai_provider' );
 	}
 
 	/**
@@ -161,13 +238,13 @@ class AdapterTest extends WP_UnitTestCase
 		add_filter(
 			'travelopia_wordpress_ai_provider',
 			static function (): string {
-				return 'openai';
+				return 'bedrock';
 			}
 		);
 
 		register_default_adapters();
 
-		$this->assertSame( OpenAI::class, Adapter::get(), 'Provider filter must override the default during bootstrap.' );
+		$this->assertSame( Bedrock::class, Adapter::get(), 'Provider filter must override the default during bootstrap.' );
 
 		remove_all_filters( 'travelopia_wordpress_ai_provider' );
 	}

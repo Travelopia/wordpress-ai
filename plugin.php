@@ -4,7 +4,8 @@
  * Description: AI functionality for WordPress
  * Author: Travelopia Team
  * Author URI: https://www.travelopia.com
- * Version: 0.1.0
+ * Version: 0.2.0
+ * Requires at least: 7.0
  *
  * @package travelopia-wordpress-ai
  */
@@ -41,8 +42,48 @@ function register_default_adapters(): void
 		return;
 	}
 
-	Adapter::register( 'openai', Adapters\OpenAI::class );
-	Adapter::register( 'bedrock', Adapters\Bedrock::class );
+	/*
+	 * The adapters build on the PHP AI Client framework that WordPress 7.0+
+	 * ships in core (`wp-includes/php-ai-client`). On older WordPress the
+	 * framework is absent, so there is nothing to register — no-op gracefully
+	 * rather than fataling. This plugin targets WordPress 7.0+.
+	 */
+	if ( ! class_exists( 'WordPress\\AiClient\\AiClient' ) ) {
+		return;
+	}
+
+	$default_adapters = [ 'bedrock' => Adapters\Bedrock::class ];
+
+	if ( class_exists( 'WordPress\\OpenAiAiProvider\\Provider\\OpenAiProvider' ) ) {
+		$default_adapters['openai'] = Adapters\OpenAI::class;
+	}
+
+	/**
+	 * Filter the registered AI adapters.
+	 *
+	 * Allows brands to add custom adapters without modifying the plugin.
+	 * Receives a map of provider slug to adapter class and must return the same shape.
+	 *
+	 * @param array<string, class-string<Adapters\AbstractAiAdapter>> $adapters
+	 */
+	$adapters = (array) apply_filters( 'travelopia_wordpress_ai_adapters', $default_adapters );
+
+	foreach ( $adapters as $name => $adapter_class ) {
+		/*
+		 * Skip anything that is not a real adapter class — Adapter::register()
+		 * calls the adapter's boot() immediately, so a bad value from the filter
+		 * would otherwise fatal during boot.
+		 */
+		if (
+			is_string( $name )
+			&& is_string( $adapter_class )
+			&& class_exists( $adapter_class )
+			&& is_subclass_of( $adapter_class, Adapters\AbstractAiAdapter::class )
+		) {
+			/** @var class-string<Adapters\AbstractAiAdapter> $adapter_class */
+			Adapter::register( $name, $adapter_class );
+		}
+	}
 
 	/**
 	 * Filter the active AI provider.
@@ -51,6 +92,15 @@ function register_default_adapters(): void
 	 */
 	$provider = (string) apply_filters( 'travelopia_wordpress_ai_provider', 'bedrock' );
 	Adapter::set( $provider );
+
+	/*
+	 * Fall back to bedrock when the selected provider is not registered — e.g.
+	 * 'openai' was chosen but its connector plugin is absent. Better to degrade
+	 * to the default than to leave Adapter::get() returning null.
+	 */
+	if ( null === Adapter::get() ) {
+		Adapter::set( 'bedrock' );
+	}
 }
 
 /*

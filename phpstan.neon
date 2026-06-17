@@ -2,6 +2,7 @@ parameters:
 	level: max
 	scanFiles:
 		- plugin.php
+		- phpstan-stubs/OpenAiProvider.php
 	scanDirectories:
 		- vendor
 		- wordpress

@@ -380,6 +380,178 @@ class AltTextTest extends WP_UnitTestCase
 	}
 
 	/**
+	 * Run_batch with an explicit ID list slices to $limit.
+	 *
+	 * @return void
+	 */
+	public function test_run_batch_limit_truncates_ids(): void
+	{
+		$this->register_mock_adapter();
+		MockAdapter::$mock_response = 'alt';
+
+		$ids = [];
+		for ( $i = 0; $i < 5; $i++ ) {
+			$ids[] = $this->create_image_attachment();
+		}
+
+		$counts = AltText::run_batch(
+			image_ids: $ids,
+			limit:     2,
+		);
+
+		$this->assertSame( 2, $counts['attempts'] );
+		$this->assertSame( 2, MockAdapter::$call_count );
+	}
+
+	/**
+	 * Run_batch in --missing mode caps attempts at $limit.
+	 *
+	 * @return void
+	 */
+	public function test_run_batch_limit_caps_attempts_with_missing(): void
+	{
+		$this->register_mock_adapter();
+		MockAdapter::$mock_response = 'alt';
+
+		for ( $i = 0; $i < 5; $i++ ) {
+			$this->create_image_attachment();
+		}
+
+		$counts = AltText::run_batch(
+			missing_only: true,
+			limit:        2,
+		);
+
+		$this->assertSame( 2, $counts['attempts'] );
+		$this->assertSame( 2, MockAdapter::$call_count );
+	}
+
+	/**
+	 * Run_batch with --all caps attempts at $limit.
+	 *
+	 * @return void
+	 */
+	public function test_run_batch_limit_caps_attempts_with_all(): void
+	{
+		$this->register_mock_adapter();
+		MockAdapter::$mock_response = 'alt';
+
+		for ( $i = 0; $i < 5; $i++ ) {
+			$this->create_image_attachment();
+		}
+
+		$counts = AltText::run_batch( limit: 2 );
+
+		$this->assertSame( 2, $counts['attempts'] );
+		$this->assertSame( 2, MockAdapter::$call_count );
+	}
+
+	/**
+	 * Run_batch with $limit greater than the natural total processes all images.
+	 *
+	 * @return void
+	 */
+	public function test_run_batch_limit_greater_than_total_processes_all(): void
+	{
+		$this->register_mock_adapter();
+		MockAdapter::$mock_response = 'alt';
+
+		for ( $i = 0; $i < 3; $i++ ) {
+			$this->create_image_attachment();
+		}
+
+		$counts = AltText::run_batch(
+			missing_only: true,
+			limit:        100,
+		);
+
+		$this->assertSame( 3, $counts['attempts'] );
+		$this->assertSame( 3, MockAdapter::$call_count );
+	}
+
+	/**
+	 * Run_batch enforces the cap mid-batch when $limit is smaller than $batch_size * pages.
+	 *
+	 * Covers the `break 2` exit from the paginated loop.
+	 *
+	 * @return void
+	 */
+	public function test_run_batch_limit_breaks_mid_batch(): void
+	{
+		$this->register_mock_adapter();
+		MockAdapter::$mock_response = 'alt';
+
+		for ( $i = 0; $i < 30; $i++ ) {
+			$this->create_image_attachment();
+		}
+
+		$counts = AltText::run_batch(
+			missing_only: true,
+			batch_size:   10,
+			limit:        15,
+		);
+
+		$this->assertSame( 15, $counts['attempts'] );
+		$this->assertSame( 15, MockAdapter::$call_count );
+	}
+
+	/**
+	 * Failures count toward the cap, not just successes.
+	 *
+	 * @return void
+	 */
+	public function test_run_batch_limit_counts_failures(): void
+	{
+		$this->register_mock_adapter();
+		MockAdapter::$mock_response = new WP_Error( 'mock_fail', 'Always fails' );
+
+		for ( $i = 0; $i < 5; $i++ ) {
+			$this->create_image_attachment();
+		}
+
+		$counts = AltText::run_batch(
+			missing_only: true,
+			limit:        3,
+		);
+
+		$this->assertSame( 3, $counts['attempts'] );
+		$this->assertSame( 0, $counts['success'] );
+		$this->assertSame( 3, $counts['failed'] );
+		$this->assertSame( 3, MockAdapter::$call_count );
+	}
+
+	/**
+	 * The optional $on_image callback fires once per attempt with (id, result).
+	 *
+	 * @return void
+	 */
+	public function test_run_batch_on_image_callback_fires_per_attempt(): void
+	{
+		$this->register_mock_adapter();
+		MockAdapter::$mock_response = 'alt';
+
+		$id1 = $this->create_image_attachment();
+		$id2 = $this->create_image_attachment();
+
+		$seen = [];
+		AltText::run_batch(
+			image_ids: [ $id1, $id2 ],
+			on_image:  static function ( int $image_id, mixed $result ) use ( &$seen ): void {
+				$seen[] = [
+					'id'     => $image_id,
+					'result' => $result,
+				];
+			},
+		);
+
+		$this->assertCount( 2, $seen );
+		$this->assertSame( $id1, $seen[0]['id'] );
+		$this->assertSame( 'alt', $seen[0]['result'] );
+		$this->assertSame( $id2, $seen[1]['id'] );
+		$this->assertSame( 'alt', $seen[1]['result'] );
+	}
+
+	/**
 	 * Test query_images returns image attachment IDs.
 	 *
 	 * @return void

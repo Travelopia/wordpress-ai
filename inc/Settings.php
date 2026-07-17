@@ -339,7 +339,7 @@ class Settings
 
 		$plugin_dir_url = plugin_dir_url( $plugin_dir_path . '/plugin.php' );
 		$asset_file     = include $asset_file_path;
-		$dependencies   = is_array( $asset_file ) && isset( $asset_file['dependencies'] ) && is_array( $asset_file['dependencies'] ) ? array_map( static fn ( mixed $dep ): string => (string) $dep, $asset_file['dependencies'] ) : [];
+		$dependencies   = is_array( $asset_file ) && isset( $asset_file['dependencies'] ) && is_array( $asset_file['dependencies'] ) ? array_values( array_filter( array_map( static fn ( mixed $dep ): string => (string) $dep, $asset_file['dependencies'] ) ) ) : [];
 		$version        = is_array( $asset_file ) && isset( $asset_file['version'] ) && is_string( $asset_file['version'] ) ? $asset_file['version'] : '1.0.0';
 
 		wp_enqueue_style(

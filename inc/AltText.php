@@ -7,6 +7,7 @@
 
 namespace Travelopia\WordPress_AI;
 
+use Closure;
 use Exception;
 use Travelopia\WordPress_AI\AltText\Admin;
 use WP_CLI;
@@ -158,6 +159,130 @@ class AltText
 	}
 
 	/**
+	 * Run alt-text generation against a batch of images.
+	 *
+	 * Two modes:
+	 * - $image_ids non-empty → process exactly those IDs (sliced to $limit if set).
+	 * - $image_ids empty     → paginate the attachment query (filtered by $missing_only).
+	 *
+	 * Counts every attempt toward $limit regardless of success or failure.
+	 * For --missing runs, successfully processed images naturally drop out
+	 * of subsequent page-1 queries — re-runs continue chunked backfills
+	 * without an external cursor.
+	 *
+	 * The optional $on_image callback receives ( int $image_id, string|WP_Error $result )
+	 * after each attempt so callers can render progress or per-image output without
+	 * coupling this method to any presentation layer.
+	 *
+	 * @param int[]    $image_ids    Optional explicit list. Empty means "query from DB".
+	 * @param bool     $missing_only When querying, only return images missing alt text.
+	 * @param int      $batch_size   Page size for the paginated query.
+	 * @param ?int     $limit        Maximum number of attempts. Null means no cap.
+	 * @param ?Closure $on_image     Optional callback invoked after each attempt.
+	 *
+	 * @return array{success: int, failed: int, attempts: int}
+	 */
+	public static function run_batch(
+		array $image_ids = [],
+		bool $missing_only = false,
+		int $batch_size = self::DEFAULT_BATCH_SIZE,
+		?int $limit = null,
+		?Closure $on_image = null,
+	): array {
+		$cap           = $limit ?? PHP_INT_MAX;
+		$attempts      = 0;
+		$success_count = 0;
+		$failed_count  = 0;
+
+		// Explicit ID path — slice up front, no pagination, no failed-ID tracking.
+		if ( ! empty( $image_ids ) ) {
+			if ( null !== $limit ) {
+				$image_ids = array_slice( $image_ids, 0, $limit );
+			}
+
+			foreach ( $image_ids as $image_id ) {
+				$result = self::generate( $image_id );
+				++$attempts;
+
+				if ( $result instanceof WP_Error ) {
+					++$failed_count;
+				} else {
+					++$success_count;
+				}
+
+				if ( null !== $on_image ) {
+					$on_image( $image_id, $result );
+				}
+			}
+
+			return [
+				'success'  => $success_count,
+				'failed'   => $failed_count,
+				'attempts' => $attempts,
+			];
+		}
+
+		// Paginated path.
+		$page       = 1;
+		$failed_ids = [];
+
+		do {
+			// --missing re-queries page 1 (processed items drop out of result set); --all uses standard page increment.
+			$query_page = $missing_only ? 1 : $page;
+
+			$batch = self::query_images(
+				missing_only: $missing_only,
+				page:         $query_page,
+				per_page:     $batch_size,
+			);
+
+			if ( empty( $batch ) ) {
+				break;
+			}
+
+			// Skip already-failed IDs to prevent infinite loops on --missing.
+			$actionable = $missing_only ? array_diff( $batch, $failed_ids ) : $batch;
+
+			if ( empty( $actionable ) ) {
+				break;
+			}
+
+			foreach ( $actionable as $image_id ) {
+				if ( $attempts >= $cap ) {
+					break 2;
+				}
+
+				$result = self::generate( $image_id );
+				++$attempts;
+
+				if ( $result instanceof WP_Error ) {
+					$failed_ids[] = $image_id;
+					++$failed_count;
+				} else {
+					++$success_count;
+				}
+
+				if ( null !== $on_image ) {
+					$on_image( $image_id, $result );
+				}
+			}
+
+			// Free memory between batches.
+			if ( function_exists( 'wp_cache_flush_runtime' ) ) {
+				wp_cache_flush_runtime();
+			}
+
+			++$page;
+		} while ( true );
+
+		return [
+			'success'  => $success_count,
+			'failed'   => $failed_count,
+			'attempts' => $attempts,
+		];
+	}
+
+	/**
 	 * Query images for alt text generation.
 	 *
 	 * @param int[] $image_ids    Specific image IDs to query. Default empty (all images).
@@ -188,7 +313,7 @@ class AltText
 
 		$images_query = new WP_Query( $query_args );
 
-		return array_map( 'absint', $images_query->posts );
+		return array_map( 'absint', $images_query->posts ?? [] );
 	}
 
 	/**

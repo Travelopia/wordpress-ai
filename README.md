@@ -69,10 +69,12 @@ The "Enable Alt Text Generation" toggle in settings controls automatic generatio
 WP-CLI examples:
 
 ```bash
-wp travelopia-wp-ai alt-text generate --missing            # only images without alt text
-wp travelopia-wp-ai alt-text generate --all                # every image
-wp travelopia-wp-ai alt-text generate --ids=1,2,3          # specific attachments
-wp travelopia-wp-ai alt-text generate --all --batch-size=20  # smaller batches for memory-constrained envs
+wp travelopia-wp-ai alt-text generate --missing                    # only images without alt text
+wp travelopia-wp-ai alt-text generate --all                        # every image
+wp travelopia-wp-ai alt-text generate --ids=1,2,3                  # specific attachments
+wp travelopia-wp-ai alt-text generate --all --batch-size=20        # smaller batches for memory-constrained envs
+wp travelopia-wp-ai alt-text generate --missing --limit=1000       # cost / quality sample — stop after 1000 attempts
+wp travelopia-wp-ai alt-text generate --missing --limit=5000       # chunked nightly backfill — re-runs continue naturally
 ```
 
 **Flags** for `wp travelopia-wp-ai alt-text generate`:
@@ -83,8 +85,11 @@ wp travelopia-wp-ai alt-text generate --all --batch-size=20  # smaller batches f
 | `--missing` | Only process images currently without alt text. |
 | `--all` | Process every image attachment on the site. |
 | `--batch-size=<number>` | Images per batch when paginating. Default `50`. Object cache is flushed between batches to keep memory bounded. |
+| `--limit=<number>` | Cap the total number of attempts in a single run (success or failure). |
 
 One of `--ids`, `--missing`, or `--all` is required.
+
+The `--limit=<number>` flag caps the total number of attempts in a single run (success or failure). It composes with `--missing`, `--all`, `--ids`, and `--batch-size`. With `--ids`, the supplied list is truncated to the first N entries. With `--all`, the run is **not resumable** — successive invocations reprocess the same first N images; use `--missing` for chunked backfills.
 
 ## Hooks
 

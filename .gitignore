@@ -26,6 +26,7 @@ vendor
 !package-lock.json
 !phpcs.xml
 !phpstan.neon
+!phpstan-stubs
 !phpunit.xml
 !.stylelintrc
 !.stylelintignore
@@ -37,6 +38,7 @@ vendor
 !wp-cli.yml
 !.wp-env.json
 !README.md
+!docs
 !plugin.php
 !assets
 !tests

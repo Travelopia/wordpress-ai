@@ -57,6 +57,16 @@ class MockAdapter extends AbstractAiAdapter
 	}
 
 	/**
+	 * Track boot invocations.
+	 *
+	 * @return void
+	 */
+	public static function boot(): void
+	{
+		++self::$boot_count;
+	}
+
+	/**
 	 * Generate alt text (mock).
 	 *
 	 * @param string               $image_url Image URL.

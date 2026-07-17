@@ -30,7 +30,7 @@ The plugin supports multiple providers out of the box:
 
 ### Provider Configuration
 
-**AWS Bedrock** (Claude 3.5 Sonnet) — set via `wp-config.php` or environment variable:
+**AWS Bedrock** (Claude Sonnet 4) — set via `wp-config.php` or environment variable:
 
 ```php
 define( 'AWS_BEDROCK_API_KEY', 'your-key-here' );
@@ -64,6 +64,8 @@ Automatically generates descriptive alt text for images — improving accessibil
 - **Respects manual alt text** — never overwrites unless you explicitly regenerate
 - **Customizable prompt** — tailor the generation instructions from the settings page
 
+The "Enable Alt Text Generation" toggle in settings controls automatic generation on upload and the admin UI. WP-CLI commands run regardless of the toggle.
+
 WP-CLI examples:
 
 ```bash
@@ -74,6 +76,18 @@ wp travelopia-wp-ai alt-text generate --all --batch-size=20        # smaller bat
 wp travelopia-wp-ai alt-text generate --missing --limit=1000       # cost / quality sample — stop after 1000 attempts
 wp travelopia-wp-ai alt-text generate --missing --limit=5000       # chunked nightly backfill — re-runs continue naturally
 ```
+
+**Flags** for `wp travelopia-wp-ai alt-text generate`:
+
+| Flag | Description |
+|---|---|
+| `--ids=<id,id,...>` | Comma-separated attachment IDs to process. |
+| `--missing` | Only process images currently without alt text. |
+| `--all` | Process every image attachment on the site. |
+| `--batch-size=<number>` | Images per batch when paginating. Default `50`. Object cache is flushed between batches to keep memory bounded. |
+| `--limit=<number>` | Cap the total number of attempts in a single run (success or failure). |
+
+One of `--ids`, `--missing`, or `--all` is required.
 
 The `--limit=<number>` flag caps the total number of attempts in a single run (success or failure). It composes with `--missing`, `--all`, `--ids`, and `--batch-size`. With `--ids`, the supplied list is truncated to the first N entries. With `--all`, the run is **not resumable** — successive invocations reprocess the same first N images; use `--missing` for chunked backfills.
 
@@ -110,7 +124,7 @@ add_filter(
 
 ---
 
-**`travelopia_wordpress_ai_alt_text_include_context`** — By default, the plugin sends the image title and filename as additional context alongside the image to help the AI produce more accurate alt text. Set this to `false` to send only the image itself.
+**`travelopia_wordpress_ai_alt_text_include_context`** — By default, the plugin sends the attachment title as additional context alongside the image to help the AI produce more accurate alt text. Set this to `false` to send only the image itself.
 
 ```php
 add_filter(
@@ -142,6 +156,21 @@ add_action(
 	},
 	10,
 	2
+);
+```
+
+---
+
+**`travelopia_wordpress_ai_error`** — Fired for plugin-level errors that happen before the AI adapter is invoked (invalid attachment, no adapter configured).
+
+```php
+add_action(
+	'travelopia_wordpress_ai_error',
+	function ( string $code, string $message, array $data ): void {
+		// Handle error.
+	},
+	10,
+	3
 );
 ```
 

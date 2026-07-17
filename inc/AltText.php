@@ -63,18 +63,11 @@ class AltText
 		$image_url = wp_get_attachment_image_url( $attachment_id, 'large' );
 
 		if ( ! is_string( $image_url ) || ! wp_attachment_is_image( $attachment_id ) ) {
-			$error = new WP_Error(
+			return self::report_error(
 				'travelopia_wordpress_ai_alt_text_invalid_image',
-				__(
-					'Invalid image.',
-					'travelopia-wordpress-ai',
-				),
+				__( 'Invalid image.', 'travelopia-wordpress-ai' ),
 				[ 'attachment_id' => $attachment_id ],
 			);
-
-			$error_code = (string) $error->get_error_code();
-			do_action( $error_code, $error_code, $error->get_error_message(), $error->get_error_data() );
-			return $error;
 		}
 
 		/**
@@ -106,7 +99,7 @@ class AltText
 		$adapter = Adapter::get();
 
 		if ( null === $adapter ) {
-			return new WP_Error(
+			return self::report_error(
 				'travelopia_wordpress_ai_no_adapter',
 				__( 'No AI adapter configured.', 'travelopia-wordpress-ai' ),
 			);
@@ -343,6 +336,32 @@ class AltText
 		$images_query = new WP_Query( $query_args );
 
 		return (int) $images_query->found_posts;
+	}
+
+	/**
+	 * Build a WP_Error and fire the generic plugin error action.
+	 *
+	 * @param string               $code    Error code.
+	 * @param string               $message Error message.
+	 * @param array<string, mixed> $data    Error data.
+	 *
+	 * @return WP_Error
+	 */
+	private static function report_error( string $code, string $message, array $data = [] ): WP_Error
+	{
+		/**
+		 * Fires when the alt text module returns an error before invoking the active AI adapter.
+		 *
+		 * Adapter-level failures fire `travelopia_wordpress_ai_bedrock_error` /
+		 * `travelopia_wordpress_ai_open_ai_error` instead.
+		 *
+		 * @param string               $code    Error code.
+		 * @param string               $message Error message.
+		 * @param array<string, mixed> $data    Error data.
+		 */
+		do_action( 'travelopia_wordpress_ai_error', $code, $message, $data );
+
+		return new WP_Error( $code, $message, $data );
 	}
 
 	/**

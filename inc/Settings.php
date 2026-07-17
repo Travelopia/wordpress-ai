@@ -73,10 +73,26 @@ class Settings
 		add_action( 'init', [ __CLASS__, 'register_rest_setting' ] );
 		add_action( 'admin_menu', [ __CLASS__, 'setup_settings' ] );
 		add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_admin_styles' ] );
+		add_action( 'add_option_' . self::OPTION_NAME, [ __CLASS__, 'clear_cache' ] );
+		add_action( 'update_option_' . self::OPTION_NAME, [ __CLASS__, 'clear_cache' ] );
+		add_action( 'admin_notices', [ __CLASS__, 'display_build_missing_notice' ] );
 		add_filter(
 			'plugin_action_links_' . plugin_basename( dirname( __DIR__ ) . '/plugin.php' ),
 			[ __CLASS__, 'add_settings_link' ],
 		);
+	}
+
+	/**
+	 * Clear the static settings cache.
+	 *
+	 * Hooked to the option's add/update actions so subsequent reads in the
+	 * same request reflect the new value without `get( true )`.
+	 *
+	 * @return void
+	 */
+	public static function clear_cache(): void
+	{
+		self::$settings = null;
 	}
 
 	/**
@@ -239,6 +255,66 @@ class Settings
 		);
 
 		return $links;
+	}
+
+	/**
+	 * Get the path to the compiled settings asset PHP file.
+	 *
+	 * The path is filterable so tests can simulate a missing build.
+	 *
+	 * @return string
+	 */
+	private static function get_settings_asset_file_path(): string
+	{
+		$default = dirname( __DIR__ ) . '/dist/settings.asset.php';
+
+		/**
+		 * Filter the path used to detect whether the settings build is present.
+		 *
+		 * @param string $path Absolute path to the settings asset PHP file.
+		 */
+		$filtered = apply_filters( 'travelopia_wordpress_ai_settings_asset_file', $default );
+
+		return is_string( $filtered ) ? $filtered : $default;
+	}
+
+	/**
+	 * Whether the compiled settings asset is missing on disk.
+	 *
+	 * @return bool
+	 */
+	public static function is_build_missing(): bool
+	{
+		return ! file_exists( self::get_settings_asset_file_path() );
+	}
+
+	/**
+	 * Render an admin notice on the settings page when the build is missing.
+	 *
+	 * @return void
+	 */
+	public static function display_build_missing_notice(): void
+	{
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+
+		if ( null === $screen || 'settings_page_' . self::PAGE_SLUG !== $screen->id ) {
+			return;
+		}
+
+		if ( ! self::is_build_missing() ) {
+			return;
+		}
+
+		wp_admin_notice(
+			esc_html__(
+				'Travelopia WordPress AI: build assets are missing. Run npm run build to compile the settings UI.',
+				'travelopia-wordpress-ai',
+			),
+			[
+				'type'           => 'warning',
+				'paragraph_wrap' => true,
+			],
+		);
 	}
 
 	/**

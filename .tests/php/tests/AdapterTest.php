@@ -10,6 +10,7 @@ namespace Travelopia\WordPress_AI\Tests;
 use Travelopia\WordPress_AI\Adapter;
 use Travelopia\WordPress_AI\Adapters\Bedrock;
 use Travelopia\WordPress_AI\Adapters\OpenAI;
+use Travelopia\WordPress_AI\Tests\MockAdapter;
 use Travelopia\WordPress_AI\AltText;
 use Travelopia\WordPress_AI\Settings;
 use stdClass;
@@ -30,6 +31,19 @@ class AdapterTest extends WP_UnitTestCase
 	{
 		parent::setUp();
 		Adapter::reset();
+		MockAdapter::reset();
+	}
+
+	/**
+	 * Reset adapter registry after each test.
+	 *
+	 * @return void
+	 */
+	public function tearDown(): void
+	{
+		Adapter::reset();
+		MockAdapter::reset();
+		parent::tearDown();
 	}
 
 	/**
@@ -95,6 +109,58 @@ class AdapterTest extends WP_UnitTestCase
 
 		Adapter::reset();
 		$this->assertNull( Adapter::get() );
+	}
+
+	/**
+	 * Test register does not boot the adapter.
+	 *
+	 * @return void
+	 */
+	public function test_register_does_not_boot(): void
+	{
+		Adapter::register( 'mock', MockAdapter::class );
+
+		$this->assertSame( 0, MockAdapter::$boot_count );
+	}
+
+	/**
+	 * Test set boots the active adapter.
+	 *
+	 * @return void
+	 */
+	public function test_set_boots_active_adapter(): void
+	{
+		Adapter::register( 'mock', MockAdapter::class );
+		Adapter::set( 'mock' );
+
+		$this->assertSame( 1, MockAdapter::$boot_count );
+	}
+
+	/**
+	 * Test set boots only once when called repeatedly with the same adapter.
+	 *
+	 * @return void
+	 */
+	public function test_set_boots_only_once_per_adapter(): void
+	{
+		Adapter::register( 'mock', MockAdapter::class );
+		Adapter::set( 'mock' );
+		Adapter::set( 'mock' );
+
+		$this->assertSame( 1, MockAdapter::$boot_count );
+	}
+
+	/**
+	 * Test set ignores unknown adapter names.
+	 *
+	 * @return void
+	 */
+	public function test_set_unknown_adapter_does_not_boot(): void
+	{
+		Adapter::register( 'mock', MockAdapter::class );
+		Adapter::set( 'nonexistent' );
+
+		$this->assertSame( 0, MockAdapter::$boot_count );
 	}
 
 	/**

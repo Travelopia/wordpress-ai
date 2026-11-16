@@ -63,6 +63,7 @@ Automatically generates descriptive alt text for images — improving accessibil
 - **Batch processing via WP-CLI** — backfill alt text for your entire media library
 - **Respects manual alt text** — never overwrites unless you explicitly regenerate
 - **Customizable prompt** — tailor the generation instructions from the settings page
+- **Per-site on multisite** — each site's own setting and prompt apply, including to attachments inserted on it with `switch_to_blog()`
 
 WP-CLI examples:
 
@@ -170,6 +171,7 @@ npm run wp-env:start     # start the dev environment (without installing deps)
 npm run wp-env:stop      # stop the dev environment
 npm run test:php:setup   # install deps in container and run PHP tests (first run)
 npm run test:php         # run PHP tests
+npm run test:php:multisite  # run PHP tests on multisite
 ```
 
 ## Privacy

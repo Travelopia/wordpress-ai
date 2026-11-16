@@ -37,16 +37,41 @@ class AltText
 			WP_CLI::add_command( 'travelopia-wp-ai alt-text', AltText\CLI::class );
 		}
 
+		/*
+		 * Hooked regardless of this site's setting: on multisite an attachment
+		 * can be inserted on another site while switched to it, and that
+		 * site's own setting decides. See generate_on_upload().
+		 */
+		add_action( 'add_attachment', [ __CLASS__, 'generate_on_upload' ], 20 );
+
 		// Check if this module is enabled.
 		if ( true !== Settings::get_setting( Settings::FIELD_ALT_TEXT_GENERATION, false ) ) {
 			return;
 		}
 
-		// Hooks.
-		add_action( 'add_attachment', [ __CLASS__, 'generate' ], 20 );
-
 		// Bootstrap admin functionality.
 		Admin::bootstrap();
+	}
+
+	/**
+	 * Generate alt text for a new attachment when the current site has generation enabled.
+	 *
+	 * Checks the setting at insert time rather than at bootstrap, because
+	 * the current site may differ from the one that bootstrapped the request
+	 * (e.g. an attachment copied to another site with `switch_to_blog()`).
+	 *
+	 * @param int $attachment_id Attachment ID.
+	 *
+	 * @return void
+	 */
+	public static function generate_on_upload( int $attachment_id = 0 ): void
+	{
+		// Bail if the current site has generation disabled.
+		if ( true !== Settings::get_setting( Settings::FIELD_ALT_TEXT_GENERATION, false ) ) {
+			return;
+		}
+
+		self::generate( $attachment_id );
 	}
 
 	/**

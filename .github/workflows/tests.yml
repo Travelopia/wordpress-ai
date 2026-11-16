@@ -63,6 +63,9 @@ jobs:
       - name: Run PHPUnit
         run: npm run test:php:setup
 
+      - name: Run PHPUnit (multisite)
+        run: npm run test:php:multisite
+
       - name: Stop wp-env
         if: always()
         run: npm run wp-env:stop

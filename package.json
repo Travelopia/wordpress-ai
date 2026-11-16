@@ -23,7 +23,8 @@
     "format:php:fix": "composer run format-fix",
     "lint-test": "npm run lint && npm run test:php:setup && npm run static-analysis:php",
     "test:php": "wp-env run tests-cli --env-cwd=wp-content/plugins/wordpress-ai ./vendor/bin/phpunit",
-    "test:php:setup": "wp-env run tests-cli --env-cwd=wp-content/plugins/wordpress-ai composer install && npm run test:php",
+    "test:php:multisite": "wp-env run tests-cli --env-cwd=wp-content/plugins/wordpress-ai env WP_MULTISITE=1 ./vendor/bin/phpunit",
+    "test:php:setup":"wp-env run tests-cli --env-cwd=wp-content/plugins/wordpress-ai composer install && npm run test:php",
     "static-analysis:php": "composer static-analysis"
   },
   "dependencies": {

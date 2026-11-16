@@ -314,8 +314,7 @@ class AdapterTest extends WP_UnitTestCase
 
 	/**
 	 * Calling `bootstrap_alt_text` must run `AltText::bootstrap` — verified
-	 * via the `add_attachment` hook it registers when alt-text generation
-	 * is enabled in settings.
+	 * via the `add_attachment` hook it registers.
 	 *
 	 * @return void
 	 */
@@ -332,8 +331,8 @@ class AdapterTest extends WP_UnitTestCase
 		bootstrap_alt_text();
 
 		$this->assertNotFalse(
-			has_action( 'add_attachment', [ AltText::class, 'generate' ] ),
-			'AltText::generate must be hooked on add_attachment after bootstrap when generation is enabled.'
+			has_action( 'add_attachment', [ AltText::class, 'generate_on_upload' ] ),
+			'AltText::generate_on_upload must be hooked on add_attachment after bootstrap.'
 		);
 
 		delete_option( Settings::OPTION_NAME );

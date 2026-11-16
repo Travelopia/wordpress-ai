@@ -57,11 +57,14 @@ class Settings
 	public const DEFAULT_ALT_TEXT_PROMPT = 'Describe this image in a concise, informative way for alt text. Focus on the main subject and important details that would help someone understand what is in the image.';
 
 	/**
-	 * Cached settings.
+	 * Cached settings, keyed by site ID.
 	 *
-	 * @var array<string, mixed>|null
+	 * Keyed by site because the option is per site: on multisite, code that
+	 * runs after `switch_to_blog()` must read the switched site's settings.
+	 *
+	 * @var array<int, array<string, mixed>>
 	 */
-	private static ?array $settings = null;
+	private static array $settings = [];
 
 	/**
 	 * Bootstrap settings functionality.
@@ -140,7 +143,7 @@ class Settings
 	}
 
 	/**
-	 * Get all settings.
+	 * Get all settings for the current site.
 	 *
 	 * @param bool $force Force getting settings from database.
 	 *
@@ -148,8 +151,10 @@ class Settings
 	 */
 	public static function get( bool $force = false ): array
 	{
-		if ( false === $force && null !== self::$settings ) {
-			return self::$settings;
+		$site_id = get_current_blog_id();
+
+		if ( false === $force && isset( self::$settings[ $site_id ] ) ) {
+			return self::$settings[ $site_id ];
 		}
 
 		$default_settings = self::get_default_settings();
@@ -157,15 +162,17 @@ class Settings
 		$saved_settings   = is_array( $saved_settings ) ? $saved_settings : [];
 
 		// Merge saved settings into defaults, ensuring string keys are preserved.
-		self::$settings = $default_settings;
+		$settings = $default_settings;
 
 		foreach ( $saved_settings as $key => $value ) {
 			if ( is_string( $key ) && array_key_exists( $key, $default_settings ) ) {
-				self::$settings[ $key ] = $value;
+				$settings[ $key ] = $value;
 			}
 		}
 
-		return self::$settings;
+		self::$settings[ $site_id ] = $settings;
+
+		return $settings;
 	}
 
 	/**
